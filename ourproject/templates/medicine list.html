@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharmacy Medicine List</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .medicine-card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border: none;
+            height: 100%;
+        }
+        .medicine-card:hover {
+            box-shadow: 0 10px 15px rgba(0,0,0,0.1);
+            transform: translateY(-5px);
+        }
+        .medicine-img {
+            height: 180px;
+            object-fit: contain;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 10px 10px 0 0;
+        }
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        .quantity-btn {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #dee2e6;
+            background-color: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+        }
+        .quantity-btn:first-child {
+            border-radius: 4px 0 0 4px;
+        }
+        .quantity-btn:last-child {
+            border-radius: 0 4px 4px 0;
+        }
+        .quantity-input {
+            width: 50px;
+            height: 30px;
+            text-align: center;
+            border: 1px solid #dee2e6;
+            border-left: none;
+            border-right: none;
+        }
+        .quantity-input:focus {
+            outline: none;
+            box-shadow: none;
+        }
+        .add-to-cart-btn {
+            width: 100%;
+        }
+        @media (max-width: 768px) {
+            .medicine-img {
+                height: 150px;
+            }
+        }
+        .badge-prescription {
+            background-color: #0d6efd;
+        }
+        .badge-otc {
+            background-color: #198754;
+        }
+        .price {
+            font-weight: bold;
+            color: #0d6efd;
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-5">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="fw-bold text-primary"><i class="fas fa-prescription-bottle-alt me-2"></i>Pharmacy Medicine List</h1>
+                <p class="text-muted">Browse our selection of medicines and health products</p>
+            </div>
+        </div>
+
+        <!-- Search and Filter -->
+        <div class="row mb-4">
+            <div class="col-md-6 mb-3">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control" placeholder="Search medicines...">
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <select class="form-select">
+                    <option selected>All Categories</option>
+                    <option>Prescription</option>
+                    <option>Over-the-counter</option>
+                    <option>Vitamins</option>
+                    <option>Medical Devices</option>
+                </select>
+            </div>
+            <div class="col-md-3 mb-3">
+                <select class="form-select">
+                    <option selected>Sort by</option>
+                    <option>Price: Low to High</option>
+                    <option>Price: High to Low</option>
+                    <option>Name: A-Z</option>
+                    <option>Name: Z-A</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Medicine List -->
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+            <!-- Medicine 1 -->
+            <div class="col">
+                <div class="card medicine-card">
+                    <img src="https://m.media-amazon.com/images/I/61tG9y9hO6L._AC_UF1000,1000_QL80_.jpg" class="card-img-top medicine-img" alt="Amoxicillin 500mg">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title mb-0">Amoxicillin 500mg</h5>
+                            <span class="badge badge-prescription text-white">Rx</span>
+                        </div>
+                        <p class="card-text text-muted small">Antibiotic capsule, 20 capsules per pack</p>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="price">$12.99</div>
+                            <div class="text-muted small"><i class="fas fa-cubes me-1"></i>In stock</div>
+                        </div>
+                        <div class="quantity-control">
+                            <div class="quantity-btn" onclick="decrementQuantity(this)">-</div>
+                            <input type="number" class="quantity-input" value="1" min="1" max="5">
+                            <div class="quantity-btn" onclick="incrementQuantity(this)">+</div>
+                        </div>
+                        <button class="btn btn-primary add-to-cart-btn">
+                            <i class="fas fa-cart-plus me-1"></i>Add to Cart
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Medicine 2 -->
+            <div class="col">
+                <div class="card medicine-card">
+                    <img src="https://5.imimg.com/data5/SELLER/Default/2021/12/QT/VO/KB/3033183/lisinopril-tablets-500x500.jpg" class="card-img-top medicine-img" alt="Lisinopril 10mg">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title mb-0">Lisinopril 10mg</h5>
+                            <span class="badge badge-prescription text-white">Rx</span>
+                        </div>
+                        <p class="card-text text-muted small">Blood pressure tablet, 30 tablets per pack</p>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="price">$8.50</div>
+                            <div class="text-muted small"><i class="fas fa-cubes me-1"></i>In stock</div>
+                        </div>
+                        <div class="quantity-control">
+                            <div class="quantity-btn" onclick="decrementQuantity(this)">-</div>
+                            <input type="number" class="quantity-input" value="1" min="1" max="3">
+                            <div class="quantity-btn" onclick="incrementQuantity(this)">+</div>
+                        </div>
+                        <button class="btn btn-primary add-to-cart-btn">
+                            <i class="fas fa-cart-plus me-1"></i>Add to Cart
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Medicine 3 -->
+            <div class="col">
+                <div class="card medicine-card">
+                    <img src="https://m.media-amazon.com/images/I/71gI-IUNUkL._AC_UF1000,1000_QL80_.jpg" class="card-img-top medicine-img" alt="Ibuprofen 200mg">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title mb-0">Ibuprofen 200mg</h5>
+                            <span class="badge badge-otc text-white">OTC</span>
+                        </div>
+                        <p class="card-text text-muted small">Pain reliever tablet, 100 tablets per bottle</p>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="price">$5.99</div>
+                            <div class="text-muted small"><i class="fas fa-cubes me-1"></i>In stock</div>
+                        </div>
+                        <div class="quantity-control">
+                            <div class="quantity-btn" onclick="decrementQuantity(this)">-</div>
+                            <input type="number" class="quantity-input" value="1" min="1" max="10">
+                            <div class="quantity-btn" onclick="incrementQuantity(this)">+</div>
+                        </div>
+                        <button class="btn btn-primary add-to-cart-btn">
+                            <i class="fas fa-cart-plus me-1"></i>Add to Cart
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Medicine 4 -->
+            <div class="col">
+                <div class="card medicine-card">
+                    <img src="https://www.drugs.com/images/pills/fio/IPI09070/omeprazole-delayed-release.JPG" class="card-img-top medicine-img" alt="Omeprazole 20mg">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title mb-0">Omeprazole 20mg</h5>
+                            <span class="badge badge-otc text-white">OTC</span>
+                        </div>
+                        <p class="card-text text-muted small">Acid reducer capsule, 14 capsules per pack</p>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="price">$9.75</div>
+                            <div class="text-muted small"><i class="fas fa-cubes me-1"></i>In stock</div>
+                        </div>
+                        <div class="quantity-control">
+                            <div class="quantity-btn" onclick="decrementQuantity(this)">-</div>
+                            <input type="number" class="quantity-input" value="1" min="1" max="5">
+                            <div class="quantity-btn" onclick="incrementQuantity(this)">+</div>
+                        </div>
+                        <button class="btn btn-primary add-to-cart-btn">
+                            <i class="fas fa-cart-plus me-1"></i>Add to Cart
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Medicine 5 -->
+            <div class="col">
+                <div class="card medicine-card">
+                    <img src="https://www.drugs.com/images/pills/fio/SKU104005/atorvastatin.JPG" class="card-img-top medicine-img" alt="Atorvastatin 20mg">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title mb-0">Atorvastatin 20mg</h5>
+                            <span class="badge badge-prescription text-white">Rx</span>
+                        </div>
+                        <p class="card-text text-muted small">Cholesterol tablet, 30 tablets per pack</p>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="price">$15.25</div>
+                            <div class="text-muted small"><i class="fas fa-cubes me-1"></i>In stock</div>
+                        </div>
+                        <div class="quantity-control">
+                            <div class="quantity-btn" onclick="decrementQuantity(this)">-</div>
+                            <input type="number" class="quantity-input" value="1" min="1" max="3">
+                            <div class="quantity-btn" onclick="incrementQuantity(this)">+</div>
+                        </div>
+                        <button class="btn btn-primary add-to-cart-btn">
+                            <i class="fas fa-cart-plus me-1"></i>Add to Cart
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Medicine 6 -->
+            <div class="col">
+                <div class="card medicine-card">
+                    <img src="https://www.drugs.com/images/pills/fio/SKU106001/metformin.JPG" class="card-img-top medicine-img" alt="Metformin 500mg">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title mb-0">Metformin 500mg</h5>
+                            <span class="badge badge-prescription text-white">Rx</span>
+                        </div>
+                        <p class="card-text text-muted small">Diabetes tablet, 60 tablets per pack</p>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="price">$7.99</div>
+                            <div class="text-muted small"><i class="fas fa-cubes me-1"></i>In stock</div>
+                        </div>
+                        <div class="quantity-control">
+                            <div class="quantity-btn" onclick="decrementQuantity(this)">-</div>
+                            <input type="number" class="quantity-input" value="1" min="1" max="3">
+                            <div class="quantity-btn" onclick="incrementQuantity(this)">+</div>
+                        </div>
+                        <button class="btn btn-primary add-to-cart-btn">
+                            <i class="fas fa-cart-plus me-1"></i>Add to Cart
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Medicine 7 -->
+            <div class="col">
+                <div class="card medicine-card">
+                    <img src="https://www.drugs.com/images/pills/fio/IPI09070/omeprazole-delayed-release.JPG" class="card-img-top medicine-img" alt="Vitamin D3 1000IU">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title mb-0">Vitamin D3 1000IU</h5>
+                            <span class="badge badge-otc text-white">OTC</span>
+                        </div>
+                        <p class="card-text text-muted small">Vitamin supplement, 60 softgels per bottle</p>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="price">$11.50</div>
+                            <div class="text-muted small"><i class="fas fa-cubes me-1"></i>In stock</div>
+                        </div>
+                        <div class="quantity-control">
+                            <div class="quantity-btn" onclick="decrementQuantity(this)">-</div>
+                            <input type="number" class="quantity-input" value="1" min="1" max="10">
+                            <div class="quantity-btn" onclick="incrementQuantity(this)">+</div>
+                        </div>
+                        <button class="btn btn-primary add-to-cart-btn">
+                            <i class="fas fa-cart-plus me-1"></i>Add to Cart
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Medicine 8 -->
+            <div class="col">
+                <div class="card medicine-card">
+                    <img src="https://www.drugs.com/images/pills/nlm/32495-1221-78.jpg" class="card-img-top medicine-img" alt="Cetirizine 10mg">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title mb-0">Cetirizine 10mg</h5>
+                            <span class="badge badge-otc text-white">OTC</span>
+                        </div>
+                        <p class="card-text text-muted small">Antihistamine tablet, 30 tablets per pack</p>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="price">$6.25</div>
+                            <div class="text-muted small"><i class="fas fa-cubes me-1"></i>In stock</div>
+                        </div>
+                        <div class="quantity-control">
+                            <div class="quantity-btn" onclick="decrementQuantity(this)">-</div>
+                            <input type="number" class="quantity-input" value="1" min="1" max="5">
+                            <div class="quantity-btn" onclick="incrementQuantity(this)">+</div>
+                        </div>
+                        <button class="btn btn-primary add-to-cart-btn">
+                            <i class="fas fa-cart-plus me-1"></i>Add to Cart
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <nav class="mt-5">
+            <ul class="pagination justify-content-center">
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" tabindex="-1">Previous</a>
+                </li>
+                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                <li class="page-item">
+                    <a class="page-link" href="#">Next</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Quantity control functions
+        function incrementQuantity(button) {
+            const input = button.parentElement.querySelector('.quantity-input');
+            const max = parseInt(input.getAttribute('max')) || 10;
+            if (parseInt(input.value) < max) {
+                input.value = parseInt(input.value) + 1;
+            }
+        }
+
+        function decrementQuantity(button) {
+            const input = button.parentElement.querySelector('.quantity-input');
+            const min = parseInt(input.getAttribute('min')) || 1;
+            if (parseInt(input.value) > min) {
+                input.value = parseInt(input.value) - 1;
+            }
+        }
+
+        // Add to cart functionality
+        document.querySelectorAll('.add-to-cart-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const card = this.closest('.card');
+                const medicineName = card.querySelector('.card-title').textContent;
+                const quantity = card.querySelector('.quantity-input').value;
+                const price = card.querySelector('.price').textContent;
+                
+                alert(`Added ${quantity} ${medicineName} to cart\nTotal: $${(parseFloat(price.substring(1)) * parseInt(quantity)).toFixed(2)}`);
+            });
+        });
+
+        // Prevent non-numeric input
+        document.querySelectorAll('.quantity-input').forEach(input => {
+            input.addEventListener('change', function() {
+                const min = parseInt(this.getAttribute('min')) || 1;
+                const max = parseInt(this.getAttribute('max')) || 10;
+                let value = parseInt(this.value);
+                
+                if (isNaN(value)) {
+                    this.value = min;
+                } else if (value < min) {
+                    this.value = min;
+                } else if (value > max) {
+                    this.value = max;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

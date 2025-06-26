@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharmastics | Customer Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2563eb',
+                        secondary: '#1d4ed8',
+                        accent: '#3b82f6',
+                        darkblue: '#1e3a8a',
+                        pharmaGreen: '#16a34a',
+                        pharmaRed: '#dc2626'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @media (max-width: 640px) {
+            .responsive-table {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+            .mobile-card {
+                min-width: 280px;
+            }
+        }
+        .pharma-gradient {
+            background: linear-gradient(135deg, #2563eb 0%, #1e3a8a 100%);
+        }
+        .card {
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- Top Navigation -->
+    <nav class="pharma-gradient text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <i class="fas fa-prescription-bottle-alt text-2xl mr-2"></i>
+                        <span class="text-xl font-bold">PHARMASTICS</span>
+                        <span class="ml-2 text-sm bg-white text-primary px-2 py-1 rounded">WHOLESALE & RETAIL</span>
+                    </div>
+                    <div class="hidden md:block ml-10">
+                        <div class="flex items-baseline space-x-4">
+                            <a href="#" class="px-3 py-2 rounded-md text-sm font-medium bg-white text-primary">Dashboard</a>
+                            <a href="#" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-700">Orders</a>
+                            <a href="#" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-700">Inventory</a>
+                            <a href="#" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-700">Suppliers</a>
+                            <a href="#" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-700">Customers</a>
+                            <a href="#" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-700">Reports</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <div class="relative mr-4">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-search text-gray-400"></i>
+                        </div>
+                        <input type="text" class="block w-full pl-10 pr-3 py-2 border border-transparent rounded-md leading-5 bg-blue-700 bg-opacity-20 text-white placeholder-blue-200 focus:outline-none focus:bg-white focus:text-gray-900 sm:text-sm transition duration-150 ease-in-out" placeholder="Search...">
+                    </div>
+                    <button class="p-1 rounded-full text-blue-200 hover:text-white focus:outline-none mr-2">
+                        <i class="fas fa-bell"></i>
+                    </button>
+                    <div class="ml-3 relative">
+                        <div class="flex items-center">
+                            <div class="text-sm mr-3 hidden md:block">Dr. Jonathan Carter</div>
+                            <div class="relative group">
+                                <img class="h-8 w-8 rounded-full object-cover cursor-pointer" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="User">
+                                <div class="hidden group-hover:block absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+                                    <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</a>
+                                    <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Settings</a>
+                                    <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 border-t border-gray-100">Logout</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                {% if request.user.userprofile.role == 'admin' %}
+                    <a href="{% url 'admin_dashboard' %}">Admin Dashboard</a>
+                {% elif request.user.userprofile.role == 'pharmacist' %}
+                    <a href="{% url 'pharmacist_dashboard' %}">Pharmacist Dashboard</a>
+                {% elif request.user.userprofile.role == 'customer' %}
+                    <a href="{% url 'customer_dashboard' %}">Customer Dashboard</a>
+                {% endif %}
+
+                
+                <a href="#">Home</a>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'logout' %}" class="btn btn-sm btn-danger">Logout</a>
+                {% else %}
+                    <a href="{% url 'login' %}" class="btn btn-sm btn-primary">Login</a>
+                {% endif %}
+
+        </div>
+
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <!-- Dashboard Header -->
+        <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Customer Dashboard</h1>
+                <p class="mt-1 text-gray-600">Welcome back! Here's your pharmacy overview</p>
+            </div>
+            <div class="mt-4 md:mt-0 flex space-x-3">
+                <button class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-secondary focus:outline-none">
+                    <i class="fas fa-plus mr-2"></i> New Order
+                </button>
+                <button class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+                    <i class="fas fa-file-export mr-2"></i> Export
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="card bg-white rounded-lg overflow-hidden">
+                <div class="p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
+                            <i class="fas fa-boxes text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Total Inventory</p>
+                            <p class="text-2xl font-semibold text-gray-900">1,842</p>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <span class="text-green-600 text-sm font-medium"><i class="fas fa-caret-up mr-1"></i> 12.5%</span>
+                        <span class="text-gray-500 text-sm ml-2">vs last month</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card bg-white rounded-lg overflow-hidden">
+                <div class="p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-green-100 text-green-600 mr-4">
+                            <i class="fas fa-shopping-cart text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Retail Orders</p>
+                            <p class="text-2xl font-semibold text-gray-900">328</p>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <span class="text-green-600 text-sm font-medium"><i class="fas fa-caret-up mr-1"></i> 8.2%</span>
+                        <span class="text-gray-500 text-sm ml-2">vs last month</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card bg-white rounded-lg overflow-hidden">
+                <div class="p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-purple-100 text-purple-600 mr-4">
+                            <i class="fas fa-truck-loading text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Wholesale Orders</p>
+                            <p class="text-2xl font-semibold text-gray-900">47</p>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <span class="text-green-600 text-sm font-medium"><i class="fas fa-caret-up mr-1"></i> 5.7%</span>
+                        <span class="text-gray-500 text-sm ml-2">vs last month</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card bg-white rounded-lg overflow-hidden">
+                <div class="p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-red-100 text-red-600 mr-4">
+                            <i class="fas fa-exclamation-triangle text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Low Stock Items</p>
+                            <p class="text-2xl font-semibold text-gray-900">18</p>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <span class="text-red-600 text-sm font-medium"><i class="fas fa-caret-down mr-1"></i> 3.3%</span>
+                        <span class="text-gray-500 text-sm ml-2">vs last month</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Recent Orders -->
+            <div class="lg:col-span-2">
+                <div class="card bg-white rounded-lg overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-medium text-gray-900">Recent Orders</h3>
+                            <a href="#" class="text-sm font-medium text-primary hover:text-secondary">View all</a>
+                        </div>
+                    </div>
+                    <div class="responsive-table">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary">#ORD-8765</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900">Green Valley Pharmacy</div>
+                                        <div class="text-sm text-gray-500">Wholesale</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">Wholesale</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$2,845.00</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Completed</span>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary">#ORD-8764</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900">John Smith</div>
+                                        <div class="text-sm text-gray-500">Retail</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Retail</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$48.75</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Processing</span>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary">#ORD-8763</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900">City Medical Center</div>
+                                        <div class="text-sm text-gray-500">Wholesale</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">Wholesale</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$5,210.50</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Completed</span>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary">#ORD-8762</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900">Emily Johnson</div>
+                                        <div class="text-sm text-gray-500">Retail</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Retail</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$32.99</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Completed</span>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary">#ORD-8761</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900">Regional Hospital</div>
+                                        <div class="text-sm text-gray-500">Wholesale</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">Wholesale</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$8,745.25</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Shipped</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Sidebar -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- Low Stock Alerts -->
+                <div class="card bg-white rounded-lg overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-medium text-gray-900">Low Stock Alerts</h3>
+                    </div>
+                    <div class="p-6">
+                        <div class="space-y-4">
+                            <div class="mobile-card flex items-start p-3 bg-red-50 rounded-lg">
+                                <div class="flex-shrink-0 mt-1">
+                                    <i class="fas fa-pills text-red-500"></i>
+                                </div>
+                                <div class="ml-3 flex-1 min-w-0">
+                                    <p class="text-sm font-medium text-gray-900">Amoxicillin 500mg Capsules</p>
+                                    <p class="text-sm text-gray-500">SKU: AMX-500-100</p>
+                                    <div class="mt-1 flex justify-between items-center">
+                                        <span class="text-xs font-semibold inline-block py-1 px-2 rounded text-red-700 bg-red-100">12 remaining</span>
+                                        <button class="text-xs text-primary hover:text-secondary font-medium">Reorder</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mobile-card flex items-start p-3 bg-yellow-50 rounded-lg">
+                                <div class="flex-shrink-0 mt-1">
+                                    <i class="fas fa-syringe text-yellow-500"></i>
+                                </div>
+                                <div class="ml-3 flex-1 min-w-0">
+                                    <p class="text-sm font-medium text-gray-900">Insulin Glargine 100IU/mL</p>
+                                    <p class="text-sm text-gray-500">SKU: INS-GL-100</p>
+                                    <div class="mt-1 flex justify-between items-center">
+                                        <span class="text-xs font-semibold inline-block py-1 px-2 rounded text-yellow-700 bg-yellow-100">8 remaining</span>
+                                        <button class="text-xs text-primary hover:text-secondary font-medium">Reorder</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mobile-card flex items-start p-3 bg-orange-50 rounded-lg">
+                                <div class="flex-shrink-0 mt-1">
+                                    <i class="fas fa-capsules text-orange-500"></i>
+                                </div>
+                                <div class="ml-3 flex-1 min-w-0">
+                                    <p class="text-sm font-medium text-gray-900">Omeprazole 20mg Capsules</p>
+                                    <p class="text-sm text-gray-500">SKU: OMP-20-30</p>
+                                    <div class="mt-1 flex justify-between items-center">
+                                        <span class="text-xs font-semibold inline-block py-1 px-2 rounded text-orange-700 bg-orange-100">5 remaining</span>
+                                        <button class="text-xs text-primary hover:text-secondary font-medium">Reorder</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <a href="#" class="text-sm font-medium text-primary hover:text-secondary">View all low stock items →</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="card bg-white rounded-lg overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-medium text-gray-900">Quick Actions</h3>
+                    </div>
+                    <div class="p-6">
+                        <div class="grid grid-cols-2 gap-4">
+                            <a href="#" class="flex flex-col items-center justify-center p-4 bg-blue-50 rounded-lg text-primary hover:bg-blue-100 transition">
+                                <i class="fas fa-plus-circle text-2xl mb-2"></i>
+                                <span class="text-sm font-medium">New Order</span>
+                            </a>
+                            <a href="#" class="flex flex-col items-center justify-center p-4 bg-green-50 rounded-lg text-green-600 hover:bg-green-100 transition">
+                                <i class="fas fa-user-plus text-2xl mb-2"></i>
+                                <span class="text-sm font-medium">Add Customer</span>
+                            </a>
+                            <a href="#" class="flex flex-col items-center justify-center p-4 bg-purple-50 rounded-lg text-purple-600 hover:bg-purple-100 transition">
+                                <i class="fas fa-file-invoice text-2xl mb-2"></i>
+                                <span class="text-sm font-medium">Generate Report</span>
+                            </a>
+                            <a href="#" class="flex flex-col items-center justify-center p-4 bg-yellow-50 rounded-lg text-yellow-600 hover:bg-yellow-100 transition">
+                                <i class="fas fa-bell text-2xl mb-2"></i>
+                                <span class="text-sm font-medium">Alerts</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="text-lg font-bold mb-4 flex items-center">
+                        <i class="fas fa-prescription-bottle-alt mr-2"></i>
+                        PHARMASTICS
+                    </h3>
+                    <p class="text-gray-400 text-sm">Your trusted partner in wholesale and retail pharmaceutical distribution since 2005.</p>
+                    <div class="mt-4 flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-sm font-semibold uppercase tracking-wider mb-4">Wholesale</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white text-sm">Order Management</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white text-sm">Bulk Pricing</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white text-sm">Hospital Supply</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white text-sm">Contract Pricing</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-sm font-semibold uppercase tracking-wider mb-4">Retail</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white text-sm">Prescription Services</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white text-sm">OTC Products</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white text-sm">Patient Care</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white text-sm">Home Delivery</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-sm font-semibold uppercase tracking-wider mb-4">Company</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white text-sm">About Us</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white text-sm">Locations</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white text-sm">Careers</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white text-sm">Contact</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="mt-8 pt-8 border-t border-gray-700 flex flex-col md:flex-row justify-between items-center">
+                <p class="text-gray-400 text-sm">© 2023 Pharmastics Wholesale & Retail. All rights reserved.</p>
+                <div class="mt-4 md:mt-0 flex space-x-6">
+                    <a href="#" class="text-gray-400 hover:text-white text-sm">Privacy Policy</a>
+                    <a href="#" class="text-gray-400 hover:text-white text-sm">Terms of Service</a>
+                    <a href="#" class="text-gray-400 hover:text-white text-sm">Sitemap</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Mobile Bottom Navigation -->
+    <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
+        <div class="flex justify-around">
+            <a href="#" class="p-4 text-primary flex flex-col items-center">
+                <i class="fas fa-home text-xl"></i>
+                <span class="text-xs mt-1">Home</span>
+            </a>
+            <a href="#" class="p-4 text-gray-500 flex flex-col items-center">
+                <i class="fas fa-clipboard-list text-xl"></i>
+                <span class="text-xs mt-1">Orders</span>
+            </a>
+            <a href="#" class="p-4 text-gray-500 flex flex-col items-center">
+                <i class="fas fa-boxes text-xl"></i>
+                <span class="text-xs mt-1">Inventory</span>
+            </a>
+            <a href="#" class="p-4 text-gray-500 flex flex-col items-center">
+                <i class="fas fa-users text-xl"></i>
+                <span class="text-xs mt-1">Customers</span>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Simple logout functionality
+        document.querySelectorAll('[href="#"]').forEach(link => {
+            link.addEventListener('click', e => e.preventDefault());
+        });
+    </script>
+</body>
+</html>
