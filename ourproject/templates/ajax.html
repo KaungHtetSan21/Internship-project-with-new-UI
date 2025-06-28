@@ -1,0 +1,15 @@
+<script>
+
+             let cart = JSON.parse(localStorage.getItem('shoppingCart')) || [];
+
+        // Function to save cart to localStorage
+        function saveCart() {
+            localStorage.setItem('shoppingCart', JSON.stringify(cart));
+        }
+
+  
+        // renderCart();
+        $('.add-to-cart').on('click', function () {
+            alert('Hello');
+        });
+</script>

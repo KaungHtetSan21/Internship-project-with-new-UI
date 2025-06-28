@@ -2,6 +2,8 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
 from .models import UserProfile
+from .models import *
+
 
 # Inline for UserProfile
 class UserProfileInline(admin.StackedInline):
@@ -42,3 +44,48 @@ admin.site.register(User, CustomUserAdmin)
 class UserProfileAdmin(admin.ModelAdmin):
     list_display = ('user', 'role')
     list_filter = ('role',)
+    search_fields = ('user__username', 'role')
+
+
+
+
+
+class category(admin.ModelAdmin):
+    list_display = ['id','name', 'description']
+    search_fields = ['name']
+
+
+class item(admin.ModelAdmin):
+    list_display = ('item_name', 'is_limited', 'max_quantity', 'item_price', 'item_quantity', 'exp_date')
+    list_filter = ('is_limited', 'category', 'exp_date')
+    search_fields = ('item_name', 'brand_name', 'barcode')
+    list_editable = ('is_limited', 'max_quantity')  # ✅ Editable from list view
+
+    # ✅ Show is_limited and max_quantity in admin form
+    fieldsets = (
+        (None, {
+            'fields': (
+                'item_name', 'category',
+                'item_photo', 'item_price', 'item_quantity', 'purcharse_price',
+                'item_description', 'exp_date', 'brand_name', 'batch_number',
+                'barcode', 'stock_minimum'
+            )
+        }),
+        ('Perception / Limited Settings', {
+            'fields': ('is_limited', 'max_quantity'),
+            'description': 'Limited stock rule - For example, max 5 per cart.'
+        }),
+    )
+
+class cart(admin.ModelAdmin):
+    list_display = ['id','total_amount']
+
+class cartproduct(admin.ModelAdmin):
+    list_display = ['id','item','qty','price']
+
+
+admin.site.register(Category,category)
+admin.site.register(Item,item)
+admin.site.register(Cart,cart)
+admin.site.register(CartProduct,cartproduct)
+

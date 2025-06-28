@@ -26,10 +26,19 @@ urlpatterns = [
 
     path('login/', login_view, name= 'login'),
     path('logout/', logout_view, name= 'logout'),
-    
+    path('customer_register/', customer_register, name= 'customer_register'),
+
     path('admin-dashboard/', admin_dashboard, name='admin_dashboard'),
     path('pharmacist-dashboard/', pharmacist_dashboard, name='pharmacist_dashboard'),
     path('customer-dashboard/', customer_dashboard, name='customer_dashboard'),
+    path('inventory_view/', inventory_view, name= 'inventory_view'),
+    path('order_view/', order_view, name= 'order_view'),
+    path('report_view/', report_view, name= 'report_view'),
+    path('medicine_list/', medicine_list, name= 'medicine_list'),
+    path('medicine_diseaseview/', medicine_diseaseview, name= 'medicine_diseaseview'),
+    path('purchase_order/', purchase_order, name= 'purchase_order'),
+
+
 ]
 
 

@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharmacy Inventory Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e40af',
+                        secondary: '#3b82f6',
+                        lightblue: '#dbeafe',
+                        darkblue: '#1e3a8a',
+                        pharmaGreen: '#16a34a',
+                        pharmaRed: '#dc2626'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @media (max-width: 640px) {
+            .responsive-table {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+            .mobile-card {
+                min-width: 300px;
+            }
+        }
+        .card {
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .status-badge {
+            transition: all 0.2s ease;
+        }
+        .badge-prescription {
+            background-color: #1e40af;
+        }
+        .badge-otc {
+            background-color: #16a34a;
+        }
+        .form-input {
+            transition: all 0.2s ease;
+        }
+        .form-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        .image-preview {
+            max-width: 100px;
+            max-height: 100px;
+            display: none;
+        }
+        .low-stock { background-color: #fef3c7; color: #92400e; }
+        .out-of-stock { background-color: #fee2e2; color: #b91c1c; }
+        .in-stock { background-color: #dcfce7; color: #166534; }
+    </style>
+</head>
+<body class="bg-gray-50 flex flex-col min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-primary text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-clinic-medical text-2xl"></i>
+                    </div>
+                    <div class="hidden md:block">
+                        <div class="ml-10 flex items-baseline space-x-4">
+                            <a href="" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary">Dashboard</a>
+                            <a href="{% url 'order_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary">Orders</a>
+                            <a href="{% url 'inventory_view' %}" class="px-3 py-2 rounded-md text-sm font-medium bg-white text-primary">Inventory</a>
+                            <a href="{% url 'report_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary">Reports</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <button class="p-1 rounded-full text-white focus:outline-none">
+                        <i class="fas fa-bell"></i>
+                    </button>
+                    <div class="ml-3 relative">
+                        <div class="flex items-center">
+                            <div class="text-sm mr-3 hidden md:block">Dr. Sarah Miller</div>
+                            <div class="relative group">
+                                <img class="h-8 w-8 rounded-full object-cover cursor-pointer" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24'%3E%3Cpath fill='%23ffffff' d='M12 12q-1.65 0-2.825-1.175T8 8q0-1.65 1.175-2.825T12 4q1.65 0 2.825 1.175T16 8q0 1.65-1.175 2.825T12 12Zm-8 8v-2.8q0-.85.438-1.563T5.6 14.55q1.55-.775 3.15-1.163T12 13q1.65 0 3.25.388t3.15 1.162q.725.375 1.163 1.088T20 17.2V20H4Z'/%3E%3C/svg%3E" alt="User">
+                                <div class="hidden group-hover:block absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+                                    <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</a>
+                                    <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Settings</a>
+                                    <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Logout</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow">
+        <!-- Inventory Header -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Inventory Management</h1>
+                <p class="mt-2 text-gray-600">Manage your pharmacy stock and medications</p>
+            </div>
+            <div class="mt-4 md:mt-0 flex space-x-3">
+                <button id="add-item-btn" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-darkblue focus:outline-none">
+                    <i class="fas fa-plus mr-2"></i> Add New Item
+                </button>
+                <button id="add-category-btn" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-pharmaGreen hover:bg-green-700 focus:outline-none">
+                    <i class="fas fa-tag mr-2"></i> Add Categories
+                </button>
+            </div>
+        </div>
+
+        <!-- Display Messages -->
+        {% if messages %}
+        <div class="mb-6">
+            {% for message in messages %}
+            <div class="p-4 mb-3 rounded-md text-white font-medium
+                {% if message.tags == 'success' %} bg-green-500
+                {% elif message.tags == 'error' %} bg-red-500
+                {% elif message.tags == 'warning' %} bg-yellow-500
+                {% else %} bg-blue-500
+                {% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Search and Filter -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="md:col-span-2">
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-search text-gray-400"></i>
+                    </div>
+                    <input type="text" id="search-input" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm" placeholder="Search medications...">
+                </div>
+            </div>
+            <div>
+                <select id="category-filter" class="form-input block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md">
+                    <option value="">All Categories</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}">{{ category.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <select id="status-filter" class="form-input block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md">
+                    <option value="all">All Status</option>
+                    <option value="in_stock">In Stock</option>
+                    <option value="low_stock">Low Stock</option>
+                    <option value="out_of_stock">Out of Stock</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Inventory Table -->
+        <div class="card bg-white rounded-lg overflow-hidden mb-6">
+            <div class="responsive-table">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Medication</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expiry Date</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200" id="inventory-items">
+                        {% for item in items %}
+                        <tr class="hover:bg-gray-50" data-category="{{ item.category.id }}" data-status="
+                            {% if item.item_quantity == 0 %}out_of_stock
+                            {% elif item.item_quantity <= item.stock_minimum %}low_stock
+                            {% else %}in_stock{% endif %}">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-10 w-10 flex items-center justify-center 
+                                        {% if item.category.name == 'Prescription' %}bg-blue-50
+                                        {% elif item.category.name == 'OTC' %}bg-green-50
+                                        {% else %}bg-purple-50{% endif %} rounded-md">
+                                        <i class="fas fa-pills 
+                                            {% if item.category.name == 'Prescription' %}text-blue-500
+                                            {% elif item.category.name == 'OTC' %}text-green-500
+                                            {% else %}text-purple-500{% endif %}"></i>
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900">{{ item.item_name }}</div>
+                                        <div class="text-sm text-gray-500">SKU: {{ item.barcode|default:"N/A" }}</div>
+                                        <div class="text-xs text-gray-400">{{ item.brand_name|default:"" }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                    {% if item.category.name == 'Prescription' %}badge-prescription
+                                    {% else %}badge-otc{% endif %} text-white">
+                                    {{ item.category.name }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <span class="text-sm font-medium mr-2">{{ item.item_quantity }}</span>
+                                    {% if item.item_quantity == 0 %}
+                                    <span class="px-2 py-1 text-xs rounded-full out-of-stock">Out of Stock</span>
+                                    {% elif item.item_quantity <= item.stock_minimum %}
+                                    <span class="px-2 py-1 text-xs rounded-full low-stock">Low Stock</span>
+                                    {% else %}
+                                    <span class="px-2 py-1 text-xs rounded-full in-stock">In Stock</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${{ item.item_price|floatformat:2 }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm {% if item.is_expired %}text-red-600{% else %}text-gray-500{% endif %}">
+                                {{ item.exp_date|date:"Y-m-d" }}
+                                {% if item.is_expired %}<span class="text-xs text-red-500 ml-1">(Expired)</span>{% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button class="text-primary hover:text-secondary mr-3 edit-btn" 
+                                    data-id="{{ item.id }}"
+                                    data-name="{{ item.item_name }}"
+                                    data-category="{{ item.category.id }}"
+                                    data-quantity="{{ item.item_quantity }}"
+                                    data-price="{{ item.item_price }}"
+                                    data-purchase-price="{{ item.purcharse_price }}"
+                                    data-description="{{ item.item_description }}"
+                                    data-exp-date="{{ item.exp_date|date:'Y-m-d' }}"
+                                    data-brand="{{ item.brand_name }}"
+                                    data-batch="{{ item.batch_number }}"
+                                    data-barcode="{{ item.barcode }}"
+                                    data-stock-min="{{ item.stock_minimum }}"
+                                    data-max-qty="{{ item.max_quantity }}"
+                                    data-is-limited="{{ item.is_limited|yesno:'true,false' }}"
+                                    data-photo-url="{% if item.item_photo %}{{ item.item_photo.url }}{% endif %}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="text-red-600 hover:text-red-900 delete-btn" data-id="{{ item.id }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                                No items found in inventory
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="flex items-center justify-between">
+            <div class="text-sm text-gray-500">
+                Showing <span class="font-medium">{{ items.start_index }}</span> to <span class="font-medium">{{ items.end_index }}</span> of <span class="font-medium">{{ items.paginator.count }}</span> results
+            </div>
+            <nav class="flex space-x-2">
+                {% if items.has_previous %}
+                <a href="?page={{ items.previous_page_number }}" class="px-3 py-1 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    Previous
+                </a>
+                {% else %}
+                <span class="px-3 py-1 rounded-md border border-gray-300 bg-gray-100 text-sm font-medium text-gray-400 cursor-not-allowed">
+                    Previous
+                </span>
+                {% endif %}
+                
+                {% for i in items.paginator.page_range %}
+                    {% if items.number == i %}
+                    <span class="px-3 py-1 rounded-md border border-gray-300 bg-white text-sm font-medium text-primary bg-blue-50">
+                        {{ i }}
+                    </span>
+                    {% else %}
+                    <a href="?page={{ i }}" class="px-3 py-1 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        {{ i }}
+                    </a>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if items.has_next %}
+                <a href="?page={{ items.next_page_number }}" class="px-3 py-1 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    Next
+                </a>
+                {% else %}
+                <span class="px-3 py-1 rounded-md border border-gray-300 bg-gray-100 text-sm font-medium text-gray-400 cursor-not-allowed">
+                    Next
+                </span>
+                {% endif %}
+            </nav>
+        </div>
+    </div>
+
+    <!-- Add/Edit Item Modal -->
+    <div id="item-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full max-h-screen overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium text-gray-900" id="modal-title">Add New Medication</h3>
+                    <button id="close-modal" class="text-gray-400 hover:text-gray-500">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <form id="item-form" method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" name="save_item" value="true">
+                    <input type="hidden" id="item-id" name="item_id">
+                    
+                    <div class="mb-4">
+                        <label for="name" class="block text-sm font-medium text-gray-700">Medication Name *</label>
+                        <input type="text" id="name" name="item_name" required
+                            class="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="barcode" class="block text-sm font-medium text-gray-700">Barcode/SKU</label>
+                        <input type="text" id="barcode" name="barcode"
+                            class="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="category" class="block text-sm font-medium text-gray-700">Category *</label>
+                        <select id="category" name="category" required
+                            class="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary">
+                            <option value="">Select a category</option>
+                            {% for category in categories %}
+                            <option value="{{ category.id }}">{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="image" class="block text-sm font-medium text-gray-700">Medication Image</label>
+                        <input type="file" id="image" name="item_photo" accept="image/*" 
+                            class="mt-1 block w-full text-sm text-gray-500
+                                file:mr-4 file:py-2 file:px-4
+                                file:rounded-md file:border-0
+                                file:text-sm file:font-semibold
+                                file:bg-blue-50 file:text-primary
+                                hover:file:bg-blue-100">
+                        <img id="image-preview" src="#" alt="Image Preview" class="image-preview mt-2">
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label for="current-stock" class="block text-sm font-medium text-gray-700">Current Stock *</label>
+                            <input type="number" id="current-stock" name="item_quantity" min="0" required
+                                class="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary">
+                        </div>
+                        <div>
+                            <label for="price" class="block text-sm font-medium text-gray-700">Price ($) *</label>
+                            <input type="number" step="0.01" id="price" name="item_price" min="0" required
+                                class="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary">
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label for="purchase-price" class="block text-sm font-medium text-gray-700">Purchase Price ($)</label>
+                            <input type="number" step="0.01" id="purchase-price" name="purcharse_price" min="0"
+                                class="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary">
+                        </div>
+                        <div>
+                            <label for="stock-min" class="block text-sm font-medium text-gray-700">Low Stock Threshold</label>
+                            <input type="number" id="stock-min" name="stock_minimum" min="1" value="10"
+                                class="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="exp-date" class="block text-sm font-medium text-gray-700">Expiry Date *</label>
+                        <input type="date" id="exp-date" name="exp_date" required
+                            class="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="brand" class="block text-sm font-medium text-gray-700">Brand Name</label>
+                        <input type="text" id="brand" name="brand_name"
+                            class="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="batch" class="block text-sm font-medium text-gray-700">Batch Number</label>
+                        <input type="text" id="batch" name="batch_number"
+                            class="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="flex items-center">
+                            <input type="checkbox" id="is-limited" name="is_limited"
+                                class="rounded border-gray-300 text-primary focus:ring-primary">
+                            <label for="is-limited" class="ml-2 text-sm font-medium text-gray-700">Limit per customer</label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4" id="max-qty-container" style="display: none;">
+                        <label for="max-qty" class="block text-sm font-medium text-gray-700">Max Quantity per Customer</label>
+                        <input type="number" id="max-qty" name="max_quantity" min="1" value="5"
+                            class="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
+                        <textarea id="description" name="item_description" rows="3"
+                            class="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"></textarea>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" id="cancel-btn" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            Cancel
+                        </button>
+                        <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-darkblue">
+                            Save Medication
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Category Modal -->
+    <div id="category-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full max-h-screen overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">Add New Category</h3>
+                    <button id="close-category-modal" class="text-gray-400 hover:text-gray-500">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <form id="category-form" method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="save_category" value="true">
+                    
+                    <div class="mb-4">
+                        <label for="category-name" class="block text-sm font-medium text-gray-700">Category Name *</label>
+                        <input type="text" id="category-name" name="category_name" required
+                            class="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="category-description" class="block text-sm font-medium text-gray-700">Description</label>
+                        <textarea id="category-description" name="category_description" rows="3"
+                            class="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"></textarea>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" id="cancel-category-btn" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            Cancel
+                        </button>
+                        <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-pharmaGreen hover:bg-green-700">
+                            Save Category
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 max-w-sm w-full">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Confirm Deletion</h3>
+            <p class="text-gray-600 mb-6">Are you sure you want to delete this medication? This action cannot be undone.</p>
+            <form method="POST" id="delete-form">
+                {% csrf_token %}
+                <input type="hidden" name="delete_item" id="delete-item-id">
+                <div class="flex justify-end space-x-3">
+                    <button type="button" id="cancel-delete" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700">
+                        Delete
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-lg font-medium mb-4">Pharmacy Pro</h3>
+                    <p class="text-gray-400">Comprehensive pharmacy management solution for modern healthcare providers.</p>
+                </div>
+                <div>
+                    <h3 class="text-lg font-medium mb-4">Quick Links</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white">Dashboard</a></li>
+                        <li><a href="{% url 'order_view' %}" class="text-gray-400 hover:text-white">Orders</a></li>
+                        <li><a href="{% url 'inventory_view' %}" class="text-gray-400 hover:text-white">Inventory</a></li>
+                        <li><a href="{% url 'report_view' %}" class="text-gray-400 hover:text-white">Reports</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-medium mb-4">Contact Us</h3>
+                    <ul class="space-y-2">
+                        <li class="flex items-center text-gray-400"><i class="fas fa-map-marker-alt mr-2"></i> 123 Medical St, Health City</li>
+                        <li class="flex items-center text-gray-400"><i class="fas fa-phone-alt mr-2"></i> (555) 123-4567</li>
+                        <li class="flex items-center text-gray-400"><i class="fas fa-envelope mr-2"></i> support@pharmacypro.com</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
+                <p class="text-gray-400 text-sm">© 2023 Pharmacy Pro. All rights reserved.</p>
+                <div class="flex space-x-6 mt-4 md:mt-0">
+                    <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Mobile Bottom Navigation -->
+    <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
+        <div class="flex justify-around">
+            <a href="#" class="p-4 text-gray-500">
+                <i class="fas fa-home block text-center text-xl"></i>
+                <span class="text-xs block text-center mt-1">Home</span>
+            </a>
+            <a href="#" class="p-4 text-gray-500">
+                <i class="fas fa-clipboard-list block text-center text-xl"></i>
+                <span class="text-xs block text-center mt-1">Orders</span>
+            </a>
+            <a href="#" class="p-4 text-primary">
+                <i class="fas fa-boxes block text-center text-xl"></i>
+                <span class="text-xs block text-center mt-1">Inventory</span>
+            </a>
+            <a href="{% url 'report_view' %}" class="p-4 text-gray-500">
+                <i class="fas fa-user-injured block text-center text-xl"></i>
+                <span class="text-xs block text-center mt-1">Reports</span>
+            </a>
+            <a href="#" class="p-4 text-gray-500">
+                <i class="fas fa-user-injured block text-center text-xl"></i>
+                <span class="text-xs block text-center mt-1">Patients</span>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Modal functionality
+        const itemModal = document.getElementById('item-modal');
+        const categoryModal = document.getElementById('category-modal');
+        const deleteModal = document.getElementById('delete-modal');
+        const addItemBtn = document.getElementById('add-item-btn');
+        const addCategoryBtn = document.getElementById('add-category-btn');
+        const closeModal = document.getElementById('close-modal');
+        const closeCategoryModal = document.getElementById('close-category-modal');
+        const cancelBtn = document.getElementById('cancel-btn');
+        const cancelCategoryBtn = document.getElementById('cancel-category-btn');
+        const cancelDelete = document.getElementById('cancel-delete');
+        const itemForm = document.getElementById('item-form');
+        const categoryForm = document.getElementById('category-form');
+        const modalTitle = document.getElementById('modal-title');
+        const isLimitedCheckbox = document.getElementById('is-limited');
+        const maxQtyContainer = document.getElementById('max-qty-container');
+        const deleteForm = document.getElementById('delete-form');
+        
+        // Toggle max quantity field based on checkbox
+        isLimitedCheckbox.addEventListener('change', function() {
+            maxQtyContainer.style.display = this.checked ? 'block' : 'none';
+        });
+        
+        // Image preview functionality
+        document.getElementById('image').addEventListener('change', function(e) {
+            const preview = document.getElementById('image-preview');
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                }
+                reader.readAsDataURL(file);
+            } else {
+                preview.style.display = 'none';
+            }
+        });
+        
+        // Add new item
+        addItemBtn.addEventListener('click', () => {
+            modalTitle.textContent = 'Add New Medication';
+            itemForm.reset();
+            document.getElementById('item-id').value = '';
+            document.getElementById('image-preview').style.display = 'none';
+            maxQtyContainer.style.display = 'none';
+            itemModal.classList.remove('hidden');
+        });
+        
+        // Add new category
+        addCategoryBtn.addEventListener('click', () => {
+            categoryForm.reset();
+            categoryModal.classList.remove('hidden');
+        });
+        
+        // Edit item
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                modalTitle.textContent = 'Edit Medication';
+                document.getElementById('item-id').value = btn.dataset.id;
+                document.getElementById('name').value = btn.dataset.name;
+                document.getElementById('barcode').value = btn.dataset.barcode || '';
+                document.getElementById('category').value = btn.dataset.category;
+                document.getElementById('current-stock').value = btn.dataset.quantity;
+                document.getElementById('price').value = btn.dataset.price;
+                document.getElementById('purchase-price').value = btn.dataset.purchasePrice || '';
+                document.getElementById('exp-date').value = btn.dataset.expDate;
+                document.getElementById('brand').value = btn.dataset.brand || '';
+                document.getElementById('batch').value = btn.dataset.batch || '';
+                document.getElementById('stock-min').value = btn.dataset.stockMin;
+                document.getElementById('max-qty').value = btn.dataset.maxQty;
+                document.getElementById('is-limited').checked = btn.dataset.isLimited === 'true';
+                document.getElementById('description').value = btn.dataset.description || '';
+                
+                // Show/hide max quantity field
+                maxQtyContainer.style.display = btn.dataset.isLimited === 'true' ? 'block' : 'none';
+                
+                // Show image preview if exists
+                const preview = document.getElementById('image-preview');
+                if (btn.dataset.photoUrl) {
+                    preview.src = btn.dataset.photoUrl;
+                    preview.style.display = 'block';
+                } else {
+                    preview.style.display = 'none';
+                }
+                
+                itemModal.classList.remove('hidden');
+            });
+        });
+        
+        // Delete item
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.getElementById('delete-item-id').value = btn.dataset.id;
+                deleteModal.classList.remove('hidden');
+            });
+        });
+        
+        // Close modals
+        closeModal.addEventListener('click', () => itemModal.classList.add('hidden'));
+        closeCategoryModal.addEventListener('click', () => categoryModal.classList.add('hidden'));
+        cancelBtn.addEventListener('click', () => itemModal.classList.add('hidden'));
+        cancelCategoryBtn.addEventListener('click', () => categoryModal.classList.add('hidden'));
+        cancelDelete.addEventListener('click', () => deleteModal.classList.add('hidden'));
+        
+        // Filter functionality
+        document.getElementById('search-input').addEventListener('input', filterItems);
+        document.getElementById('category-filter').addEventListener('change', filterItems);
+        document.getElementById('status-filter').addEventListener('change', filterItems);
+        
+        function filterItems() {
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            const categoryFilter = document.getElementById('category-filter').value;
+            const statusFilter = document.getElementById('status-filter').value;
+            
+            document.querySelectorAll('#inventory-items tr').forEach(row => {
+                const name = row.querySelector('td:first-child .text-sm.font-medium').textContent.toLowerCase();
+                const categoryMatch = categoryFilter === '' || row.dataset.category === categoryFilter;
+                const statusMatch = statusFilter === 'all' || row.dataset.status === statusFilter;
+                const searchMatch = name.includes(searchTerm);
+                
+                row.style.display = (categoryMatch && statusMatch && searchMatch) ? '' : 'none';
+            });
+        }
+        
+        // Logout functionality
+        document.getElementById('logout-button').addEventListener('click', function(e) {
+            e.preventDefault();
+            alert('You have been logged out successfully.');
+        });
+    </script>
+</body>
+</html>
