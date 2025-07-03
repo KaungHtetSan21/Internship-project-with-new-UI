@@ -317,7 +317,7 @@
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
-                <form id="item-form" method="POST" enctype="multipart/form-data">
+                <form id="item-form" method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     <input type="hidden" name="save_item" value="true">
                     <input type="hidden" id="item-id" name="item_id">
@@ -444,7 +444,7 @@
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
-                <form id="category-form" method="POST">
+                <form id="category-form" method="post">
                     {% csrf_token %}
                     <input type="hidden" name="save_category" value="true">
                     

@@ -27,17 +27,30 @@ urlpatterns = [
     path('login/', login_view, name= 'login'),
     path('logout/', logout_view, name= 'logout'),
     path('customer_register/', customer_register, name= 'customer_register'),
+    path('register_customer_ajax/', register_customer_ajax, name='register_customer_ajax'),
 
     path('admin-dashboard/', admin_dashboard, name='admin_dashboard'),
     path('pharmacist-dashboard/', pharmacist_dashboard, name='pharmacist_dashboard'),
     path('customer-dashboard/', customer_dashboard, name='customer_dashboard'),
     path('inventory_view/', inventory_view, name= 'inventory_view'),
     path('order_view/', order_view, name= 'order_view'),
+    path('SaveOrderView/', SaveOrderView.as_view(), name= 'save_order'),
+    path('print-preview/', print_preview, name='print_preview'),
+    path('search_customer/', search_customer, name='search_customer'),  
+
     path('report_view/', report_view, name= 'report_view'),
     path('medicine_list/', medicine_list, name= 'medicine_list'),
     path('medicine_diseaseview/', medicine_diseaseview, name= 'medicine_diseaseview'),
     path('purchase_order/', purchase_order, name= 'purchase_order'),
 
+
+    path('order/add/<int:item_id>/', add_to_cart, name='add_to_cart'),
+    path('order/increase/<int:item_id>/', increase_quantity, name='increase_quantity'),
+    path('order/decrease/<int:item_id>/', decrease_quantity, name='decrease_quantity'),
+    path('order/update/<int:item_id>/', update_quantity, name='update_quantity'),
+    path('order/remove_from_cart/<int:item_id>/', remove_from_cart, name='remove_from_cart'),
+    path('place-order/', place_order_view, name='place_order'),
+    path('customer/profile/', customer_profile_view, name='customer_profile'),
 
 ]
 

@@ -1,38 +1,64 @@
+{% load cart_extras %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pharmacy Medicine List</title>
+    <title>Pharmastics - Products</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
             background-color: #f8f9fa;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding-bottom: 70px;
         }
-        .medicine-card {
+        .sidebar {
+            background-color: #0d6efd;
+            color: white;
+            height: 100vh;
+            position: fixed;
+            width: 250px;
+        }
+        .sidebar-link {
+            color: white;
+            padding: 10px 15px;
+            display: block;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .sidebar-link:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+        .sidebar-link.active {
+            background-color: rgba(255,255,255,0.2);
+            font-weight: 500;
+        }
+        .dashboard-card {
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             transition: all 0.3s ease;
             border: none;
-            height: 100%;
         }
-        .medicine-card:hover {
+        .dashboard-card:hover {
             box-shadow: 0 10px 15px rgba(0,0,0,0.1);
-            transform: translateY(-5px);
+            transform: translateY(-2px);
         }
-        .medicine-img {
-            height: 180px;
+        .main-content {
+            margin-left: 250px;
+            width: calc(100% - 250px);
+        }
+        .product-img {
+            height: 200px;
             object-fit: contain;
-            padding: 15px;
             background-color: #f8f9fa;
-            border-radius: 10px 10px 0 0;
+            padding: 20px;
+            border-radius: 8px;
         }
         .quantity-control {
             display: flex;
             align-items: center;
-            margin: 10px 0;
+            margin-bottom: 10px;
         }
         .quantity-btn {
             width: 30px;
@@ -63,338 +89,490 @@
             outline: none;
             box-shadow: none;
         }
-        .add-to-cart-btn {
-            width: 100%;
+        .cart-item-img {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+            border-radius: 4px;
+            background-color: #f8f9fa;
+            padding: 5px;
         }
-        @media (max-width: 768px) {
-            .medicine-img {
+        .tab-content {
+            background-color: white;
+            border-radius: 0 0 10px 10px;
+            padding: 20px;
+            border: 1px solid #dee2e6;
+            border-top: none;
+        }
+        .nav-tabs .nav-link {
+            border: 1px solid #dee2e6;
+            border-bottom: none;
+            border-radius: 10px 10px 0 0;
+            margin-right: 5px;
+            color: #495057;
+            font-weight: 500;
+        }
+        .nav-tabs .nav-link.active {
+            background-color: white;
+            color: #0d6efd;
+            border-bottom: 1px solid white;
+            margin-bottom: -1px;
+        }
+        .mobile-footer-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: #0d6efd;
+            z-index: 1000;
+            padding: 5px 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        }
+        .mobile-footer-nav .nav-item {
+            text-align: center;
+            padding: 5px 0;
+        }
+        .mobile-footer-nav .nav-link {
+            color: white;
+            font-size: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 5px 10px;
+        }
+        .mobile-footer-nav .nav-link i {
+            font-size: 1.25rem;
+            margin-bottom: 3px;
+        }
+        .mobile-footer-nav .nav-link.active {
+            color: white;
+            background-color: rgba(255,255,255,0.2);
+            border-radius: 5px;
+        }
+        @media (max-width: 992px) {
+            .sidebar {
+                display: none;
+            }
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+            }
+            .mobile-footer-nav {
+                display: flex;
+                justify-content: space-around;
+            }
+        }
+        @media (max-width: 576px) {
+            .product-img {
                 height: 150px;
             }
-        }
-        .badge-prescription {
-            background-color: #0d6efd;
-        }
-        .badge-otc {
-            background-color: #198754;
-        }
-        .price {
-            font-weight: bold;
-            color: #0d6efd;
-            font-size: 1.1rem;
+            .cart-item-img {
+                width: 40px;
+                height: 40px;
+            }
+            body {
+                padding-bottom: 60px;
+            }
         }
     </style>
+            {% if messages %}
+        <div class="mb-6">
+            {% for message in messages %}
+            <div class="p-4 mb-3 rounded-md text-white font-medium
+                {% if message.tags == 'success' %} bg-green-500
+                {% elif message.tags == 'error' %} bg-red-500
+                {% elif message.tags == 'warning' %} bg-yellow-500
+                {% else %} bg-blue-500
+                {% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
 </head>
 <body>
-    <div class="container py-5">
-        <div class="row mb-4">
-            <div class="col-12">
-                <h1 class="fw-bold text-primary"><i class="fas fa-prescription-bottle-alt me-2"></i>Pharmacy Medicine List</h1>
-                <p class="text-muted">Browse our selection of medicines and health products</p>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 d-md-block sidebar p-0 d-none">
+                <div class="text-center p-3">
+                    <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/120c636b-923a-456a-a13a-39844d5d3a4a.png" alt="Pharmastics logo" class="img-fluid mb-3" style="max-height: 50px;">
+                </div>
+                <div class="px-2">
+                    <a href="#" class="sidebar-link">
+                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                    </a>
+                    <a href="#" class="sidebar-link active">
+                        <i class="fas fa-shopping-bag me-2"></i>Products
+                    </a>
+                    <a href="#" class="sidebar-link">
+                        <i class="fas fa-prescription me-2"></i>My Prescriptions
+                    </a>
+                    <a href="#" class="sidebar-link">
+                        <i class="fas fa-history me-2"></i>Order History
+                    </a>
+                    <a href="#" class="sidebar-link">
+                        <i class="fas fa-file-medical me-2"></i>Health Records
+                    </a>
+                    <a href="#" class="sidebar-link">
+                        <i class="fas fa-cog me-2"></i>Settings
+                    </a>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 ms-sm-auto px-md-4 py-4 main-content">
+                <!-- Header -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="fw-bold">Pharmacy Products</h2>
+                    <div class="dropdown">
+                        <button class="btn btn-outline-primary dropdown-toggle d-flex align-items-center" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown">
+                            <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/8637fe83-4dd7-4a12-acb3-070973d2f38d.png" alt="User profile" class="rounded-circle me-2" style="width: 32px; height: 32px;">
+                            <span>Customer Account</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Profile</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Tabs for Products/Cart/Checkout -->
+<ul class="nav nav-tabs mb-0" id="myTab" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="products-tab" data-bs-toggle="tab" data-bs-target="#products" type="button" role="tab">Products</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="cart-tab" data-bs-toggle="tab" data-bs-target="#cart" type="button" role="tab">
+            <i class="fas fa-shopping-cart me-1"></i>Cart <span class="badge bg-primary rounded-pill" id="cart-count">{{ cart_products|length }}</span>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="checkout-tab" data-bs-toggle="tab" data-bs-target="#checkout" type="button" role="tab">Checkout</button>
+    </li>
+</ul>
+
+                <!-- Tab Content -->
+                <div class="tab-content" id="myTabContent">
+                    <!-- Products Tab -->
+                    <div class="tab-pane fade show active" id="products" role="tabpanel">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="input-group mb-3">
+                                    <input type="text" class="form-control" placeholder="Search products...">
+                                    <button class="btn btn-primary" type="button"><i class="fas fa-search"></i></button>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <select class="form-select">
+                                    <option selected>All Categories</option>
+                                    <option>Prescription Drugs</option>
+                                    <option>Over-the-Counter</option>
+                                    <option>Vitamins & Supplements</option>
+                                    <option>Medical Supplies</option>
+                                    <option>Personal Care</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row g-4">
+                            <!-- Product 1 -->
+                             {% for item in items %}
+                            <div class="col-md-6 col-lg-4">
+                                
+                                <div class="dashboard-card p-3 h-100">
+                                    <div class="text-center mb-3">
+                                        <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/b21cc3d5-0786-45a5-9127-6963e75799eb.png" alt="Vitamin D" class="product-img img-fluid">
+                                    </div>
+                                    <h5 class="fw-semibold">{{ item.item_name }}</h5>
+                                    
+                                    <div class="d-flex justify-content-between align-items-center mt-3">
+                                        <h5 class="text-primary mb-0">{{ item.item_price }}</h5>
+                                    
+                                    </div>
+                                    <button><a href="{% url 'add_to_cart' item.id %}" class="add-to-cart">
+                                    <i class="fas fa-plus"></i>
+                                    </a></button>
+                                </div>
+                                
+                            </div>
+                            {% endfor %}
+
+                            
+                       
+                        </div>
+                    </div>
+
+                    <!-- Cart Tab -->
+                    <div class="tab-pane fade" id="cart" role="tabpanel">
+                        <div class="row">
+                            <div class="col-lg-8">
+                                <h5 class="mb-4">Your Shopping Cart (<span id="cart-items-count">0</span> items)</h5>
+                                
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Product</th>
+                                                <th>Price</th>
+                                                <th>Quantity</th>
+                                                <th>Total</th>
+
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="cart-items">
+                                            <!-- Cart items will be added here dynamically -->
+                                        {% if cart_products %}
+                                            {% for cp in cart_products %}
+
+                                            <tr>
+                                                <td>{{ cp.item.item_name }}</td>
+                                                <td>${{ cp.item.item_price }}</td>
+                                                <td>
+                                                    <!-- Manual quantity input form -->
+                                                    <form method="POST" action="{% url 'update_quantity' cp.item.id %}" class="d-flex align-items-center" enctype="multipart/form-data">
+                                                        {% csrf_token %}
+                                                        
+                                                    <a href="{% url 'decrease_quantity' cp.item.id %}" class="btn btn-sm btn-outline-secondary">-</a>
+                                                    {{ cp.qty }}
+                                                    <a href="{% url 'increase_quantity' cp.item.id %}" class="btn btn-sm btn-outline-secondary">+</a>
+                                                
+                                                        <button type="submit" class="btn btn-sm btn-outline-primary">Update</button>
+                                                    </form>
+                                                </td>
+                                                <td>${{ cp.qty|multiply:cp.item.item_price }}</td>
+                                                <td>
+                                                    <a href="{% url 'remove_from_cart' cp.item.id %}" class="btn btn-sm btn-danger">Remove</a>
+                                                </td>
+                                            </tr>
+                                             {% endfor %}   
+                                            {% else %}
+
+                                            <tr id="empty-cart-message">
+                                                <td colspan="5" class="text-center py-4">
+                                                    <i class="fas fa-shopping-cart fa-2x text-muted mb-3"></i>
+                                                    <p class="text-muted">Your cart is empty</p>
+                                                    <button class="btn btn-primary" onclick="switchToProductsTab()">
+                                                        <i class="fas fa-arrow-left me-1"></i>Browse Products
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        {% endif %}
+
+                                           
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <div class="col-lg-4">
+                                <div class="dashboard-card p-4">
+                                    <h5 class="fw-semibold mb-3">Order Summary</h5>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Subtotal:</span>
+                                        <span id="cart-subtotal">{{ cart.total_amount }}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Shipping:</span>
+                                        <span id="cart-shipping">$5.99</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-3">
+                                        <span>Tax:</span>
+                                        <span id="cart-tax">$0.00</span>
+                                    </div>
+                                    <hr>
+                                    <div class="d-flex justify-content-between fw-bold mb-4">
+                                        <span>Total:</span>
+                                        <span id="cart-total">
+                                            {% with total=cart.total_amount|add:"5.99" %}
+                                            <span id="cart-total">${{ total|floatformat:2 }}</span>
+                                        {% endwith %}
+                                        </span>
+                                    </div>
+                               <a href="#checkout" class="btn btn-primary w-100" data-bs-toggle="tab">Proceed to Checkout</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Checkout Tab -->
+                    <div class="tab-pane fade" id="checkout" role="tabpanel">
+                        <form action="{% url 'place_order' %}" method="post">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-lg-7">
+                                <h5 class="mb-4">Checkout</h5>
+                                
+                                <div class="dashboard-card p-4 mb-4">
+                                    <h6 class="fw-semibold mb-3"><i class="fas fa-user me-2"></i>Contact Information</h6>
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">First Name</label>
+                                            <input type="text" class="form-control" value="John">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Last Name</label>
+                                            <input type="text" class="form-control" value="Doe">
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label">Email</label>
+                                            <input type="email" class="form-control" value="john.doe@example.com">
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label">Phone</label>
+                                            <input type="tel" class="form-control" value="(555) 123-4567">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="dashboard-card p-4 mb-4">
+                                    <h6 class="fw-semibold mb-3"><i class="fas fa-truck me-2"></i>Shipping Address</h6>
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="same-as-billing" checked>
+                                        <label class="form-check-label" for="same-as-billing">
+                                            Same as billing address
+                                        </label>
+                                    </div>
+                                    <div class="row g-3">
+                                        <div class="col-12">
+                                            <label class="form-label">Address</label>
+                                            <input type="text" class="form-control" value="123 Main St">
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label">Address 2 (Optional)</label>
+                                            <input type="text" class="form-control" placeholder="Apt, suite, etc.">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">City</label>
+                                            <input type="text" class="form-control" value="New York">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">State</label>
+                                            <select class="form-select">
+                                                <option>New York</option>
+                                                <option>California</option>
+                                                <option>Texas</option>
+                                                <!-- More states would be here -->
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">ZIP Code</label>
+                                            <input type="text" class="form-control" value="10001">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="dashboard-card p-4">
+                                    <h6 class="fw-semibold mb-3"><i class="fas fa-credit-card me-2"></i>Payment Method</h6>
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="radio" name="paymentMethod" id="creditCard" checked>
+                                        <label class="form-check-label" for="creditCard">
+                                            Credit Card
+                                        </label>
+                                    </div>
+                                    <div class="row g-3">
+                                        <div class="col-12">
+                                            <label class="form-label">Card Number</label>
+                                            <input type="text" class="form-control" placeholder="1234 5678 9012 3456">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Expiration Date</label>
+                                            <input type="text" class="form-control" placeholder="MM/YY">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Security Code</label>
+                                            <input type="text" class="form-control" placeholder="CVC">
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label">Name on Card</label>
+                                            <input type="text" class="form-control" placeholder="John Doe">
+                                        </div>
+                                    </div>
+                                    <hr>
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="savePayment" checked>
+                                        <label class="form-check-label" for="savePayment">
+                                            Save payment information for next time
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-lg-5">
+                                <div class="dashboard-card p-4 sticky-top" style="top: 20px;">
+                                    <h5 class="fw-semibold mb-3">Order Summary</h5>
+                                    {% for cp in cart_products %}
+                                    <div id="checkout-items">
+                                        <!-- Order items will be added here dynamically -->
+                                        <span>{{ cp.item.item_name }} × {{ cp.qty }}</span>
+                                        <span>${{ cp.qty|multiply:cp.item.item_price }}</span>
+                                    </div>
+                                    {% endfor %}
+                                    <hr>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Subtotal:</span>
+                                        <span id="checkout-subtotal">{{ cart.total_amount }}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Shipping:</span>
+                                        <span id="checkout-shipping">$5.99</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-3">
+                                        <span>Tax:</span>
+                                        <span id="checkout-tax">$0.00</span>
+                                    </div>
+                                    <hr>
+                                    <div class="d-flex justify-content-between fw-bold mb-4">
+                                        <span>Total:</span>
+                                            {% with total=cart.total_amount|add:"5.99" %}
+                                                <span id="cart-total">${{ total|floatformat:2 }}</span>
+                                            {% endwith %}                                    </div>
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="fas fa-lock me-1"></i>Place Order
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
-
-        <!-- Search and Filter -->
-        <div class="row mb-4">
-            <div class="col-md-6 mb-3">
-                <div class="input-group">
-                    <span class="input-group-text"><i class="fas fa-search"></i></span>
-                    <input type="text" class="form-control" placeholder="Search medicines...">
-                </div>
-            </div>
-            <div class="col-md-3 mb-3">
-                <select class="form-select">
-                    <option selected>All Categories</option>
-                    <option>Prescription</option>
-                    <option>Over-the-counter</option>
-                    <option>Vitamins</option>
-                    <option>Medical Devices</option>
-                </select>
-            </div>
-            <div class="col-md-3 mb-3">
-                <select class="form-select">
-                    <option selected>Sort by</option>
-                    <option>Price: Low to High</option>
-                    <option>Price: High to Low</option>
-                    <option>Name: A-Z</option>
-                    <option>Name: Z-A</option>
-                </select>
-            </div>
-        </div>
-
-        <!-- Medicine List -->
-        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
-            <!-- Medicine 1 -->
-            <div class="col">
-                <div class="card medicine-card">
-                    <img src="https://m.media-amazon.com/images/I/61tG9y9hO6L._AC_UF1000,1000_QL80_.jpg" class="card-img-top medicine-img" alt="Amoxicillin 500mg">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h5 class="card-title mb-0">Amoxicillin 500mg</h5>
-                            <span class="badge badge-prescription text-white">Rx</span>
-                        </div>
-                        <p class="card-text text-muted small">Antibiotic capsule, 20 capsules per pack</p>
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <div class="price">$12.99</div>
-                            <div class="text-muted small"><i class="fas fa-cubes me-1"></i>In stock</div>
-                        </div>
-                        <div class="quantity-control">
-                            <div class="quantity-btn" onclick="decrementQuantity(this)">-</div>
-                            <input type="number" class="quantity-input" value="1" min="1" max="5">
-                            <div class="quantity-btn" onclick="incrementQuantity(this)">+</div>
-                        </div>
-                        <button class="btn btn-primary add-to-cart-btn">
-                            <i class="fas fa-cart-plus me-1"></i>Add to Cart
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Medicine 2 -->
-            <div class="col">
-                <div class="card medicine-card">
-                    <img src="https://5.imimg.com/data5/SELLER/Default/2021/12/QT/VO/KB/3033183/lisinopril-tablets-500x500.jpg" class="card-img-top medicine-img" alt="Lisinopril 10mg">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h5 class="card-title mb-0">Lisinopril 10mg</h5>
-                            <span class="badge badge-prescription text-white">Rx</span>
-                        </div>
-                        <p class="card-text text-muted small">Blood pressure tablet, 30 tablets per pack</p>
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <div class="price">$8.50</div>
-                            <div class="text-muted small"><i class="fas fa-cubes me-1"></i>In stock</div>
-                        </div>
-                        <div class="quantity-control">
-                            <div class="quantity-btn" onclick="decrementQuantity(this)">-</div>
-                            <input type="number" class="quantity-input" value="1" min="1" max="3">
-                            <div class="quantity-btn" onclick="incrementQuantity(this)">+</div>
-                        </div>
-                        <button class="btn btn-primary add-to-cart-btn">
-                            <i class="fas fa-cart-plus me-1"></i>Add to Cart
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Medicine 3 -->
-            <div class="col">
-                <div class="card medicine-card">
-                    <img src="https://m.media-amazon.com/images/I/71gI-IUNUkL._AC_UF1000,1000_QL80_.jpg" class="card-img-top medicine-img" alt="Ibuprofen 200mg">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h5 class="card-title mb-0">Ibuprofen 200mg</h5>
-                            <span class="badge badge-otc text-white">OTC</span>
-                        </div>
-                        <p class="card-text text-muted small">Pain reliever tablet, 100 tablets per bottle</p>
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <div class="price">$5.99</div>
-                            <div class="text-muted small"><i class="fas fa-cubes me-1"></i>In stock</div>
-                        </div>
-                        <div class="quantity-control">
-                            <div class="quantity-btn" onclick="decrementQuantity(this)">-</div>
-                            <input type="number" class="quantity-input" value="1" min="1" max="10">
-                            <div class="quantity-btn" onclick="incrementQuantity(this)">+</div>
-                        </div>
-                        <button class="btn btn-primary add-to-cart-btn">
-                            <i class="fas fa-cart-plus me-1"></i>Add to Cart
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Medicine 4 -->
-            <div class="col">
-                <div class="card medicine-card">
-                    <img src="https://www.drugs.com/images/pills/fio/IPI09070/omeprazole-delayed-release.JPG" class="card-img-top medicine-img" alt="Omeprazole 20mg">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h5 class="card-title mb-0">Omeprazole 20mg</h5>
-                            <span class="badge badge-otc text-white">OTC</span>
-                        </div>
-                        <p class="card-text text-muted small">Acid reducer capsule, 14 capsules per pack</p>
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <div class="price">$9.75</div>
-                            <div class="text-muted small"><i class="fas fa-cubes me-1"></i>In stock</div>
-                        </div>
-                        <div class="quantity-control">
-                            <div class="quantity-btn" onclick="decrementQuantity(this)">-</div>
-                            <input type="number" class="quantity-input" value="1" min="1" max="5">
-                            <div class="quantity-btn" onclick="incrementQuantity(this)">+</div>
-                        </div>
-                        <button class="btn btn-primary add-to-cart-btn">
-                            <i class="fas fa-cart-plus me-1"></i>Add to Cart
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Medicine 5 -->
-            <div class="col">
-                <div class="card medicine-card">
-                    <img src="https://www.drugs.com/images/pills/fio/SKU104005/atorvastatin.JPG" class="card-img-top medicine-img" alt="Atorvastatin 20mg">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h5 class="card-title mb-0">Atorvastatin 20mg</h5>
-                            <span class="badge badge-prescription text-white">Rx</span>
-                        </div>
-                        <p class="card-text text-muted small">Cholesterol tablet, 30 tablets per pack</p>
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <div class="price">$15.25</div>
-                            <div class="text-muted small"><i class="fas fa-cubes me-1"></i>In stock</div>
-                        </div>
-                        <div class="quantity-control">
-                            <div class="quantity-btn" onclick="decrementQuantity(this)">-</div>
-                            <input type="number" class="quantity-input" value="1" min="1" max="3">
-                            <div class="quantity-btn" onclick="incrementQuantity(this)">+</div>
-                        </div>
-                        <button class="btn btn-primary add-to-cart-btn">
-                            <i class="fas fa-cart-plus me-1"></i>Add to Cart
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Medicine 6 -->
-            <div class="col">
-                <div class="card medicine-card">
-                    <img src="https://www.drugs.com/images/pills/fio/SKU106001/metformin.JPG" class="card-img-top medicine-img" alt="Metformin 500mg">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h5 class="card-title mb-0">Metformin 500mg</h5>
-                            <span class="badge badge-prescription text-white">Rx</span>
-                        </div>
-                        <p class="card-text text-muted small">Diabetes tablet, 60 tablets per pack</p>
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <div class="price">$7.99</div>
-                            <div class="text-muted small"><i class="fas fa-cubes me-1"></i>In stock</div>
-                        </div>
-                        <div class="quantity-control">
-                            <div class="quantity-btn" onclick="decrementQuantity(this)">-</div>
-                            <input type="number" class="quantity-input" value="1" min="1" max="3">
-                            <div class="quantity-btn" onclick="incrementQuantity(this)">+</div>
-                        </div>
-                        <button class="btn btn-primary add-to-cart-btn">
-                            <i class="fas fa-cart-plus me-1"></i>Add to Cart
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Medicine 7 -->
-            <div class="col">
-                <div class="card medicine-card">
-                    <img src="https://www.drugs.com/images/pills/fio/IPI09070/omeprazole-delayed-release.JPG" class="card-img-top medicine-img" alt="Vitamin D3 1000IU">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h5 class="card-title mb-0">Vitamin D3 1000IU</h5>
-                            <span class="badge badge-otc text-white">OTC</span>
-                        </div>
-                        <p class="card-text text-muted small">Vitamin supplement, 60 softgels per bottle</p>
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <div class="price">$11.50</div>
-                            <div class="text-muted small"><i class="fas fa-cubes me-1"></i>In stock</div>
-                        </div>
-                        <div class="quantity-control">
-                            <div class="quantity-btn" onclick="decrementQuantity(this)">-</div>
-                            <input type="number" class="quantity-input" value="1" min="1" max="10">
-                            <div class="quantity-btn" onclick="incrementQuantity(this)">+</div>
-                        </div>
-                        <button class="btn btn-primary add-to-cart-btn">
-                            <i class="fas fa-cart-plus me-1"></i>Add to Cart
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Medicine 8 -->
-            <div class="col">
-                <div class="card medicine-card">
-                    <img src="https://www.drugs.com/images/pills/nlm/32495-1221-78.jpg" class="card-img-top medicine-img" alt="Cetirizine 10mg">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h5 class="card-title mb-0">Cetirizine 10mg</h5>
-                            <span class="badge badge-otc text-white">OTC</span>
-                        </div>
-                        <p class="card-text text-muted small">Antihistamine tablet, 30 tablets per pack</p>
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <div class="price">$6.25</div>
-                            <div class="text-muted small"><i class="fas fa-cubes me-1"></i>In stock</div>
-                        </div>
-                        <div class="quantity-control">
-                            <div class="quantity-btn" onclick="decrementQuantity(this)">-</div>
-                            <input type="number" class="quantity-input" value="1" min="1" max="5">
-                            <div class="quantity-btn" onclick="incrementQuantity(this)">+</div>
-                        </div>
-                        <button class="btn btn-primary add-to-cart-btn">
-                            <i class="fas fa-cart-plus me-1"></i>Add to Cart
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Pagination -->
-        <nav class="mt-5">
-            <ul class="pagination justify-content-center">
-                <li class="page-item disabled">
-                    <a class="page-link" href="#" tabindex="-1">Previous</a>
-                </li>
-                <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                <li class="page-item"><a class="page-link" href="#">2</a></li>
-                <li class="page-item"><a class="page-link" href="#">3</a></li>
-                <li class="page-item">
-                    <a class="page-link" href="#">Next</a>
-                </li>
-            </ul>
-        </nav>
     </div>
 
+    <!-- Mobile Footer Navigation -->
+    <nav class="mobile-footer-nav">
+        <div class="nav-item">
+            <a href="#" class="nav-link">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Dashboard</span>
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="#" class="nav-link active">
+                <i class="fas fa-shopping-bag"></i>
+                <span>Products</span>
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="#" class="nav-link">
+                <i class="fas fa-prescription"></i>
+                <span>Prescriptions</span>
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="#" class="nav-link">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </a>
+        </div>
+    </nav>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Quantity control functions
-        function incrementQuantity(button) {
-            const input = button.parentElement.querySelector('.quantity-input');
-            const max = parseInt(input.getAttribute('max')) || 10;
-            if (parseInt(input.value) < max) {
-                input.value = parseInt(input.value) + 1;
-            }
-        }
-
-        function decrementQuantity(button) {
-            const input = button.parentElement.querySelector('.quantity-input');
-            const min = parseInt(input.getAttribute('min')) || 1;
-            if (parseInt(input.value) > min) {
-                input.value = parseInt(input.value) - 1;
-            }
-        }
-
-        // Add to cart functionality
-        document.querySelectorAll('.add-to-cart-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const card = this.closest('.card');
-                const medicineName = card.querySelector('.card-title').textContent;
-                const quantity = card.querySelector('.quantity-input').value;
-                const price = card.querySelector('.price').textContent;
-                
-                alert(`Added ${quantity} ${medicineName} to cart\nTotal: $${(parseFloat(price.substring(1)) * parseInt(quantity)).toFixed(2)}`);
-            });
-        });
-
-        // Prevent non-numeric input
-        document.querySelectorAll('.quantity-input').forEach(input => {
-            input.addEventListener('change', function() {
-                const min = parseInt(this.getAttribute('min')) || 1;
-                const max = parseInt(this.getAttribute('max')) || 10;
-                let value = parseInt(this.value);
-                
-                if (isNaN(value)) {
-                    this.value = min;
-                } else if (value < min) {
-                    this.value = min;
-                } else if (value > max) {
-                    this.value = max;
-                }
-            });
-        });
-    </script>
+    
 </body>
 </html>

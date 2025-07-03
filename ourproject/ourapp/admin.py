@@ -83,9 +83,19 @@ class cart(admin.ModelAdmin):
 class cartproduct(admin.ModelAdmin):
     list_display = ['id','item','qty','price']
 
+class stockHistory(admin.ModelAdmin):
+    list_display = ('item','action', 'quantity', 'date', 'note')
+    list_filter = ('action', 'date')
+    search_fields = ('item__item_name', 'note')
 
 admin.site.register(Category,category)
 admin.site.register(Item,item)
 admin.site.register(Cart,cart)
 admin.site.register(CartProduct,cartproduct)
+admin.site.register(Sale)
+admin.site.register(SaleItem)
+
+admin.site.register(StockHistory,stockHistory)
+admin.site.register(Possalesreport)
+admin.site.register(customerpos)
 

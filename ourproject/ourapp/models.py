@@ -62,9 +62,10 @@ class Item(models.Model):
 
 class Cart(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='carts')  # 🆕
+    customer_name = models.CharField(max_length=100, blank=True, null=True)
     total_amount = models.PositiveIntegerField(default=0)
     created_date = models.DateField(default=timezone.now)
-
+    payment_method = models.CharField(max_length=20, blank=True, null=True)
     def update_total_amount(self):
         total = sum([cp.qty * cp.item.item_price for cp in self.cartproduct_set.all()])
         self.total_amount = total
@@ -75,5 +76,50 @@ class CartProduct(models.Model):
     item = models.ForeignKey(Item,on_delete=models.CASCADE)
     qty = models.PositiveIntegerField(default=0)
     price = models.PositiveIntegerField(default=0)
+    def str(self):
+        return f"CartProduct: {self.item} (Qty: {self.qty})"
+    
+
+class Sale(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    invoice_no = models.CharField(max_length=100)
+    total_amount = models.PositiveIntegerField()
+    created_date = models.DateTimeField(auto_now_add=True)
+    def __str__(self):
+        return f"Invoice {self.invoice_no} - {self.total_amount}"
+
+class SaleItem(models.Model):
+    sale = models.ForeignKey(Sale, on_delete=models.CASCADE)
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField()
+    price = models.PositiveIntegerField()
+    def __str__(self):
+        return f"{self.item.item_name if self.item else 'Unknown Item'} - {self.quantity} pcs"
+
+class StockHistory(models.Model):
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    action = models.CharField(choices=[('in', 'In'), ('out', 'Out')])
+    quantity = models.PositiveIntegerField()
+    note = models.TextField(blank=True, null=True)
+    date = models.DateTimeField(auto_now_add=True)
+    def __str__(self):
+        return f"{self.item.item_name}  - {self.quantity}"
+    
+
+class Possalesreport(models.Model):
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField()
+    price = models.PositiveIntegerField()
+
+    amount = models.PositiveIntegerField()
+    created_date = models.DateTimeField(auto_now_add=True)
     def __str__(self):
         return self.item
+
+class customerpos(models.Model):
+    name = models.CharField(max_length=100)
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    address = models.CharField(max_length=255, blank=True, null= True)
+    def __str__(self):
+        return self.name

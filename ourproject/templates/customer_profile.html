@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h2 class="text-lg font-bold mb-4">My Purchase History</h2>
+
+{% if sales %}
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Invoice No</th>
+                <th>Total</th>
+                <th>Date</th>
+                <th>Items</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sale in sales %}
+            <tr>
+                <td>{{ sale.invoice_no }}</td>
+                <td>${{ sale.total_amount }}</td>
+                <td>{{ sale.created_date }}</td>
+                <td>
+                    <ul>
+                        {% for item in sale.saleitem_set.all %}
+                        <li>{{ item.item.item_name }} – {{ item.quantity }} pcs – ${{ item.price }}</li>
+                        {% endfor %}
+                    </ul>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>No purchases yet.</p>
+{% endif %}
+</body>
+</html>

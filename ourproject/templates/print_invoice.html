@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body onload="window.print()">
+    <h2>Pharmacy Invoice</h2>
+    <p><strong>Customer:</strong> {{ cart.customer_name|default:"Walk-in" }}</p>
+    <ul>
+        {% for item in items %}
+        <li>{{ item.item.item_name }} - {{ item.qty }} x {{ item.price }} ks</li>
+        {% endfor %}
+    </ul>
+    <p>Total: {{ cart.total_amount }} ks</p>
+
+    <!-- inside body of print_invoice.html -->
+<div class="text-center mt-6">
+    <a href="{% url 'pharmacist_dashboard' %}" 
+       class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+       ← Back to Home
+    </a>
+</div>
+</body>
+</html>

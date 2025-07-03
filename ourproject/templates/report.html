@@ -68,9 +68,8 @@
                     <div class="hidden md:block">
                         <div class="ml-10 flex items-baseline space-x-4">
                             <a href="pharmastic dashboard.html" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary">Dashboard</a>
-                            <a href="#" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary">POS</a>
+                            <a href="#" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary">Orders</a>
                             <a href="#" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary">Inventory</a>
-                            <a href="#" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary">Patients</a>
                             <a href="#" class="px-3 py-2 rounded-md text-sm font-medium bg-white text-primary">Reports</a>
                         </div>
                     </div>
@@ -155,7 +154,6 @@
             </div>
         </div>
 
-        <!-- Summary Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div class="card bg-white rounded-lg p-6">
                 <div class="flex items-center">
@@ -164,7 +162,7 @@
                     </div>
                     <div>
                         <p class="text-gray-500">Total Transactions</p>
-                        <p class="text-2xl font-bold">248</p>
+                        <p class="text-2xl font-bold">{{ total_transactions }}</p>
                     </div>
                 </div>
             </div>
@@ -175,7 +173,7 @@
                     </div>
                     <div>
                         <p class="text-gray-500">Total Revenue</p>
-                        <p class="text-2xl font-bold">$12,845.75</p>
+                        <p class="text-2xl font-bold">{{ total_revenue }} Ks</p>
                     </div>
                 </div>
             </div>
@@ -186,7 +184,7 @@
                     </div>
                     <div>
                         <p class="text-gray-500">Items Sold</p>
-                        <p class="text-2xl font-bold">1,024</p>
+                        <p class="text-2xl font-bold">{{ items_sold }}</p>
                     </div>
                 </div>
             </div>
@@ -197,7 +195,7 @@
                     </div>
                     <div>
                         <p class="text-gray-500">Avg. Margin</p>
-                        <p class="text-2xl font-bold">32.5%</p>
+                        <p class="text-2xl font-bold">{{ avg_margin }}%</p>
                     </div>
                 </div>
             </div>
@@ -233,197 +231,119 @@
             </div>
         </div>
 
-        <!-- Top Products -->
-        <div class="card bg-white rounded-lg mb-8">
-            <div class="p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-lg font-medium text-gray-900">Top Selling Products</h2>
-                    <a href="#" class="text-sm text-blue-600 hover:text-blue-900">View All</a>
-                </div>
-                <div class="responsive-table">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qty Sold</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Margin</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <div class="flex-shrink-0 h-10 w-10 flex items-center justify-center bg-blue-50 rounded-md">
-                                            <i class="fas fa-pills text-blue-500"></i>
-                                        </div>
-                                        <div class="ml-4">
-                                            <div class="text-sm font-medium text-gray-900">Lipitor 20mg</div>
-                                            <div class="text-sm text-gray-500">Atorvastatin</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Prescription</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">142</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$6,529.00</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">35%</td>
-                            </tr>
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <div class="flex-shrink-0 h-10 w-10 flex items-center justify-center bg-green-50 rounded-md">
-                                            <i class="fas fa-pills text-green-500"></i>
-                                        </div>
-                                        <div class="ml-4">
-                                            <div class="text-sm font-medium text-gray-900">Metformin 500mg</div>
-                                            <div class="text-sm text-gray-500">Glucophage</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Prescription</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">98</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$1,225.00</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">28%</td>
-                            </tr>
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <div class="flex-shrink-0 h-10 w-10 flex items-center justify-center bg-yellow-50 rounded-md">
-                                            <i class="fas fa-pills text-yellow-500"></i>
-                                        </div>
-                                        <div class="ml-4">
-                                            <div class="text-sm font-medium text-gray-900">Zoloft 50mg</div>
-                                            <div class="text-sm text-gray-500">Sertraline</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Prescription</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">76</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$2,945.00</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">32%</td>
-                            </tr>
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <div class="flex-shrink-0 h-10 w-10 flex items-center justify-center bg-purple-50 rounded-md">
-                                            <i class="fas fa-pills text-purple-500"></i>
-                                        </div>
-                                        <div class="ml-4">
-                                            <div class="text-sm font-medium text-gray-900">Synthroid 50mcg</div>
-                                            <div class="text-sm text-gray-500">Levothyroxine</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Prescription</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">65</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$1,949.35</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">30%</td>
-                            </tr>
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <div class="flex-shrink-0 h-10 w-10 flex items-center justify-center bg-red-50 rounded-md">
-                                            <i class="fas fa-inhaler text-red-500"></i>
-                                        </div>
-                                        <div class="ml-4">
-                                            <div class="text-sm font-medium text-gray-900">Ventolin Inhaler</div>
-                                            <div class="text-sm text-gray-500">Albuterol</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Prescription</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">42</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$2,194.50</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">25%</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
 
-        <!-- Recent Transactions -->
-        <div class="card bg-white rounded-lg">
-            <div class="p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-lg font-medium text-gray-900">Recent Transactions</h2>
-                    <a href="#" class="text-sm text-blue-600 hover:text-blue-900">View All</a>
-                </div>
-                <div class="responsive-table">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction ID</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Items</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Staff</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary">#TX-1001</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Today, 10:45 AM</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">John D. Smith</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">3</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$96.28</td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Card</span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Sarah M.</td>
-                            </tr>
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary">#TX-1000</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Today, 9:30 AM</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Emily R. Johnson</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">2</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$42.50</td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Cash</span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Sarah M.</td>
-                            </tr>
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary">#TX-999</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Today, 9:15 AM</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Michael T. Williams</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">1</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$38.75</td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">Mobile</span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">James K.</td>
-                            </tr>
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary">#TX-998</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Yesterday, 4:20 PM</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Patricia K. Davis</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">4</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$124.95</td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">Insurance</span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">James K.</td>
-                            </tr>
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary">#TX-997</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Yesterday, 3:45 PM</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Robert J. Anderson</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">2</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$71.24</td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Card</span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Sarah M.</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+<!-- Top Selling Products -->
+<div class="card bg-white rounded-lg mb-8">
+    <div class="p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-medium text-gray-900">Top Selling Products</h2>
+            <a href="#" class="text-sm text-blue-600 hover:text-blue-900">View All</a>
         </div>
+        <div class="responsive-table">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qty Sold</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Margin</th>
+                    </tr>
+                </thead>
+<tbody class="bg-white divide-y divide-gray-200">
+    {% for product in top_products %}
+        <tr>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                {{ product.item__item_name }}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                {{ product.item__category__name|default:"-" }}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                {{ product.total_qty }}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                {{ product.total_revenue }} Ks
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                -
+            </td>
+        </tr>
+    {% empty %}
+        <tr><td colspan="5" class="text-center py-4 text-sm text-gray-500">No top products yet.</td></tr>
+    {% endfor %}
+</tbody>            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Transactions -->
+<div class="card bg-white rounded-lg">
+    <div class="p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-medium text-gray-900">Recent Transactions</h2>
+            <a href="#" class="text-sm text-blue-600 hover:text-blue-900">View All</a>
+        </div>
+        <div class="responsive-table">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction ID</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Items</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+
+
+<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Staff</th>
+                    </tr>
+                </thead>
+<!-- Replace this static row block inside tbody -->
+<tbody class="bg-white divide-y divide-gray-200">
+    {% for tx in recent_transactions %}
+        <tr>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary">
+                TX-{{ tx.id|stringformat:"04d" }}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                {{ tx.created_date }}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                {{ tx.customer_name|default:"Walk-in" }}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                {{ tx.cartproduct_set.count }}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                {{ tx.total_amount }} Ks
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                {% if tx.payment_method == 'cash' %}
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Cash</span>
+                {% elif tx.payment_method == 'mobile' %}
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">Mobile</span>
+                {% elif tx.payment_method == 'print' %}
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Print</span>
+                {% else %}
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">Unknown</span>
+                {% endif %}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                {{ tx.user.username }}
+            </td>
+        </tr>
+    {% empty %}
+        <tr>
+            <td colspan="7" class="text-center text-sm text-gray-500 py-4">No transactions found.</td>
+        </tr>
+    {% endfor %}
+</tbody>           
+ </table>
+        </div>
+    </div>
+</div>
+
     </div>
 
     <!-- Footer -->
@@ -438,9 +358,8 @@
                     <h3 class="text-lg font-medium mb-4">Quick Links</h3>
                     <ul class="space-y-2">
                         <li><a href="pharmastic dashboard.html" class="text-gray-400 hover:text-white">Dashboard</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white">POS</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Orders</a></li>
                         <li><a href="#" class="text-gray-400 hover:text-white">Inventory</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white">Patients</a></li>
                         <li><a href="#" class="text-gray-400 hover:text-white">Reports</a></li>
                     </ul>
                 </div>
@@ -474,7 +393,7 @@
             </a>
             <a href="#" class="p-4 text-gray-500">
                 <i class="fas fa-cash-register block text-center text-xl"></i>
-                <span class="text-xs block text-center mt-1">POS</span>
+                <span class="text-xs block text-center mt-1">Orders</span>
             </a>
             <a href="#" class="p-4 text-gray-500">
                 <i class="fas fa-boxes block text-center text-xl"></i>
