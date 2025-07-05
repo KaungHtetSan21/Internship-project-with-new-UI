@@ -84,9 +84,12 @@ class cartproduct(admin.ModelAdmin):
     list_display = ['id','item','qty','price']
 
 class stockHistory(admin.ModelAdmin):
-    list_display = ('item','action', 'quantity', 'date', 'note')
-    list_filter = ('action', 'date')
-    search_fields = ('item__item_name', 'note')
+    list_display = ('item', 'supplier','action', 'quantity', 'date', 'note')
+    list_filter = ( 'supplier','action', 'date')
+    search_fields = ('item__item_name', 'supplier__name', 'note')
+
+class supplier(admin.ModelAdmin):
+    list_display = ['id','supplier_name','phone']
 
 admin.site.register(Category,category)
 admin.site.register(Item,item)
@@ -98,4 +101,6 @@ admin.site.register(SaleItem)
 admin.site.register(StockHistory,stockHistory)
 admin.site.register(Possalesreport)
 admin.site.register(customerpos)
+admin.site.register(Disease)
+admin.site.register(Supplier,supplier)
 

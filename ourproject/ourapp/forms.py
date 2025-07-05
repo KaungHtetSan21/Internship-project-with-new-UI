@@ -1,6 +1,7 @@
 # forms.py
 from django import forms
 from django.contrib.auth.models import User
+from .models import *
 
 class CustomerRegisterForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput)
@@ -23,3 +24,20 @@ class CustomerRegisterForm(forms.ModelForm):
         if password != confirm:
             raise forms.ValidationError("Passwords do not match.")
         return cleaned_data
+    
+
+
+# class SupplierForm(forms.ModelForm):
+#     class Meta:
+#         model = Supplier
+#         fields = ['supplier_name', 'supplier_phnumber', 'supplier_location']
+
+# class PurchaseOrderForm(forms.ModelForm):
+#     class Meta:
+#         model = PurchaseOrder
+#         fields = ['supplier', 'po_number', 'order_date', 'status', 'notes']
+
+# class PurchaseItemForm(forms.ModelForm):
+#     class Meta:
+#         model = PurchaseItem
+#         fields = ['medicine_name', 'batch_number', 'quantity', 'unit_price']

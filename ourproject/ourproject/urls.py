@@ -41,8 +41,12 @@ urlpatterns = [
     path('report_view/', report_view, name= 'report_view'),
     path('medicine_list/', medicine_list, name= 'medicine_list'),
     path('medicine_diseaseview/', medicine_diseaseview, name= 'medicine_diseaseview'),
-    path('purchase_order/', purchase_order, name= 'purchase_order'),
+   
 
+    path('purchaseorder/', purchaseorder_view, name='purchaseorder_view'),
+    path('create_supplier_ajax/', create_supplier_ajax, name='create_supplier_ajax'),
+    path('update_supplier_ajax/', update_supplier_ajax, name='update_supplier_ajax'),
+    path('delete_supplier_ajax/', delete_supplier_ajax, name='delete_supplier_ajax'),
 
     path('order/add/<int:item_id>/', add_to_cart, name='add_to_cart'),
     path('order/increase/<int:item_id>/', increase_quantity, name='increase_quantity'),
@@ -51,6 +55,7 @@ urlpatterns = [
     path('order/remove_from_cart/<int:item_id>/', remove_from_cart, name='remove_from_cart'),
     path('place-order/', place_order_view, name='place_order'),
     path('customer/profile/', customer_profile_view, name='customer_profile'),
+
 
 ]
 

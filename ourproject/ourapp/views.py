@@ -317,8 +317,7 @@ def report_view(request):
 def medicine_diseaseview(request):
     return render(request,'medicine&disease.html')
 
-def purchase_order(request):
-    return render(request,'purchaseorder.html')
+
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -532,7 +531,98 @@ def search_customer(request):
     
 
 
-    
+
+
+# views.py
+from django.shortcuts import render
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from .models import Supplier
+import json
+
+def purchaseorder_view(request):
+    suppliers = Supplier.objects.all()
+    return render(request, 'purchaseorder.html', {'suppliers': suppliers})
+@csrf_exempt
+def create_supplier_ajax(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            supplier = Supplier.objects.create(
+                supplier_name=data.get('supplier_name'),
+                company=data.get('company'),
+                contact_person=data.get('contact_person'),
+                email=data.get('email'),
+                phone=data.get('phone'),
+                address=data.get('address'),
+                # city=data.get('city'),
+                # state=data.get('state'),
+                # zip_code=data.get('zip_code'),
+                # country=data.get('country'),
+                # tax_id=data.get('tax_id'),
+                # notes=data.get('notes'),
+                status=data.get('is_active', True)
+            )
+            return JsonResponse({
+                'message': 'Supplier added successfully!', 
+                # 'supplier_id': supplier.id
+            }, status=201)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+
+@csrf_exempt
+def update_supplier_ajax(request):
+    if request.method == 'PUT':
+        try:
+            data = json.loads(request.body)
+            supplier_id = data.get('supplier_id')
+            if not supplier_id:
+                return JsonResponse({'error': 'Supplier ID is required'}, status=400)
+                
+            supplier = Supplier.objects.get(id=supplier_id)
+            
+            fields = [
+                'supplier_name', 'company', 'contact_person', 'email', 'phone',
+                'address', 'city', 'state', 'zip_code', 'country', 'tax_id', 'notes'
+            ]
+            
+            for field in fields:
+                if field in data:
+                    setattr(supplier, field, data[field])
+            
+            if 'is_active' in data:
+                supplier.is_active = data['is_active']
+            
+            supplier.save()
+            
+            return JsonResponse({
+                'message': 'Supplier updated successfully!', 
+                'supplier_id': supplier.id
+            })
+        except Supplier.DoesNotExist:
+            return JsonResponse({'error': 'Supplier not found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)        
+
+@csrf_exempt
+def delete_supplier_ajax(request):
+    if request.method == 'DELETE':
+        try:
+            data = json.loads(request.body)
+            supplier_id = data.get('supplier_id')
+            if not supplier_id:
+                return JsonResponse({'error': 'Supplier ID is required'}, status=400)
+                
+            supplier = Supplier.objects.get(id=supplier_id)
+            supplier.delete()
+            
+            return JsonResponse({
+                'message': 'Supplier deleted successfully!'
+            })
+        except Supplier.DoesNotExist:
+            return JsonResponse({'error': 'Supplier not found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
 
 
 
