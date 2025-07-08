@@ -40,12 +40,7 @@ class Category(models.Model):
 
     
 
-class Disease(models.Model):
-    item_photo = models.ImageField(upload_to='photos',blank=True, null=True)
-    disease_name = models.CharField(max_length=255,blank=True, null=True)
-    disease_symptom = models.TextField(blank=True, null=True)
-    def __str__(self):
-        return self.disease_name or "Unnamed Disease"
+
 
 class Supplier(models.Model):
     supplier_name = models.CharField(max_length=255, blank=True, null= True)
@@ -63,7 +58,7 @@ class Item(models.Model):
     category = models.ForeignKey(Category, on_delete= models.CASCADE)
 
     item_photo = models.ImageField(upload_to='photos')
-    disease = models.ForeignKey(Disease, on_delete= models.CASCADE, blank=True, null=True)
+
     primary_supplier = models.ForeignKey(Supplier, on_delete= models.CASCADE, blank=True, null=True)
     strength = models.CharField(max_length=50, blank=True, null=True)
     item_name = models.CharField(max_length=255)
@@ -123,6 +118,11 @@ class Cart(models.Model):
     total_amount = models.PositiveIntegerField(default=0)
     created_date = models.DateField(default=timezone.now)
     payment_method = models.CharField(max_length=20, blank=True, null=True)
+    source = models.CharField(
+        max_length=10,
+        choices=[('pos', 'POS'), ('online', 'Online')],
+        default='online'
+    )
     def update_total_amount(self):
         total = sum([cp.qty * cp.item.item_price for cp in self.cartproduct_set.all()])
         self.total_amount = total

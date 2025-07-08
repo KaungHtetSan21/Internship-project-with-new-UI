@@ -314,16 +314,35 @@ def report_view(request):
 
 
 
-def medicine_diseaseview(request):
-    return render(request,'medicine&disease.html')
 
+
+@csrf_exempt
+def edit_item_view(request, item_id):
+    item = get_object_or_404(Item, id=item_id)
+    if request.method == "POST":
+        item.item_name = request.POST.get('item_name')
+        item.strength = request.POST.get('strength')
+        item.item_quantity = request.POST.get('item_quantity')
+        item.item_price = request.POST.get('item_price')
+        item.is_limited = request.POST.get('is_limited') == 'true'
+        item.save()
+        return redirect('medicine_diseaseview')
+    
+
+
+def delete_item(request, item_id):
+    if request.method == "POST":
+        item = get_object_or_404(Item, id=item_id)
+        item.delete()
+        messages.success(request, f"{item.item_name} deleted successfully.")
+    return redirect('medicine_diseaseview')  # your template name
 
 
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils.dateparse import parse_date
-from .models import Item, Category
+from django.contrib.auth.decorators import login_required
+from .models import Item, Category, Supplier
 
 @login_required
 def inventory_view(request):
@@ -332,20 +351,25 @@ def inventory_view(request):
         return redirect('login')
 
     items = Item.objects.all().order_by('-id')
+    for item in items:
+        if item.exp_date:
+            item.days_left = (item.exp_date - date.today()).days
+        else:
+            item.days_left = None
     categories = Category.objects.all()
 
-    # Handle Category Create
+    # ---------------------- CATEGORY CREATE ----------------------
     if request.method == 'POST' and 'save_category' in request.POST:
         name = request.POST.get('category_name')
-        description = request.POST.get('category_description')
+        description = request.POST.get('category_description', '')
         if name:
-            Category.objects.create(name=name, description=description or "")
-            messages.success(request, "Category added.")
+            Category.objects.create(name=name, description=description)
+            messages.success(request, "Category added successfully.")
         else:
             messages.error(request, "Category name is required.")
         return redirect('inventory_view')
 
-    # Handle Item Create & Edit
+    # ---------------------- ITEM CREATE OR EDIT ----------------------
     if request.method == 'POST' and 'save_item' in request.POST:
         item_id = request.POST.get('item_id')
         is_edit = bool(item_id)
@@ -356,6 +380,7 @@ def inventory_view(request):
             messages.error(request, "Invalid category.")
             return redirect('inventory_view')
 
+        # Prepare cleaned data
         data = {
             'category': category,
             'item_name': request.POST.get('item_name'),
@@ -366,39 +391,65 @@ def inventory_view(request):
             'exp_date': parse_date(request.POST.get('exp_date')),
             'brand_name': request.POST.get('brand_name') or '',
             'batch_number': request.POST.get('batch_number') or '',
-            'barcode': request.POST.get('barcode') or '',
             'stock_minimum': request.POST.get('stock_minimum') or 10,
             'is_limited': 'is_limited' in request.POST,
             'max_quantity': request.POST.get('max_quantity') or 5,
         }
 
+        # Get image from FILES
+        item_photo = request.FILES.get('item_photo')
+        if item_photo:
+            data['item_photo'] = item_photo
+
         if is_edit:
             item = get_object_or_404(Item, id=item_id)
             for field, value in data.items():
                 setattr(item, field, value)
-            if request.FILES.get('item_photo'):
-                item.item_photo = request.FILES['item_photo']
             item.save()
-            messages.success(request, "Item updated.")
+            messages.success(request, "Item updated successfully.")
         else:
-            item_photo = request.FILES.get('item_photo')
-            Item.objects.create(item_photo=item_photo, **data)
-            messages.success(request, "Item created.")
+            if not item_photo:
+                messages.error(request, "Medication image is required.")
+                return redirect('inventory_view')
+
+            Item.objects.create(**data)
+            messages.success(request, "Item created successfully.")
 
         return redirect('inventory_view')
 
-    # Handle Delete
+    # ---------------------- ITEM DELETE ----------------------
     if request.method == 'POST' and 'delete_item' in request.POST:
         item_id = request.POST.get('delete_item')
         item = get_object_or_404(Item, id=item_id)
         item.delete()
-        messages.success(request, "Item deleted.")
+        messages.success(request, "Item deleted successfully.")
         return redirect('inventory_view')
 
+    # ---------------------- RENDER PAGE ----------------------
     return render(request, 'inventory.html', {
         'items': items,
         'categories': categories,
     })
+
+from django.views.decorators.http import require_POST
+
+@require_POST
+@login_required
+def send_to_promotion(request):
+    if request.user.userprofile.role != 'pharmacist':
+        messages.error(request, "Unauthorized.")
+        return redirect('inventory_view')
+
+    item_id = request.POST.get('item_id')
+    item = get_object_or_404(Item, id=item_id)
+
+    # Example: Mark item as promotion or move to another model/table if needed
+    item.is_promotion = True
+    item.save()
+
+    messages.success(request, f"{item.item_name} has been moved to promotion area.")
+    return redirect('inventory_view')
+
 
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
@@ -406,7 +457,7 @@ from django.contrib import messages
 from ourapp.models import *
 from .models import *
 from django.utils import timezone
-
+@login_required
 def order_view(request):
     if request.user.userprofile.role != 'pharmacist':
         messages.error(request, "You do not have permission to access this page.")
@@ -755,7 +806,7 @@ def medicine_list(request):
     items = Item.objects.all().order_by('-id')
 
     # ✅ Refresh cart total
-    cart.update_total_amount()
+    cart.update_total_amount()  # Ensure this includes shipping and tax
     cart.refresh_from_db()
 
     # ✅ If POST, handle checkout (place order logic)
@@ -764,13 +815,22 @@ def medicine_list(request):
             messages.warning(request, "Your cart is empty.")
             return redirect('medicine_list')
 
+        # Calculate total with shipping and tax
+        shipping_fee = 5.99
+        tax = 1.00
+        total_amount = cart.total_amount + shipping_fee + tax  # Final total with shipping and tax
+
+        # Create sale
         sale = Sale.objects.create(
             invoice_no=f"INV-{timezone.now().strftime('%Y%m%d%H%M%S')}",
             user=user,
-            total_amount=cart.total_amount
+            total_amount=total_amount  # Use the final total here
         )
 
+        # Process cart items and update stock
         for cp in cart_products:
+            cp.total_price = cp.qty * cp.item.item_price
+
             SaleItem.objects.create(
                 sale=sale,
                 item=cp.item,
@@ -787,6 +847,7 @@ def medicine_list(request):
                 note=f"Checked out by {user.username}"
             )
 
+        # Clear the cart after checkout
         cart_products.delete()
         cart.total_amount = 0
         cart.save()
@@ -805,8 +866,8 @@ def medicine_list(request):
         'items': items,
         'cart': cart,
         'cart_products': cart_products,
+        'total_amount': cart.total_amount + 5.99 + 1.00,  # Pass the total to template
     })
-
 
 
 @login_required
@@ -863,6 +924,8 @@ def place_order_view(request):
     except Cart.DoesNotExist:
         messages.error(request, "No active cart found.")
         return redirect('medicine_list')
+    
+
     
 
 

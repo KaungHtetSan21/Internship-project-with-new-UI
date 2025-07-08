@@ -101,6 +101,6 @@ admin.site.register(SaleItem)
 admin.site.register(StockHistory,stockHistory)
 admin.site.register(Possalesreport)
 admin.site.register(customerpos)
-admin.site.register(Disease)
+
 admin.site.register(Supplier,supplier)
 

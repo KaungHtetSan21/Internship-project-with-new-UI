@@ -33,6 +33,7 @@ urlpatterns = [
     path('pharmacist-dashboard/', pharmacist_dashboard, name='pharmacist_dashboard'),
     path('customer-dashboard/', customer_dashboard, name='customer_dashboard'),
     path('inventory_view/', inventory_view, name= 'inventory_view'),
+    path('send_to_promotion/', send_to_promotion, name='send_to_promotion'),
     path('order_view/', order_view, name= 'order_view'),
     path('SaveOrderView/', SaveOrderView.as_view(), name= 'save_order'),
     path('print-preview/', print_preview, name='print_preview'),
@@ -40,8 +41,8 @@ urlpatterns = [
 
     path('report_view/', report_view, name= 'report_view'),
     path('medicine_list/', medicine_list, name= 'medicine_list'),
-    path('medicine_diseaseview/', medicine_diseaseview, name= 'medicine_diseaseview'),
-   
+  
+    path('medicine/edit/<int:item_id>/', edit_item_view, name='edit_item'), 
 
     path('purchaseorder/', purchaseorder_view, name='purchaseorder_view'),
     path('create_supplier_ajax/', create_supplier_ajax, name='create_supplier_ajax'),
@@ -55,10 +56,11 @@ urlpatterns = [
     path('order/remove_from_cart/<int:item_id>/', remove_from_cart, name='remove_from_cart'),
     path('place-order/', place_order_view, name='place_order'),
     path('customer/profile/', customer_profile_view, name='customer_profile'),
-
+    path('medicine/delete/<int:item_id>/', delete_item, name='delete_item'),
 
 ]
 
-
+urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 

@@ -204,31 +204,35 @@
                     </div>
                 </div>
 
-                <!-- Product Grid -->
-                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {% for item in items %}
-                    <!-- Product Card 1 -->
-                    <div class="card bg-white rounded-lg overflow-hidden">
-                        <div class="p-4">
-                            <div class="h-32 bg-blue-50 rounded-md flex items-center justify-center mb-3">
-                                <i class="fas fa-pills text-blue-500 text-4xl"></i>
-                            </div>
-                            <h3 class="text-md font-medium text-gray-900 mb-1">{{ item.item_name }}</h3>
+<!-- Product Grid -->
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+    {% for item in items %}
+    <!-- Product Card -->
+    <div class="card bg-white rounded-lg overflow-hidden">
+        <div class="p-4">
+            <div class="h-32 bg-blue-50 rounded-md flex items-center justify-center mb-3">
+                {% if item.item_photo %}
+                    <img src="{{ item.item_photo.url }}" alt="{{ item.item_name }}" class="h-full object-contain rounded">
+                {% else %}
+                    <i class="fas fa-pills text-blue-500 text-4xl"></i>
+                {% endif %}
+            </div>
+            <h3 class="text-md font-medium text-gray-900 mb-1">{{ item.item_name }}</h3>
 
-                            <div class="Product flex justify-between items-center" data-id="{{item.id}}"
-                                data-name="{{item.item_name }}" data-price="{{item.item_price}}">
-                                <span class="text-sm font-medium text-primary">{{ item.item_price }}</span>
-                                <a href=""
-                                    class="add-to-cart bg-primary text-white p-1 rounded-md hover:bg-darkblue transition">
-                                    <i class="fas fa-plus"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
+            <div class="Product flex justify-between items-center" data-id="{{item.id}}"
+                data-name="{{item.item_name }}" data-price="{{item.item_price}}">
+                <span class="text-sm font-medium text-primary">{{ item.item_price }} ks</span>
+                <a href=""
+                    class="add-to-cart flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-full shadow transition">
+                    <i class="fas fa-shopping-cart"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
 
 
-                </div>
             </div>
 
             <!-- Right Column - Cart and Checkout -->

@@ -64,16 +64,37 @@
                             <a href="{% url 'order_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary">Orders</a>
                             <a href="{% url 'inventory_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary">Inventory</a>
                             <a href="{% url 'report_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary">Reports</a>
-                            <a href="{% url 'medicine_diseaseview' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary">Medicines & Diseases</a>
                             <a href="{% url 'purchaseorder_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary">Purchase Order</a>
 
                         </div>
                     </div>
                 </div>
                 <div class="flex items-center">
-                    <button class="p-1 rounded-full text-white focus:outline-none">
-                        <i class="fas fa-bell"></i>
-                    </button>
+<!-- Notification Bell in Navbar -->
+<div class="ml-3 relative">
+    <button id="notif-bell" class="p-1 rounded-full text-white focus:outline-none relative">
+        <i class="fas fa-bell text-xl"></i>
+        {% if expiring_items %}
+        <span class="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full px-1.5 py-0.5">
+            {{ expiring_items|length }}
+        </span>
+        {% endif %}
+    </button>
+    <!-- Dropdown -->
+    <div id="notif-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-white shadow-lg rounded-md z-50">
+        <div class="px-4 py-2 border-b text-sm font-semibold text-gray-700">Expiring Items</div>
+        <ul class="max-h-60 overflow-y-auto">
+            {% for item in expiring_items %}
+            <li class="px-4 py-2 hover:bg-gray-100 text-sm text-gray-700 flex justify-between">
+                <span>{{ item.item_name }}</span>
+                <span class="text-red-600 text-xs">{{ item.exp_date|date:"M d" }}</span>
+            </li>
+            {% empty %}
+            <li class="px-4 py-2 text-gray-400 text-sm text-center">No expiring items</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
                     <div class="ml-3 relative">
                         <div class="flex items-center">
                             <div class="text-sm mr-3 hidden md:block">Dr. Sarah Miller</div>
@@ -384,10 +405,11 @@
                                 <i class="fas fa-file-invoice text-2xl mb-2"></i>
                                 <span class="text-sm font-medium">Reports</span>
                             </a>
-                            <a href="#" class="flex flex-col items-center justify-center p-4 bg-lightblue rounded-lg text-primary hover:bg-blue-100 transition">
-                                <i class="fas fa-bell text-2xl mb-2"></i>
-                                <span class="text-sm font-medium">Notifications</span>
-                            </a>
+<!-- Inside Quick Actions -->
+                                <button onclick="document.getElementById('expiryModal').classList.remove('hidden')"
+                                    class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded flex items-center">
+                                    <i class="fas fa-exclamation-triangle mr-2"></i> View Expiring Items
+                                </button>
                         </div>
                     </div>
                 </div>
@@ -410,7 +432,6 @@
                         <li><a href="{% url 'order_view' %}" class="text-gray-400 hover:text-white">Orders</a></li>
                         <li><a href="{% url 'inventory_view' %}" class="text-gray-400 hover:text-white">Inventory</a></li>
                         <li><a href="{% url 'report_view' %}" class="text-gray-400 hover:text-white">Reports</a></li>
-                        <a href="{% url 'medicine_diseaseview' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary">Medicines & Diseases</a>
                         <a href="{% url 'purchaseorder_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary">Purchase Order</a>
                     </ul>
                 </div>
@@ -469,7 +490,55 @@
         </div>
     </div>
 
+<div id="expiryModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center">
+    <div class="bg-white w-full max-w-3xl rounded-lg shadow-lg overflow-auto max-h-[80vh]">
+        <div class="flex justify-between items-center px-6 py-4 border-b">
+            <h2 class="text-lg font-bold text-gray-800">Expiring Medicines</h2>
+            <button onclick="document.getElementById('expiryModal').classList.add('hidden')" class="text-gray-500 hover:text-red-600 text-xl">&times;</button>
+        </div>
+        <div class="p-4">
+            {% if expiring_items %}
+            <ul class="divide-y divide-gray-200">
+                {% for item in expiring_items %}
+                <li class="py-2 flex justify-between items-center">
+                    <div>
+                        <a href="{% url 'inventory_view' %}?highlight_id={{ item.id }}" class="text-blue-600 hover:underline">
+                        <p class="text-sm font-medium text-gray-800">{{ item.item_name }}</p>
+                        </a>
+                        <p class="text-xs text-gray-500">Brand: {{ item.brand_name|default:"N/A" }}</p>
+                    </div>
+                    <span class="text-sm text-red-500">{{ item.exp_date|date:"M d, Y" }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-gray-500 text-center py-4">No expiring items within 90 days.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
     <script>
+        
+document.addEventListener('DOMContentLoaded', () => {
+    const bell = document.getElementById('notif-bell');
+    const dropdown = document.getElementById('notif-dropdown');
+
+    bell.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdown.classList.toggle('hidden');
+    });
+
+    document.addEventListener('click', () => {
+        dropdown.classList.add('hidden');
+    });
+});
+
+
+
+
+
+
         // Logout functionality
         document.getElementById('logout-button').addEventListener('click', function(e) {
             e.preventDefault();
