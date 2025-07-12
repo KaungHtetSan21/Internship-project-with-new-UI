@@ -277,21 +277,48 @@ from django.http import HttpResponseForbidden
 from django.shortcuts import render
 from .models import Sale, SaleItem, Cart, CartProduct
 
+
+# ✅ All your existing views remain same (register, login, logout, dashboards...)
+from django.db.models import Sum, Count, F, FloatField, ExpressionWrapper
+from django.db.models.functions import Coalesce
+
 @login_required
 def report_view(request):
     if request.user.userprofile.role != 'pharmacist':
         return HttpResponseForbidden("Pharmacists only.")
 
-    # ✅ Summary Cards
-    total_transactions = Sale.objects.count()
-    total_revenue = Sale.objects.aggregate(total=Sum('total_amount'))['total'] or 0
-    items_sold = SaleItem.objects.aggregate(total_qty=Sum('quantity'))['total_qty'] or 0
-    avg_margin = 32.5  # Static or dynamic if you have margin logic
+    # ✅ All Sales
+    all_sales = Sale.objects.all()
+    total_transactions = all_sales.count()
+    total_revenue = all_sales.aggregate(total=Coalesce(Sum('total_amount'), 0))['total']
 
-    # ✅ Top Selling Products
+    # ✅ Items Sold (from SaleItem)
+    items_sold = SaleItem.objects.aggregate(total_qty=Coalesce(Sum('quantity'), 0))['total_qty']
+
+    # ✅ Avg Margin Calculation (dynamic)
+    sale_items = SaleItem.objects.annotate(
+        margin=ExpressionWrapper(
+            (F('price') - F('item__purcharse_price')) / F('item__purcharse_price') * 100,
+            output_field=FloatField()
+        )
+    )
+    avg_margin = round(sale_items.aggregate(avg=Coalesce(Sum('margin') / Count('id'), 0.0))['avg'], 2)
+
+    # ✅ POS Summary
+    pos_sales = Cart.objects.filter(payment_method__in=['cash', 'mobile', 'print'])
+    pos_transactions = pos_sales.count()
+    pos_revenue = pos_sales.aggregate(total=Coalesce(Sum('total_amount'), 0))['total']
+
+    # ✅ Online Summary (customer checkout)
+    online_sales = Sale.objects.exclude(user__userprofile__role='pharmacist')
+    online_transactions = online_sales.count()
+    online_revenue = online_sales.aggregate(total=Coalesce(Sum('total_amount'), 0))['total']
+
+    # ✅ Top Selling Products (combine both)
+
     top_products = (
         CartProduct.objects
-        .values('item__item_name', 'item__category__name')
+        .values('item_id','item__item_name', 'item__category__name')
         .annotate(
             total_qty=Sum('qty'),
             total_revenue=Sum('price')
@@ -299,20 +326,91 @@ def report_view(request):
         .order_by('-total_qty')[:5]
     )
 
-    # ✅ Recent Transactions (POS orders)
-    recent_transactions = Cart.objects.filter(user=request.user).order_by('-created_date')[:10]
+    # ✅ Add margin manually (using item purchase price)
 
-    # ✅ Pass all context to report.html
+    for product in top_products:
+        try:
+            item = Item.objects.get(id=product['item_id'])  # now ID is used, safe
+            cost = item.purcharse_price or 1
+            sell = product['total_revenue']
+            qty = product['total_qty']
+
+            avg_sell = sell / qty if qty else 0
+            margin = ((avg_sell - cost) / cost) * 100
+            product['margin'] = round(margin, 2)
+        except:
+            product['margin'] = "-"
+
+    # ✅ Recent Transactions (POS only)
+    recent_transactions = Cart.objects.order_by('-created_date')[:10]
+
+    # ✅ Summary List for UI Cards Loop
+    summary_list = [
+        {
+            'label': 'POS Transactions',
+            'icon': 'fa-receipt',
+            'bg': 'bg-blue-100',
+            'text': 'text-blue-600',
+            'value': pos_transactions,
+            'unit': '',
+        },
+        {
+            'label': 'Online Transactions',
+            'icon': 'fa-receipt',
+            'bg': 'bg-blue-100',
+            'text': 'text-blue-600',
+            'value': online_transactions,
+            'unit': '',
+        },
+        {
+            'label': 'POS Revenue',
+            'icon': 'fa-dollar-sign',
+            'bg': 'bg-green-100',
+            'text': 'text-green-600',
+            'value': pos_revenue,
+            'unit': 'Ks',
+        },
+        {
+            'label': 'Online Revenue',
+            'icon': 'fa-dollar-sign',
+            'bg': 'bg-green-100',
+            'text': 'text-green-600',
+            'value': online_revenue,
+            'unit': 'Ks',
+        },
+        {
+            'label': 'Items Sold',
+            'icon': 'fa-shopping-basket',
+            'bg': 'bg-purple-100',
+            'text': 'text-purple-600',
+            'value': items_sold,
+            'unit': '',
+        },
+        {
+            'label': 'Avg. Margin',
+            'icon': 'fa-percentage',
+            'bg': 'bg-yellow-100',
+            'text': 'text-yellow-600',
+            'value': avg_margin,
+            'unit': '%',
+        },
+    ]
+
     return render(request, 'report.html', {
         'total_transactions': total_transactions,
         'total_revenue': total_revenue,
         'items_sold': items_sold,
         'avg_margin': avg_margin,
+
         'top_products': top_products,
         'recent_transactions': recent_transactions,
+
+        'pos_transactions': pos_transactions,
+        'pos_revenue': pos_revenue,
+        'online_transactions': online_transactions,
+        'online_revenue': online_revenue,
+        'summary_list':summary_list,
     })
-
-
 
 
 
@@ -583,99 +681,142 @@ def search_customer(request):
 
 
 
+# from django.shortcuts import render, redirect, get_object_or_404
+# from django.contrib import messages
+# from .models import Supplier
 
-# views.py
-from django.shortcuts import render
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
+# def purchaseorder_view(request):
+#     suppliers = Supplier.objects.all()
+#     return render(request, 'purchaseorder.html', {'suppliers': suppliers})
+
+# def create_supplier(request):
+#     if request.method == 'POST':
+#         Supplier.objects.create(
+#             supplier_name=request.POST.get('supplier_name'),
+#             company=request.POST.get('company'),
+#             contact_person=request.POST.get('contact_person'),
+#             email=request.POST.get('email'),
+#             phone=request.POST.get('phone'),
+#             address=request.POST.get('address'),
+#             status=request.POST.get('status') == 'active'
+#         )
+#         messages.success(request, "Supplier created successfully.")
+#         return redirect('purchaseorder_view')
+
+# def edit_supplier(request, pk):
+#     supplier = get_object_or_404(Supplier, pk=pk)
+#     if request.method == 'POST':
+#         supplier.supplier_name = request.POST.get('supplier_name')
+#         supplier.company = request.POST.get('company')
+#         supplier.contact_person = request.POST.get('contact_person')
+#         supplier.email = request.POST.get('email')
+#         supplier.phone = request.POST.get('phone')
+#         supplier.address = request.POST.get('address')
+#         supplier.status = request.POST.get('status') == 'active'
+#         supplier.save()
+#         messages.success(request, "Supplier updated successfully.")
+#         return redirect('purchaseorder_view')
+#     return render(request, 'edit_supplier.html', {'supplier': supplier})
+
+# def delete_supplier(request, pk):
+#     supplier = get_object_or_404(Supplier, pk=pk)
+#     if request.method == 'POST':
+#         supplier.delete()
+#         messages.success(request, "Supplier deleted successfully.")
+#         return redirect('purchaseorder_view')
+#     return render(request, 'confirm_delete.html', {'supplier': supplier})
+
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.core.paginator import Paginator
+from django.contrib import messages
 from .models import Supplier
-import json
 
 def purchaseorder_view(request):
-    suppliers = Supplier.objects.all()
+    # Get all suppliers ordered by name and paginate them
+    supplier_list = Supplier.objects.all().order_by('supplier_name')
+    paginator = Paginator(supplier_list, 10)  # Show 10 suppliers per page
+    page_number = request.GET.get('page')
+    suppliers = paginator.get_page(page_number)
+    
     return render(request, 'purchaseorder.html', {'suppliers': suppliers})
-@csrf_exempt
-def create_supplier_ajax(request):
+
+def create_supplier(request):
     if request.method == 'POST':
         try:
-            data = json.loads(request.body)
-            supplier = Supplier.objects.create(
-                supplier_name=data.get('supplier_name'),
-                company=data.get('company'),
-                contact_person=data.get('contact_person'),
-                email=data.get('email'),
-                phone=data.get('phone'),
-                address=data.get('address'),
-                # city=data.get('city'),
-                # state=data.get('state'),
-                # zip_code=data.get('zip_code'),
-                # country=data.get('country'),
-                # tax_id=data.get('tax_id'),
-                # notes=data.get('notes'),
-                status=data.get('is_active', True)
-            )
-            return JsonResponse({
-                'message': 'Supplier added successfully!', 
-                # 'supplier_id': supplier.id
-            }, status=201)
+            supplier_id = request.POST.get('supplier_id')
+            
+            if supplier_id:  # Update existing supplier
+                supplier = get_object_or_404(Supplier, pk=supplier_id)
+                supplier.name = request.POST.get('name')
+                supplier.company = request.POST.get('company')
+                supplier.contact_person = request.POST.get('contact_person')
+                supplier.email = request.POST.get('email')
+                supplier.phone = request.POST.get('phone')
+                supplier.address = request.POST.get('address')
+                supplier.is_active = request.POST.get('status') == 'active'
+                supplier.save()
+                messages.success(request, "Supplier updated successfully.")
+            else:  # Create new supplier
+                Supplier.objects.create(
+                    name=request.POST.get('name'),
+                    company=request.POST.get('company'),
+                    contact_person=request.POST.get('contact_person'),
+                    email=request.POST.get('email'),
+                    phone=request.POST.get('phone'),
+                    address=request.POST.get('address'),
+                    is_active=request.POST.get('status') == 'active'
+                )
+                messages.success(request, "Supplier created successfully.")
+            
+            return redirect('purchaseorder_view')
+            
         except Exception as e:
-            return JsonResponse({'error': str(e)}, status=400)
+            messages.error(request, f"Error: {str(e)}")
+            return redirect('purchaseorder_view')
 
-@csrf_exempt
-def update_supplier_ajax(request):
-    if request.method == 'PUT':
+    # If not POST, show the form
+    return redirect('purchaseorder_view')
+
+def edit_supplier(request, pk):
+    supplier = get_object_or_404(Supplier, pk=pk)
+    
+    if request.method == 'POST':
         try:
-            data = json.loads(request.body)
-            supplier_id = data.get('supplier_id')
-            if not supplier_id:
-                return JsonResponse({'error': 'Supplier ID is required'}, status=400)
-                
-            supplier = Supplier.objects.get(id=supplier_id)
-            
-            fields = [
-                'supplier_name', 'company', 'contact_person', 'email', 'phone',
-                'address', 'city', 'state', 'zip_code', 'country', 'tax_id', 'notes'
-            ]
-            
-            for field in fields:
-                if field in data:
-                    setattr(supplier, field, data[field])
-            
-            if 'is_active' in data:
-                supplier.is_active = data['is_active']
-            
+            supplier.name = request.POST.get('name')
+            supplier.company = request.POST.get('company')
+            supplier.contact_person = request.POST.get('contact_person')
+            supplier.email = request.POST.get('email')
+            supplier.phone = request.POST.get('phone')
+            supplier.address = request.POST.get('address')
+            supplier.is_active = request.POST.get('status') == 'active'
             supplier.save()
             
-            return JsonResponse({
-                'message': 'Supplier updated successfully!', 
-                'supplier_id': supplier.id
-            })
-        except Supplier.DoesNotExist:
-            return JsonResponse({'error': 'Supplier not found'}, status=404)
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=400)        
-
-@csrf_exempt
-def delete_supplier_ajax(request):
-    if request.method == 'DELETE':
-        try:
-            data = json.loads(request.body)
-            supplier_id = data.get('supplier_id')
-            if not supplier_id:
-                return JsonResponse({'error': 'Supplier ID is required'}, status=400)
-                
-            supplier = Supplier.objects.get(id=supplier_id)
-            supplier.delete()
+            messages.success(request, "Supplier updated successfully.")
+            return redirect('purchaseorder_view')
             
-            return JsonResponse({
-                'message': 'Supplier deleted successfully!'
-            })
-        except Supplier.DoesNotExist:
-            return JsonResponse({'error': 'Supplier not found'}, status=404)
         except Exception as e:
-            return JsonResponse({'error': str(e)}, status=400)
+            messages.error(request, f"Error: {str(e)}")
+            return redirect('purchaseorder_view')
 
+    # If not POST, show the form
+    return redirect('purchaseorder_view')
 
+def delete_supplier(request, pk):
+    supplier = get_object_or_404(Supplier, pk=pk)
+    
+    if request.method == 'POST':
+        try:
+            supplier.delete()
+            messages.success(request, "Supplier deleted successfully.")  
+            return redirect('purchaseorder_view')
+            
+        except Exception as e:
+            messages.error(request, f"Error: {str(e)}")
+            return redirect('purchaseorder_view')
+
+    # If not POST, show the confirmation
+    return redirect('purchaseorder_view')
 
 @login_required
 def add_to_cart(request, item_id):

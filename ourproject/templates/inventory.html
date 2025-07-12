@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -44,23 +43,67 @@
         .out-of-stock { background-color: #fee2e2; color: #b91c1c; }
         .in-stock { background-color: #dcfce7; color: #166534; }
 
-       
-/* You can define these as Tailwind utility classes or custom */
-        .highlight-row {
-        animation: blink-highlight 2s ease-in-out;
+        /* Mobile table styles */
+        @media (max-width: 768px) {
+            table { 
+                width: 100%;
+                border-collapse: collapse;
+            }
+            /* Hide table headers */
+            table thead {
+                display: none;
+            }
+            /* Make table rows stack vertically */
+            table tr {
+                display: block;
+                margin-bottom: 1rem;
+                border: 1px solid #e5e7eb;
+                border-radius: 0.5rem;
+            }
+            /* Display table cells as block elements */
+            table td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.5rem 1rem;
+                text-align: right;
+                border-bottom: 1px solid #e5e7eb;
+            }
+            /* Add data-label pseudo-elements */
+            table td:before {
+                content: attr(data-label);
+                font-weight: bold;
+                text-align: left;
+                margin-right: 1rem;
+            }
+            /* Remove border from last cell */
+            table td:last-child {
+                border-bottom: 0;
+            }
+            /* Special styling for action buttons */
+            .actions-cell {
+                justify-content: flex-end;
+                gap: 0.5rem;
+            }
+            .actions-cell:before {
+                display: none;
+            }
         }
 
-
+        /* Highlight animation */
+        .highlight-row {
+            animation: blink-highlight 2s ease-in-out;
+        }
         
-tr:target {
-  scroll-margin-top: 80px;
-  animation: blink-highlight 1.5s ease-in-out;
-}
-@keyframes blink-highlight {
-  0% { background-color: #fef9c3; } /* yellow-100 */
-  100% { background-color: transparent; }
-}
-
+        tr:target {
+            scroll-margin-top: 80px;
+            animation: blink-highlight 1.5s ease-in-out;
+        }
+        
+        @keyframes blink-highlight {
+            0% { background-color: #fef9c3; } /* yellow-100 */
+            100% { background-color: transparent; }
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
@@ -68,8 +111,13 @@ tr:target {
     <!-- Navigation -->
     <nav class="bg-primary text-white">
         <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-            <div class="text-2xl font-bold"><i class="fas fa-clinic-medical"></i> Pharmacy Pro</div>
-            <div class="space-x-4 hidden md:flex">
+            <div class="text-xl md:text-2xl font-bold"><i class="fas fa-clinic-medical"></i> Pharmacy Pro</div>
+            <div class="md:hidden">
+                <button id="mobile-menu-button" class="text-white focus:outline-none">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            <div class="hidden md:flex space-x-4">
                 <a href="#" class="hover:underline">Dashboard</a>
                 <a href="#" class="hover:underline">POS</a>
                 <a href="#" class="hover:underline">Inventory</a>
@@ -77,10 +125,18 @@ tr:target {
                 <a href="#" class="underline">Medicine</a>
             </div>
         </div>
+        <!-- Mobile menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-darkblue px-4 py-2">
+            <a href="#" class="block py-2 hover:underline">Dashboard</a>
+            <a href="#" class="block py-2 hover:underline">POS</a>
+            <a href="#" class="block py-2 hover:underline">Inventory</a>
+            <a href="#" class="block py-2 hover:underline">Customer</a>
+            <a href="#" class="block py-2 underline">Medicine</a>
+        </div>
     </nav>
 
     <!-- Main Content -->
-    <main class="flex-grow max-w-7xl mx-auto p-4">
+    <main class="w-full mx-auto p-4">
         <!-- Message Display -->
         {% if messages %}
             <div class="mb-4">
@@ -97,13 +153,13 @@ tr:target {
         {% endif %}
 
         <!-- Action Buttons -->
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold">Inventory List</h2>
-            <div class="flex gap-2">
-                <button id="add-item-btn" class="bg-primary text-white px-4 py-2 rounded hover:bg-darkblue">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+            <h2 class="text-xl sm:text-2xl font-bold">Inventory List</h2>
+            <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+                <button id="add-item-btn" class="bg-primary text-white px-3 py-2 sm:px-4 sm:py-2 rounded hover:bg-darkblue w-full sm:w-auto">
                     <i class="fas fa-plus mr-1"></i> Add Item
                 </button>
-                <button id="add-category-btn" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                <button id="add-category-btn" class="bg-green-600 text-white px-3 py-2 sm:px-4 sm:py-2 rounded hover:bg-green-700 w-full sm:w-auto">
                     <i class="fas fa-tag mr-1"></i> Add Category
                 </button>
             </div>
@@ -112,90 +168,68 @@ tr:target {
         <!-- Inventory Table -->
         <div class="bg-white shadow rounded overflow-x-auto">
             <table class="min-w-full">
-                <thead class="bg-gray-100">
+                <thead class="bg-gray-100 hidden md:table-header-group">
                     <tr id="item_{{ item.id }}">
                         <th class="text-left px-6 py-3 text-xs font-bold uppercase">Image</th>
                         <th class="text-left px-6 py-3 text-xs font-bold uppercase">Name</th>
                         <th class="text-left px-6 py-3 text-xs font-bold uppercase">Category</th>
                         <th class="text-left px-6 py-3 text-xs font-bold uppercase">Stock</th>
                         <th class="text-left px-6 py-3 text-xs font-bold uppercase">Type</th>
-
-
                         <th class="text-left px-6 py-3 text-xs font-bold uppercase">Price</th>
- 
                         <th class="text-right px-6 py-3 text-xs font-bold uppercase">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for item in items %}
-                    <tr   class="border-b hover:bg-gray-50">
-                        <td class="px-6 py-4">
+                    <tr class="border-b hover:bg-gray-50">
+                        <td data-label="Image" class="px-6 py-4">
                             {% if item.item_photo %}
                             <img src="{{ item.item_photo.url }}" alt="item image" class="w-10 h-10 rounded object-cover">
                             {% else %}<span class="text-gray-400 text-xs">No image</span>{% endif %}
                         </td>
-                        <td class="px-6 py-4">{{ item.item_name }}</td>
-                        <td class="px-6 py-4">{{ item.category.name }}</td>
-                        <td class="px-6 py-4">
-                        <span class="font-semibold text-gray-800">{{ item.item_quantity }}</span>
-                        <span class="text-sm text-gray-500">/ {{ item.stock_minimum }}</span>
+                        <td data-label="Name" class="px-6 py-4">{{ item.item_name }}</td>
+                        <td data-label="Category" class="px-6 py-4">{{ item.category.name }}</td>
+                        <td data-label="Stock" class="px-6 py-4">
+                            <span class="font-semibold text-gray-800">{{ item.item_quantity }}</span>
+                            <span class="text-sm text-gray-500">/ {{ item.stock_minimum }}</span>
                         </td>
-
-                        <td class="px-6 py-4">
-    
-                        {% if item.is_limited %}
-                            <span class="ml-2 text-xs text-red-600 font-semibold px-2 py-1 bg-red-100 rounded-full">Limited</span>
-                        {% else %}
-                            <span class="ml-2 text-xs text-green-600 font-medium px-2 py-1 bg-green-100 rounded-full">Unlimited</span>
-                        {% endif %}
-                        </td>
-                        <td>
-<!-- Inside Actions <td> -->
-                            {% if item.days_left <= 0 %}
-                            <form method="POST" action="{% url 'send_to_promotion' %}" style="display: inline;">
-                                {% csrf_token %}
-                                <input type="hidden" name="item_id" value="{{ item.id }}">
-                                <button type="submit"
-                                    class="text-sm bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600"
-                                    onclick="return confirm('Send this expired item to promotion area?');">
-                                    Promote
-                                </button>
-                            </form>
+                        <td data-label="Type" class="px-6 py-4">
+                            {% if item.is_limited %}
+                                <span class="ml-2 text-xs text-red-600 font-semibold px-2 py-1 bg-red-100 rounded-full">Limited</span>
+                            {% else %}
+                                <span class="ml-2 text-xs text-green-600 font-medium px-2 py-1 bg-green-100 rounded-full">Unlimited</span>
                             {% endif %}
                         </td>
+                        <td data-label="Price" class="px-6 py-4">${{ item.item_price|floatformat:2 }}</td>
+                        <td class="text-right px-6 py-4 actions-cell">
+                            <!-- Edit -->
+                            <button class="text-primary hover:text-secondary mr-3 edit-btn"
+                                data-id="{{ item.id }}"
+                                data-name="{{ item.item_name }}"
+                                data-category="{{ item.category.id }}"
+                                data-quantity="{{ item.item_quantity }}"
+                                data-price="{{ item.item_price }}"
+                                data-purchase-price="{{ item.purcharse_price }}"
+                                data-stock-min="{{ item.stock_minimum }}"
+                                data-exp-date="{{ item.exp_date|date:'Y-m-d' }}"
+                                data-brand="{{ item.brand_name }}"
+                                data-batch="{{ item.batch_number }}"
+                                data-description="{{ item.item_description }}"
+                                data-max-qty="{{ item.max_quantity }}"
+                                data-is-limited="{{ item.is_limited|yesno:'true,false' }}"
+                                data-photo-url="{% if item.item_photo %}{{ item.item_photo.url }}{% endif %}">
+                                <i class="fas fa-edit"></i>
+                            </button>
 
-                        <td class="px-6 py-4">${{ item.item_price|floatformat:2 }}</td>
-
-<td class="text-right">
-    <!-- Edit -->
-    <button class="text-primary hover:text-secondary mr-3 edit-btn"
-        data-id="{{ item.id }}"
-        data-name="{{ item.item_name }}"
-        data-category="{{ item.category.id }}"
-        data-quantity="{{ item.item_quantity }}"
-        data-price="{{ item.item_price }}"
-        data-purchase-price="{{ item.purcharse_price }}"
-        data-stock-min="{{ item.stock_minimum }}"
-
-        data-exp-date="{{ item.exp_date|date:'Y-m-d' }}"
-        data-brand="{{ item.brand_name }}"
-        data-batch="{{ item.batch_number }}"
-        data-description="{{ item.item_description }}"
-        data-max-qty="{{ item.max_quantity }}"
-        data-is-limited="{{ item.is_limited|yesno:'true,false' }}"
-        data-photo-url="{% if item.item_photo %}{{ item.item_photo.url }}{% endif %}">
-        <i class="fas fa-edit"></i>
-    </button>
-
-    <!-- Delete -->
-    <button class="text-red-600 hover:text-red-900 delete-btn" data-id="{{ item.id }}">
-        <i class="fas fa-trash"></i>
-
-</td>
+                            <!-- Delete -->
+                            <button class="text-red-600 hover:text-red-900 delete-btn" data-id="{{ item.id }}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="6" class="text-center text-gray-500 py-4">No items found.</td>
+                        <td colspan="7" class="text-center text-gray-500 py-4">No items found.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -204,126 +238,124 @@ tr:target {
     </main>
 
     <!-- Delete modal -->
-<!-- Delete Modal -->
-<div id="delete-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-6 max-w-sm w-full">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Confirm Deletion</h3>
-        <p class="text-gray-600 mb-6">Are you sure you want to delete this item?</p>
-        <form method="POST" id="delete-form">
-            {% csrf_token %}
-            <input type="hidden" name="delete_item" id="delete-item-id">
-            <div class="flex justify-end space-x-3">
-                <button type="button" id="cancel-delete"
-                        class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
-                    Cancel
-                </button>
-                <button type="submit"
-                        class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700">
-                    Delete
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<div id="item-modal" class="hidden fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl modal-content p-6">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-semibold text-gray-800" id="modal-title">Add New Medication</h2>
-            <button id="close-modal" class="text-gray-500 hover:text-red-600 text-2xl">&times;</button>
+    <div id="delete-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Confirm Deletion</h3>
+            <p class="text-gray-600 mb-6">Are you sure you want to delete this item?</p>
+            <form method="POST" id="delete-form">
+                {% csrf_token %}
+                <input type="hidden" name="delete_item" id="delete-item-id">
+                <div class="flex justify-end space-x-3">
+                    <button type="button" id="cancel-delete"
+                            class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700">
+                        Delete
+                    </button>
+                </div>
+            </form>
         </div>
-        <form id="item-form" method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            <input type="hidden" name="save_item" value="true">
-            <input type="hidden" name="item_id" id="item-id">
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Item Name *</label>
-                    <input type="text" name="item_name" id="name" required class="form-input w-full rounded border border-gray-300">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Category *</label>
-                    <select name="category" id="category" required class="form-input w-full rounded border border-gray-300">
-                        <option value="">Select category</option>
-                        {% for category in categories %}
-                            <option value="{{ category.id }}">{{ category.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Current Stock *</label>
-                    <input type="number" name="item_quantity" id="current-stock" min="0" required class="form-input w-full rounded border border-gray-300">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Price *</label>
-                    <input type="number" name="item_price" id="price" step="0.01" min="0" required class="form-input w-full rounded border border-gray-300">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Purchase Price</label>
-                    <input type="number" name="purcharse_price" id="purchase-price" step="0.01" min="0" class="form-input w-full rounded border border-gray-300">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Low Stock Threshold</label>
-                    <input type="number" name="stock_minimum" id="stock-min" min="1" value="10" class="form-input w-full rounded border border-gray-300">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Expire Date *</label>
-                    <input type="date" name="exp_date" id="exp-date" required class="form-input w-full rounded border border-gray-300">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Brand Name</label>
-                    <input type="text" name="brand_name" id="brand" class="form-input w-full rounded border border-gray-300">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Batch Number</label>
-                    <input type="text" name="batch_number" id="batch" class="form-input w-full rounded border border-gray-300">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Image *</label>
-                    <input type="file" name="item_photo" id="image" accept="image/*" class="form-input w-full">
-                    <img id="image-preview" src="#" alt="Preview" class="image-preview mt-2">
-                </div>
-            </div>
-
-
-<div class="my-4">
-                <label class="flex items-center space-x-2">
-                    <input type="checkbox" id="is-limited" name="is_limited" class="form-checkbox">
-                    <span class="text-sm text-gray-700">Limit per customer</span>
-                </label>
-            </div>
-            <div id="max-qty-container" class="mb-4 hidden">
-                <label class="block text-sm font-medium text-gray-700">Max Quantity per Customer</label>
-                <input type="number" id="max-qty" name="max_quantity" value="5" min="1" class="form-input w-full rounded border border-gray-300">
-            </div>
-
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700">Description</label>
-                <textarea name="item_description" id="description" rows="3" class="form-input w-full rounded border border-gray-300"></textarea>
-            </div>
-
-            <div class="flex justify-end gap-2">
-                <button type="button" id="cancel-btn" class="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">Cancel</button>
-                <button type="submit" class="bg-primary text-white px-4 py-2 rounded hover:bg-darkblue">Save</button>
-            </div>
-        </form>
     </div>
-</div>
 
-<!-- Category Modal -->
-    <div id="category-modal" class="hidden fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
-        <div class="bg-white p-6 rounded-lg max-w-md w-full">
+    <div id="item-modal" class="hidden fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl modal-content p-4 sm:p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold text-gray-800" id="modal-title">Add New Medication</h2>
+                <button id="close-modal" class="text-gray-500 hover:text-red-600 text-2xl">&times;</button>
+            </div>
+            <form id="item-form" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="save_item" value="true">
+                <input type="hidden" name="item_id" id="item-id">
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Item Name *</label>
+                        <input type="text" name="item_name" id="name" required class="form-input w-full rounded border border-gray-300 p-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Category *</label>
+                        <select name="category" id="category" required class="form-input w-full rounded border border-gray-300 p-2">
+                            <option value="">Select category</option>
+                            {% for category in categories %}
+                                <option value="{{ category.id }}">{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Current Stock *</label>
+                        <input type="number" name="item_quantity" id="current-stock" min="0" required class="form-input w-full rounded border border-gray-300 p-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Price *</label>
+                        <input type="number" name="item_price" id="price" step="0.01" min="0" required class="form-input w-full rounded border border-gray-300 p-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Purchase Price</label>
+                        <input type="number" name="purcharse_price" id="purchase-price" step="0.01" min="0" class="form-input w-full rounded border border-gray-300 p-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Low Stock Threshold</label>
+                        <input type="number" name="stock_minimum" id="stock-min" min="1" value="10" class="form-input w-full rounded border border-gray-300 p-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Expire Date *</label>
+                        <input type="date" name="exp_date" id="exp-date" required class="form-input w-full rounded border border-gray-300 p-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Brand Name</label>
+                        <input type="text" name="brand_name" id="brand" class="form-input w-full rounded border border-gray-300 p-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Batch Number</label>
+                        <input type="text" name="batch_number" id="batch" class="form-input w-full rounded border border-gray-300 p-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Image *</label>
+                        <input type="file" name="item_photo" id="image" accept="image/*" class="form-input w-full p-1">
+                        <img id="image-preview" src="#" alt="Preview" class="image-preview mt-2">
+                    </div>
+                </div>
+
+                <div class="my-4">
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" id="is-limited" name="is_limited" class="form-checkbox">
+                        <span class="text-sm text-gray-700">Limit per customer</span>
+                    </label>
+                </div>
+                <div id="max-qty-container" class="mb-4 hidden">
+                    <label class="block text-sm font-medium text-gray-700">Max Quantity per Customer</label>
+                    <input type="number" id="max-qty" name="max_quantity" value="5" min="1" class="form-input w-full rounded border border-gray-300 p-2">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700">Description</label>
+                    <textarea name="item_description" id="description" rows="3" class="form-input w-full rounded border border-gray-300 p-2"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-2">
+                    <button type="button" id="cancel-btn" class="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">Cancel</button>
+                    <button type="submit" class="bg-primary text-white px-4 py-2 rounded hover:bg-darkblue">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Category Modal -->
+    <div id="category-modal" class="hidden fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50 p-4">
+        <div class="bg-white p-4 sm:p-6 rounded-lg max-w-md w-full">
             <h2 class="text-xl font-semibold mb-4">Add Category</h2>
             <form method="POST">
                 {% csrf_token %}
                 <input type="hidden" name="save_category" value="true">
                 <div class="mb-4">
-                    <label>Category Name</label>
+                    <label class="block text-sm font-medium text-gray-700">Category Name</label>
                     <input type="text" name="category_name" class="form-input w-full border p-2 rounded" required>
                 </div>
                 <div class="mb-4">
-                    <label>Description</label>
+                    <label class="block text-sm font-medium text-gray-700">Description</label>
                     <textarea name="category_description" rows="3" class="form-input w-full border p-2 rounded"></textarea>
                 </div>
                 <div class="flex justify-end gap-2">
@@ -340,31 +372,66 @@ tr:target {
     </footer>
 
     <script>
+        // Mobile menu toggle
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
 
-
-
-
-
+        // Modal elements
         const itemModal = document.getElementById('item-modal');
         const categoryModal = document.getElementById('category-modal');
         const addItemBtn = document.getElementById('add-item-btn');
         const addCategoryBtn = document.getElementById('add-category-btn');
         const cancelBtn = document.getElementById('cancel-btn');
         const cancelCategoryBtn = document.getElementById('cancel-category-btn');
+        const closeModalBtn = document.getElementById('close-modal');
 
+        // Modal functions
         addItemBtn.addEventListener('click', () => {
             itemModal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
         });
+        
         addCategoryBtn.addEventListener('click', () => {
             categoryModal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
         });
+        
         cancelBtn.addEventListener('click', () => {
             itemModal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
         });
+        
+        closeModalBtn.addEventListener('click', () => {
+            itemModal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        });
+        
         cancelCategoryBtn.addEventListener('click', () => {
             categoryModal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
         });
 
+        // Close modals when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target === itemModal) {
+                itemModal.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }
+            if (e.target === categoryModal) {
+                categoryModal.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }
+            if (e.target === deleteModal) {
+                deleteModal.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }
+        });
+
+        // Image preview
         document.getElementById('image').addEventListener('change', function (e) {
             const preview = document.getElementById('image-preview');
             const file = e.target.files[0];
@@ -381,71 +448,93 @@ tr:target {
         });
 
         // Edit Modal Load
-document.querySelectorAll('.edit-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        document.getElementById('modal-title').textContent = 'Edit Medication';
-        document.getElementById('item-id').value = btn.dataset.id;
-        document.getElementById('name').value = btn.dataset.name;
-        document.getElementById('category').value = btn.dataset.category;
-        document.getElementById('current-stock').value = btn.dataset.quantity;
-        document.getElementById('price').value = btn.dataset.price;
-        document.getElementById('purchase-price').value = btn.dataset.purchasePrice || '';
-        document.getElementById('exp-date').value = btn.dataset.expDate;
-        document.getElementById('brand').value = btn.dataset.brand || '';
-        document.getElementById('batch').value = btn.dataset.batch || '';
-        document.getElementById('stock-min').value = btn.dataset.stockMin;
-        document.getElementById('max-qty').value = btn.dataset.maxQty;
-        document.getElementById('is-limited').checked = btn.dataset.isLimited === 'true';
-        document.getElementById('description').value = btn.dataset.description || '';
-        if (btn.dataset.photoUrl) {
-            const preview = document.getElementById('image-preview');
-            preview.src = btn.dataset.photoUrl;
-            preview.style.display = 'block';
-        }
-        itemModal.classList.remove('hidden');
-    });
-});
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.getElementById('modal-title').textContent = 'Edit Medication';
+                document.getElementById('item-id').value = btn.dataset.id;
+                document.getElementById('name').value = btn.dataset.name;
+                document.getElementById('category').value = btn.dataset.category;
+                document.getElementById('current-stock').value = btn.dataset.quantity;
+                document.getElementById('price').value = btn.dataset.price;
+                document.getElementById('purchase-price').value = btn.dataset.purchasePrice || '';
+                document.getElementById('exp-date').value = btn.dataset.expDate;
+                document.getElementById('brand').value = btn.dataset.brand || '';
+                document.getElementById('batch').value = btn.dataset.batch || '';
+                document.getElementById('stock-min').value = btn.dataset.stockMin;
+                document.getElementById('max-qty').value = btn.dataset.maxQty;
+                document.getElementById('is-limited').checked = btn.dataset.isLimited === 'true';
+                document.getElementById('description').value = btn.dataset.description || '';
+                
+                // Toggle max quantity container based on is_limited
+                const maxQtyContainer = document.getElementById('max-qty-container');
+                if (btn.dataset.isLimited === 'true') {
+                    maxQtyContainer.classList.remove('hidden');
+                } else {
+                    maxQtyContainer.classList.add('hidden');
+                }
+                
+                if (btn.dataset.photoUrl) {
+                    const preview = document.getElementById('image-preview');
+                    preview.src = btn.dataset.photoUrl;
+                    preview.style.display = 'block';
+                }
+                
+                itemModal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            });
+        });
 
+        // Toggle max quantity field
+        document.getElementById('is-limited').addEventListener('change', function() {
+            const maxQtyContainer = document.getElementById('max-qty-container');
+            if (this.checked) {
+                maxQtyContainer.classList.remove('hidden');
+            } else {
+                maxQtyContainer.classList.add('hidden');
+            }
+        });
 
-// Delete Button JS
-document.querySelectorAll('.delete-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        const modal = document.getElementById('delete-modal');
-        const input = document.getElementById('delete-item-id');
-        if (modal && input) {
-            input.value = btn.dataset.id;
-            modal.classList.remove('hidden');
-        } else {
-            console.error('Delete modal or input not found!');
-        }
-    });
-});
+        // Delete Button JS
+        const deleteModal = document.getElementById('delete-modal');
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const input = document.getElementById('delete-item-id');
+                if (deleteModal && input) {
+                    input.value = btn.dataset.id;
+                    deleteModal.classList.remove('hidden');
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    console.error('Delete modal or input not found!');
+                }
+            });
+        });
 
-// Close delete modal
-document.getElementById('cancel-delete').addEventListener('click', () => {
-    const modal = document.getElementById('delete-modal');
-    if (modal) modal.classList.add('hidden');
-});
+        // Close delete modal
+        document.getElementById('cancel-delete').addEventListener('click', () => {
+            deleteModal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        });
 
-    
-document.addEventListener("DOMContentLoaded", function () {
-    const urlParams = new URLSearchParams(window.location.search);
-    const highlightId = urlParams.get("highlight_id");
+        // Highlight row when coming from another page
+        document.addEventListener("DOMContentLoaded", function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const highlightId = urlParams.get("highlight_id");
 
-    if (highlightId) {
-        const hash = `#item_${highlightId}`;
-        const target = document.querySelector(hash);
-        if (target) {
-            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (highlightId) {
+                const hash = `#item_${highlightId}`;
+                const target = document.querySelector(hash);
+                if (target) {
+                    // Scroll to the element
+                    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-            // highlight effect
-            target.classList.add('ring-2', 'ring-blue-500', 'rounded-md');
-            setTimeout(() => {
-                target.classList.remove('ring-2', 'ring-blue-500', 'rounded-md');
-            }, 3000);
-        }
-    }
-});
-</script>
+                    // Highlight effect
+                    target.classList.add('ring-2', 'ring-blue-500', 'rounded-md');
+                    setTimeout(() => {
+                        target.classList.remove('ring-2', 'ring-blue-500', 'rounded-md');
+                    }, 3000);
+                }
+            }
+        });
+    </script>
 </body>
 </html>

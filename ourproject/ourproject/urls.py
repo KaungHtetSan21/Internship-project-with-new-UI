@@ -44,10 +44,15 @@ urlpatterns = [
   
     path('medicine/edit/<int:item_id>/', edit_item_view, name='edit_item'), 
 
-    path('purchaseorder/', purchaseorder_view, name='purchaseorder_view'),
-    path('create_supplier_ajax/', create_supplier_ajax, name='create_supplier_ajax'),
-    path('update_supplier_ajax/', update_supplier_ajax, name='update_supplier_ajax'),
-    path('delete_supplier_ajax/', delete_supplier_ajax, name='delete_supplier_ajax'),
+    
+    # path('purchase-order/',purchaseorder_view, name='purchaseorder_view'),
+    # path('supplier/add/', create_supplier, name='create_supplier'),
+    # path('supplier/edit/<int:pk>/',edit_supplier, name='edit_supplier'),
+    # path('supplier/delete/<int:pk>/',delete_supplier, name='delete_supplier'),
+    path('suppliers/',purchaseorder_view, name='purchaseorder_view'),
+    path('suppliers/create/',create_supplier, name='create_supplier'),
+    path('suppliers/edit/<int:pk>/',edit_supplier, name='edit_supplier'),
+    path('suppliers/delete/<int:pk>/',delete_supplier, name='delete_supplier'),
 
     path('order/add/<int:item_id>/', add_to_cart, name='add_to_cart'),
     path('order/increase/<int:item_id>/', increase_quantity, name='increase_quantity'),
