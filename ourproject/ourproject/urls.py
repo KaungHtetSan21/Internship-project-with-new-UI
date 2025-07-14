@@ -30,8 +30,8 @@ urlpatterns = [
     path('register_customer_ajax/', register_customer_ajax, name='register_customer_ajax'),
 
     path('admin-dashboard/', admin_dashboard, name='admin_dashboard'),
-    path('pharmacist-dashboard/', pharmacist_dashboard, name='pharmacist_dashboard'),
-    path('customer-dashboard/', customer_dashboard, name='customer_dashboard'),
+    path('pharmacist-dashboard/', pharmacist_dashboard_view, name='pharmacist_dashboard'),
+    path('customer-dashboard/', customer_dashboard_view, name='customer_dashboard'),
     path('inventory_view/', inventory_view, name= 'inventory_view'),
     path('send_to_promotion/', send_to_promotion, name='send_to_promotion'),
     path('order_view/', order_view, name= 'order_view'),
@@ -41,7 +41,7 @@ urlpatterns = [
 
     path('report_view/', report_view, name= 'report_view'),
     path('medicine_list/', medicine_list, name= 'medicine_list'),
-  
+ 
     path('medicine/edit/<int:item_id>/', edit_item_view, name='edit_item'), 
 
     

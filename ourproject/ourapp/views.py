@@ -203,7 +203,7 @@ def login_view(request):
             elif role == 'pharmacist':
                 return redirect('pharmacist_dashboard')
             elif role == 'customer':
-                return redirect('customer_dashboard')
+                return redirect('medicine_list')
             else:
                 messages.error(request, 'Unknown user role.')
                 return redirect('login')
@@ -250,17 +250,143 @@ def admin_dashboard(request):
         return HttpResponseForbidden("Admins only.")
     return render(request, 'admin/dashboard.html')
 
-@login_required
-def pharmacist_dashboard(request):
-    if request.user.userprofile.role != 'pharmacist':
-        return HttpResponseForbidden("Pharmacists only.")
-    return render(request, 'pharmacist/dashboard.html')
+
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseForbidden
+from django.shortcuts import render
+from .models import Sale, SaleItem, Item
+import datetime
+from django.db.models import Sum
+from django.db.models.functions import Coalesce
+
 
 @login_required
-def customer_dashboard(request):
-    if request.user.userprofile.role != 'customer':
-        return HttpResponseForbidden("Customers only.")
-    return render(request, 'customer/dashboard.html')
+def pharmacist_dashboard_view(request):
+    if request.user.userprofile.role != 'pharmacist':
+        return HttpResponseForbidden("Unauthorized")
+
+    # ✅ Total Online Orders
+    total_orders = Sale.objects.count()
+
+    # ✅ Low Stock
+    low_stock_count = Item.objects.filter(item_quantity__lt=10).count()
+    low_stock_items = Item.objects.filter(item_quantity__lt=10).order_by('item_quantity')
+
+    # ✅ Expiring Items
+    today = datetime.date.today()
+    expiring_items = Item.objects.filter(exp_date__lte=today + datetime.timedelta(days=90)).order_by('exp_date')
+
+    # ✅ Recent Online Orders
+    recent_orders = (
+        SaleItem.objects
+        .select_related('item', 'sale', 'sale__user')
+        .order_by('-sale__created_date')[:5]
+    )
+
+    # ✅ POS Orders (from Cart)
+    pos_orders = Cart.objects.filter(payment_method__in=['cash', 'mobile', 'print'])
+    pos_total = pos_orders.count()
+    pos_revenue = pos_orders.aggregate(total=Coalesce(Sum('total_amount'), 0))['total']
+
+    # ✅ Online Orders (from Sale)
+    online_orders = Sale.objects.exclude(user__userprofile__role='pharmacist')
+    online_total = online_orders.count()
+    online_revenue = online_orders.aggregate(total=Coalesce(Sum('total_amount'), 0))['total']
+
+    # ✅ Dashboard Stats
+    dashboard_stats = [
+        {
+            'label': 'Total Orders',
+            'icon': 'fa-prescription-bottle-alt',
+            'bg': 'bg-blue-100',
+            'text': 'text-blue-600',
+            'value': total_orders
+        },
+        {
+            'label': 'POS Orders',
+            'icon': 'fa-cash-register',
+            'bg': 'bg-green-100',
+            'text': 'text-green-600',
+            'value': pos_total
+        },
+        {
+            'label': 'Online Orders',
+            'icon': 'fa-globe',
+            'bg': 'bg-purple-100',
+            'text': 'text-purple-600',
+            'value': online_total
+        },
+        {
+            'label': 'POS Revenue',
+            'icon': 'fa-dollar-sign',
+            'bg': 'bg-green-100',
+            'text': 'text-green-600',
+            'value': f"{pos_revenue} Ks"
+        },
+        {
+            'label': 'Online Revenue',
+            'icon': 'fa-credit-card',
+            'bg': 'bg-yellow-100',
+            'text': 'text-yellow-600',
+            'value': f"{online_revenue} Ks"
+        },
+        {
+            'label': 'Low Stock Items',
+            'icon': 'fa-exclamation-triangle',
+            'bg': 'bg-red-100',
+            'text': 'text-red-600',
+            'value': low_stock_count
+        },
+    ]
+
+    context = {
+        'dashboard_stats': dashboard_stats,
+        'low_stock_items': low_stock_items,
+        'expiring_items': expiring_items,
+        'recent_orders': recent_orders,
+    }
+
+    return render(request, 'pharmacist/dashboard.html', context)
+
+@login_required
+def customer_dashboard_view(request):
+    user = request.user
+
+    cart = Cart.objects.filter(user=user).last()
+    cart_products = CartProduct.objects.filter(cart=cart) if cart else []
+
+    total_orders = Sale.objects.filter(user=user).count()
+    total_items = SaleItem.objects.filter(sale__user=user).aggregate(total=Coalesce(Sum('quantity'), 0))['total']
+    total_spent = Sale.objects.filter(user=user).aggregate(spent=Coalesce(Sum('total_amount'), 0))['spent']
+
+    dashboard_stats = [
+        {
+            'label': 'Total Orders',
+            'icon': 'fa-box',
+            'color': 'primary',
+            'value': total_orders
+        },
+        {
+            'label': 'Items Purchased',
+            'icon': 'fa-shopping-basket',
+            'color': 'success',
+            'value': total_items
+        },
+        {
+            'label': 'Total Spent',
+            'icon': 'fa-dollar-sign',
+            'color': 'warning',
+            'value': f"{total_spent} Ks"
+        },
+    ]
+
+    context = {
+        'dashboard_stats': dashboard_stats,
+        'cart': cart,
+        'cart_products': cart_products,
+        # any other context data needed
+    }
+    return render(request, 'customer_dashboard.html', context)
 
 
 
@@ -288,21 +414,28 @@ def report_view(request):
         return HttpResponseForbidden("Pharmacists only.")
 
     # ✅ All Sales
-    all_sales = Sale.objects.all()
+    all_sales = Cart.objects.all()
     total_transactions = all_sales.count()
     total_revenue = all_sales.aggregate(total=Coalesce(Sum('total_amount'), 0))['total']
 
     # ✅ Items Sold (from SaleItem)
-    items_sold = SaleItem.objects.aggregate(total_qty=Coalesce(Sum('quantity'), 0))['total_qty']
+    items_sold = CartProduct.objects.aggregate(total_qty=Coalesce(Sum('qty'), 0))['total_qty']
 
     # ✅ Avg Margin Calculation (dynamic)
-    sale_items = SaleItem.objects.annotate(
+
+
+    cart_products = CartProduct.objects.annotate(
         margin=ExpressionWrapper(
             (F('price') - F('item__purcharse_price')) / F('item__purcharse_price') * 100,
             output_field=FloatField()
         )
     )
-    avg_margin = round(sale_items.aggregate(avg=Coalesce(Sum('margin') / Count('id'), 0.0))['avg'], 2)
+
+    avg_margin = round(
+        cart_products.aggregate(
+            avg=Coalesce(Sum('margin') / Count('id'), 0.0)
+        )['avg'], 2
+    )
 
     # ✅ POS Summary
     pos_sales = Cart.objects.filter(payment_method__in=['cash', 'mobile', 'print'])
@@ -1011,9 +1144,19 @@ def medicine_list(request):
     })
 
 
+
+
+
 @login_required
 def place_order_view(request):
-    user = request.user
+    user = request.user 
+    name = request.GET['name']
+    phone = request.GET['phone']
+    address = request.GET['address']
+    print(name)
+    print(phone)
+    print(address)
+
 
     # ✅ Role check
     if not hasattr(user, 'userprofile') or user.userprofile.role != 'customer':
@@ -1032,6 +1175,9 @@ def place_order_view(request):
         sale = Sale.objects.create(
             invoice_no=f"INV-{timezone.now().strftime('%Y%m%d%H%M%S')}",
             user=user,
+            name =name,
+            phone =phone,
+            address =address,
             total_amount=cart.total_amount
         )
 
@@ -1066,7 +1212,15 @@ def place_order_view(request):
         messages.error(request, "No active cart found.")
         return redirect('medicine_list')
     
-
+# def kpaydemo_payment():
+#     if request.method == "GET":
+#         payment_success = True
+#         if payment_success:
+#             return 
+#         else:
+#         pass
+#         messages()
+#         return redirect('medicine_list')
     
 
 

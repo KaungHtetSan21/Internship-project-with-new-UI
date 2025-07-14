@@ -140,6 +140,10 @@ class CartProduct(models.Model):
 class Sale(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     invoice_no = models.CharField(max_length=100)
+    name = models.CharField(blank=True, null=True)
+    phone = models.CharField(blank=True, null=True)
+    address = models.CharField(blank=True, null=True)
+
     total_amount = models.PositiveIntegerField()
     created_date = models.DateTimeField(auto_now_add=True)
     def __str__(self):

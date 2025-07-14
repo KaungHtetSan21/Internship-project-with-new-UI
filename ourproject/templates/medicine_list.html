@@ -285,7 +285,10 @@
                                 
                                 <div class="dashboard-card p-3 h-100">
                                     <div class="text-center mb-3">
-                                        <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/b21cc3d5-0786-45a5-9127-6963e75799eb.png" alt="Vitamin D" class="product-img img-fluid">
+                                    {% if item.item_photo %}
+                                        <img src="{{ item.item_photo.url }}" alt="{{ item.item_name }}" class="product-img img-fluid">
+                                    {% else %}
+                                    <i class="fas fa-pills text-blue-500 text-4xl"></i>                                    {% endif %}
                                     </div>
                                     <h5 class="fw-semibold">{{ item.item_name }}</h5>
                                     
@@ -399,8 +402,8 @@
 
                     <!-- Checkout Tab -->
                     <div class="tab-pane fade" id="checkout" role="tabpanel">
-                        <form action="{% url 'place_order' %}" method="post">
-                        {% csrf_token %}
+                        <form action="{% url 'place_order' %}" method="get">
+                        <!-- {% csrf_token %} -->
                         <div class="row">
                             <div class="col-lg-7">
                                 <h5 class="mb-4">Checkout</h5>
@@ -409,20 +412,14 @@
                                     <h6 class="fw-semibold mb-3"><i class="fas fa-user me-2"></i>Contact Information</h6>
                                     <div class="row g-3">
                                         <div class="col-md-6">
-                                            <label class="form-label">First Name</label>
-                                            <input type="text" class="form-control" value="John">
+                                            <label class="form-label"> Name</label>
+                                            <input type="text" class="form-control" name="name" value="John">
                                         </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label">Last Name</label>
-                                            <input type="text" class="form-control" value="Doe">
-                                        </div>
-                                        <div class="col-12">
-                                            <label class="form-label">Email</label>
-                                            <input type="email" class="form-control" value="john.doe@example.com">
-                                        </div>
+
+
                                         <div class="col-12">
                                             <label class="form-label">Phone</label>
-                                            <input type="tel" class="form-control" value="(555) 123-4567">
+                                            <input type="tel" class="form-control" name="phone" value="(555) 123-4567">
                                         </div>
                                     </div>
                                 </div>
@@ -430,41 +427,24 @@
                                 <div class="dashboard-card p-4 mb-4">
                                     <h6 class="fw-semibold mb-3"><i class="fas fa-truck me-2"></i>Shipping Address</h6>
                                     <div class="form-check mb-3">
-                                        <input class="form-check-input" type="checkbox" id="same-as-billing" checked>
-                                        <label class="form-check-label" for="same-as-billing">
+                                        <input class="form-check-input" type="checkbox"  id="same-as-billing" checked>
+                                        <label class="form-check-label"  for="same-as-billing">
                                             Same as billing address
                                         </label>
                                     </div>
-                                    <div class="row g-3">
+                                     <div class="row g-3">
                                         <div class="col-12">
                                             <label class="form-label">Address</label>
-                                            <input type="text" class="form-control" value="123 Main St">
-                                        </div>
-                                        <div class="col-12">
-                                            <label class="form-label">Address 2 (Optional)</label>
-                                            <input type="text" class="form-control" placeholder="Apt, suite, etc.">
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label class="form-label">City</label>
-                                            <input type="text" class="form-control" value="New York">
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label class="form-label">State</label>
-                                            <select class="form-select">
-                                                <option>New York</option>
-                                                <option>California</option>
-                                                <option>Texas</option>
-                                                <!-- More states would be here -->
-                                            </select>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label class="form-label">ZIP Code</label>
-                                            <input type="text" class="form-control" value="10001">
-                                        </div>
-                                    </div>
+                                            <input type="text" class="form-control" name="address" value="123 Main St">
+                                        </div> 
+    
+                                       
+
+                                    </div> 
                                 </div>
-                                
-                                <div class="dashboard-card p-4">
+                                <button></button>
+
+                                <!-- <div class="dashboard-card p-4"> 
                                     <h6 class="fw-semibold mb-3"><i class="fas fa-credit-card me-2"></i>Payment Method</h6>
                                     <div class="form-check mb-3">
                                         <input class="form-check-input" type="radio" name="paymentMethod" id="creditCard" checked>
@@ -497,7 +477,7 @@
                                             Save payment information for next time
                                         </label>
                                     </div>
-                                </div>
+                                </div>  -->
                             </div>
                             
                             <div class="col-lg-5">

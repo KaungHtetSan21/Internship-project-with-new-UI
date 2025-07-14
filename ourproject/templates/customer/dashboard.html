@@ -226,7 +226,7 @@
                 </div>
 
                 <!-- Dashboard Widgets -->
-                <div class="row mb-4 g-3">
+                <!-- <div class="row mb-4 g-3">
                     <div class="col-md-6 col-lg-3">
                         <div class="dashboard-card p-3 bg-white h-100">
                             <div class="d-flex align-items-center">
@@ -279,8 +279,25 @@
                             </div>
                         </div>
                     </div>
+                </div> -->
+                <!-- Dashboard Cards Summary -->
+<div class="row mb-4">
+    {% for stat in dashboard_stats %}
+    <div class="col-md-4">
+        <div class="dashboard-card p-3 border-start border-3 border-{{ stat.color }}">
+            <div class="d-flex align-items-center">
+                <div class="me-3">
+                    <i class="fas {{ stat.icon }} fa-2x text-{{ stat.color }}"></i>
                 </div>
-
+                <div>
+                    <p class="mb-0 fw-semibold">{{ stat.label }}</p>
+                    <h5 class="fw-bold text-{{ stat.color }}">{{ stat.value }}</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
                 <!-- Recent Orders -->
                 <div class="dashboard-card p-4 mb-4 bg-white">
                     <div class="d-flex justify-content-between align-items-center mb-3">
