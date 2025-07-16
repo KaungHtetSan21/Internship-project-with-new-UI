@@ -203,7 +203,7 @@ def login_view(request):
             elif role == 'pharmacist':
                 return redirect('pharmacist_dashboard')
             elif role == 'customer':
-                return redirect('medicine_list')
+                return redirect('customer_dashboard')
             else:
                 messages.error(request, 'Unknown user role.')
                 return redirect('login')
@@ -251,21 +251,22 @@ def admin_dashboard(request):
     return render(request, 'admin/dashboard.html')
 
 
+
+
+
+
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseForbidden
 from django.shortcuts import render
 from .models import Sale, SaleItem, Item
 import datetime
-from django.db.models import Sum
-from django.db.models.functions import Coalesce
-
 
 @login_required
 def pharmacist_dashboard_view(request):
     if request.user.userprofile.role != 'pharmacist':
         return HttpResponseForbidden("Unauthorized")
 
-    # ✅ Total Online Orders
+    # ✅ Total Orders
     total_orders = Sale.objects.count()
 
     # ✅ Low Stock
@@ -276,11 +277,12 @@ def pharmacist_dashboard_view(request):
     today = datetime.date.today()
     expiring_items = Item.objects.filter(exp_date__lte=today + datetime.timedelta(days=90)).order_by('exp_date')
 
-    # ✅ Recent Online Orders
-    recent_orders = (
-        SaleItem.objects
-        .select_related('item', 'sale', 'sale__user')
-        .order_by('-sale__created_date')[:5]
+    # ✅ All Online Orders (instead of just 5)
+    online_orders_list = (
+        Sale.objects
+        .exclude(user__userprofile__role='pharmacist')
+        .select_related('user')
+        .order_by('-created_date')
     )
 
     # ✅ POS Orders (from Cart)
@@ -288,10 +290,9 @@ def pharmacist_dashboard_view(request):
     pos_total = pos_orders.count()
     pos_revenue = pos_orders.aggregate(total=Coalesce(Sum('total_amount'), 0))['total']
 
-    # ✅ Online Orders (from Sale)
-    online_orders = Sale.objects.exclude(user__userprofile__role='pharmacist')
-    online_total = online_orders.count()
-    online_revenue = online_orders.aggregate(total=Coalesce(Sum('total_amount'), 0))['total']
+    # ✅ Online Orders Summary
+    online_total = online_orders_list.count()
+    online_revenue = online_orders_list.aggregate(total=Coalesce(Sum('total_amount'), 0))['total']
 
     # ✅ Dashboard Stats
     dashboard_stats = [
@@ -343,10 +344,53 @@ def pharmacist_dashboard_view(request):
         'dashboard_stats': dashboard_stats,
         'low_stock_items': low_stock_items,
         'expiring_items': expiring_items,
-        'recent_orders': recent_orders,
+        'online_orders_list': online_orders_list,  # ✅ context key changed
     }
 
     return render(request, 'pharmacist/dashboard.html', context)
+
+@login_required
+def confirm_order_view(request, order_id):
+    if request.user.userprofile.role != 'pharmacist':
+        return HttpResponseForbidden()
+    try:
+        order = Sale.objects.get(id=order_id)
+        order.status = 'confirmed'
+        order.save()
+        Notification.objects.create(
+        recipient=order.user,
+        message=f"Your order {order.invoice_no} has been confirmed by the pharmacist."
+    )
+
+        messages.success(request, "Order confirmed successfully.")
+    except Sale.DoesNotExist:
+        messages.error(request, "Order not found.")
+    return redirect('pharmacist_dashboard')
+
+@login_required
+def cancel_order_view(request, order_id):
+    if request.user.userprofile.role != 'pharmacist':
+        return HttpResponseForbidden()
+    try:
+        order = Sale.objects.get(id=order_id)
+        order.status = 'cancelled'
+        order.save()
+        Notification.objects.create(
+        recipient=order.user,
+        message=f"Your order {order.invoice_no} has been cancelled by the pharmacist."
+    )
+        messages.warning(request, "Order cancelled.")
+    except Sale.DoesNotExist:
+        messages.error(request, "Order not found.")
+    return redirect('pharmacist_dashboard')
+
+@login_required
+def mark_notification_read(request, noti_id):
+    notification = get_object_or_404(Notification, id=noti_id, recipient=request.user)
+    notification.is_read = True
+    notification.save()
+    return redirect('customer_dashboard')  # or your desired page
+
 
 @login_required
 def customer_dashboard_view(request):
@@ -379,15 +423,17 @@ def customer_dashboard_view(request):
             'value': f"{total_spent} Ks"
         },
     ]
-
+    notifications = Notification.objects.filter(
+        recipient=user
+    ).order_by('-created_at')  # newest first
     context = {
         'dashboard_stats': dashboard_stats,
         'cart': cart,
         'cart_products': cart_products,
+        'notifications': notifications,
         # any other context data needed
     }
-    return render(request, 'customer_dashboard.html', context)
-
+    return render(request, 'customer/dashboard.html', context)
 
 
 
@@ -408,76 +454,67 @@ from .models import Sale, SaleItem, Cart, CartProduct
 from django.db.models import Sum, Count, F, FloatField, ExpressionWrapper
 from django.db.models.functions import Coalesce
 
+
 @login_required
 def report_view(request):
     if request.user.userprofile.role != 'pharmacist':
         return HttpResponseForbidden("Pharmacists only.")
 
-    # ✅ All Sales
-    all_sales = Cart.objects.all()
-    total_transactions = all_sales.count()
-    total_revenue = all_sales.aggregate(total=Coalesce(Sum('total_amount'), 0))['total']
+    # ✅ All Sales (POS + Online)
+    total_transactions = Cart.objects.count() + Sale.objects.exclude(user__userprofile__role='pharmacist').count()
+    total_revenue = (
+        (Cart.objects.aggregate(total=Coalesce(Sum('total_amount'), 0))['total']) +
+        (Sale.objects.exclude(user__userprofile__role='pharmacist').aggregate(total=Coalesce(Sum('total_amount'), 0))['total'])
+    )
 
-    # ✅ Items Sold (from SaleItem)
+    # ✅ Items Sold (POS only for now)
     items_sold = CartProduct.objects.aggregate(total_qty=Coalesce(Sum('qty'), 0))['total_qty']
 
-    # ✅ Avg Margin Calculation (dynamic)
-
-
+    # ✅ Avg Margin (POS only)
     cart_products = CartProduct.objects.annotate(
         margin=ExpressionWrapper(
             (F('price') - F('item__purcharse_price')) / F('item__purcharse_price') * 100,
             output_field=FloatField()
         )
     )
+    avg_margin = round(cart_products.aggregate(avg=Coalesce(Sum('margin') / Count('id'), 0.0))['avg'], 2)
 
-    avg_margin = round(
-        cart_products.aggregate(
-            avg=Coalesce(Sum('margin') / Count('id'), 0.0)
-        )['avg'], 2
-    )
+    # ✅ POS Summary + Full Order List
+    pos_orders = Cart.objects.filter(payment_method__in=['cash', 'mobile', 'print']).order_by('-created_date')
+    pos_transactions = pos_orders.count()
+    pos_revenue = pos_orders.aggregate(total=Coalesce(Sum('total_amount'), 0))['total']
+    for order in pos_orders:
+        if not order.customer_name:
+            order.customer_name = "Walking Customer"
 
-    # ✅ POS Summary
-    pos_sales = Cart.objects.filter(payment_method__in=['cash', 'mobile', 'print'])
-    pos_transactions = pos_sales.count()
-    pos_revenue = pos_sales.aggregate(total=Coalesce(Sum('total_amount'), 0))['total']
+    # ✅ Online Summary + Full Order List
+    online_orders = Sale.objects.exclude(user__userprofile__role='pharmacist').order_by('-created_date')
+    online_transactions = online_orders.count()
+    online_revenue = online_orders.aggregate(total=Coalesce(Sum('total_amount'), 0))['total']
+    for order in online_orders:
+        if not order.name:
+            order.name = order.user.username
 
-    # ✅ Online Summary (customer checkout)
-    online_sales = Sale.objects.exclude(user__userprofile__role='pharmacist')
-    online_transactions = online_sales.count()
-    online_revenue = online_sales.aggregate(total=Coalesce(Sum('total_amount'), 0))['total']
-
-    # ✅ Top Selling Products (combine both)
-
+    # ✅ Top Selling Products (POS)
     top_products = (
         CartProduct.objects
-        .values('item_id','item__item_name', 'item__category__name')
-        .annotate(
-            total_qty=Sum('qty'),
-            total_revenue=Sum('price')
-        )
+        .values('item_id', 'item__item_name', 'item__category__name')
+        .annotate(total_qty=Sum('qty'), total_revenue=Sum('price'))
         .order_by('-total_qty')[:5]
     )
-
-    # ✅ Add margin manually (using item purchase price)
-
     for product in top_products:
         try:
-            item = Item.objects.get(id=product['item_id'])  # now ID is used, safe
+            item = Item.objects.get(id=product['item_id'])
             cost = item.purcharse_price or 1
             sell = product['total_revenue']
             qty = product['total_qty']
-
             avg_sell = sell / qty if qty else 0
             margin = ((avg_sell - cost) / cost) * 100
             product['margin'] = round(margin, 2)
         except:
             product['margin'] = "-"
 
-    # ✅ Recent Transactions (POS only)
-    recent_transactions = Cart.objects.order_by('-created_date')[:10]
-
-    # ✅ Summary List for UI Cards Loop
+    # ✅ Summary Card for Sales Report Tab
     summary_list = [
         {
             'label': 'POS Transactions',
@@ -530,21 +567,26 @@ def report_view(request):
     ]
 
     return render(request, 'report.html', {
-        'total_transactions': total_transactions,
-        'total_revenue': total_revenue,
-        'items_sold': items_sold,
-        'avg_margin': avg_margin,
+            # ✅ Sales Report Tab Data
+            'summary_list': summary_list,
+            'top_products': top_products,
 
-        'top_products': top_products,
-        'recent_transactions': recent_transactions,
+            # ✅ POS Report Tab Data
+            'pos_orders_list': pos_orders,
+            'pos_transactions': pos_transactions,
+            'pos_revenue': pos_revenue,
 
-        'pos_transactions': pos_transactions,
-        'pos_revenue': pos_revenue,
-        'online_transactions': online_transactions,
-        'online_revenue': online_revenue,
-        'summary_list':summary_list,
-    })
+            # ✅ Online Report Tab Data
+            'online_orders_list': online_orders,
+            'online_transactions': online_transactions,
+            'online_revenue': online_revenue,
 
+            # ✅ Global Totals (if you need at top header)
+            'total_transactions': total_transactions,
+            'total_revenue': total_revenue,
+            'items_sold': items_sold,
+            'avg_margin': avg_margin,
+        })
 
 
 @csrf_exempt

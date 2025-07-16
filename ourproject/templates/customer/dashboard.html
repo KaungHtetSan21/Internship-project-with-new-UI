@@ -176,7 +176,9 @@
                     <a href="{% url 'login' %}" class="btn btn-sm btn-primary">Login</a>
                 {% endif %}
 
+
         </div>
+
     </nav>
 </head>
 <body>
@@ -299,43 +301,23 @@
     {% endfor %}
 </div>
                 <!-- Recent Orders -->
-                <div class="dashboard-card p-4 mb-4 bg-white">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h4 class="mb-0 fw-semibold">Recent Orders</h4>
-                        <a href="#" class="btn btn-sm btn-outline-primary">
-                            <i class="fas fa-list me-1"></i>View All Orders
-                        </a>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Order #</th>
-                                    <th>Date</th>
-                                    <th>Status</th>
-                                    <th>Total</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td class="fw-semibold text-primary">PH-2023-4567</td>
-                                    <td>Oct 15, 2023</td>
-                                    <td><span class="badge bg-success rounded-pill"><i class="fas fa-check-circle me-1"></i>Completed</span></td>
-                                    <td>$125.50</td>
-                                    <td><a href="#" class="btn btn-sm btn-outline-primary"><i class="fas fa-eye me-1"></i>View</a></td>
-                                </tr>
-                                <tr>
-                                    <td class="fw-semibold text-primary">PH-2023-4568</td>
-                                    <td>Oct 18, 2023</td>
-                                    <td><span class="badge bg-warning rounded-pill"><i class="fas fa-spinner me-1"></i>Processing</span></td>
-                                    <td>$78.25</td>
-                                    <td><a href="#" class="btn btn-sm btn-outline-primary"><i class="fas fa-truck me-1"></i>Track</a></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+            <div class="card bg-white rounded shadow p-4 mb-4">
+            <h5 class="fw-bold mb-3">
+                <i class="fas fa-bell me-2 text-warning"></i> Notifications
+            </h5>
+            {% if notifications %}
+                <ul class="list-group">
+                    {% for note in notifications %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center {% if not note.is_read %}bg-light{% endif %}">
+                            <span>{{ note.message }}</span>
+                            <small class="text-muted">{{ note.created_at|date:"M d, Y H:i" }}</small>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-muted">No notifications yet.</p>
+            {% endif %}
+        </div>
 
                 <!-- Current Prescriptions -->
                 <div class="row g-4">

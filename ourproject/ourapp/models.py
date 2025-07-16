@@ -116,7 +116,7 @@ class Cart(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='carts')  # 🆕
     customer_name = models.CharField(max_length=100, blank=True, null=True)
     total_amount = models.PositiveIntegerField(default=0)
-    created_date = models.DateField(default=timezone.now)
+    created_date = models.DateTimeField(default=timezone.now)
     payment_method = models.CharField(max_length=20, blank=True, null=True)
     source = models.CharField(
         max_length=10,
@@ -138,6 +138,11 @@ class CartProduct(models.Model):
     
 
 class Sale(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('confirmed', 'Confirmed'),
+        ('cancelled', 'Cancelled'),
+    ]
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     invoice_no = models.CharField(max_length=100)
     name = models.CharField(blank=True, null=True)
@@ -146,6 +151,7 @@ class Sale(models.Model):
 
     total_amount = models.PositiveIntegerField()
     created_date = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending',blank=True, null=True)
     def __str__(self):
         return f"Invoice {self.invoice_no} - {self.total_amount}"
 
@@ -186,3 +192,12 @@ class customerpos(models.Model):
     address = models.CharField(max_length=255, blank=True, null= True)
     def __str__(self):
         return self.name
+    
+class Notification(models.Model):
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications',blank=True, null= True)
+    message = models.TextField(blank=True, null= True)
+    is_read = models.BooleanField(default=False,blank=True, null= True)
+    created_at = models.DateTimeField(auto_now_add=True,blank=True, null= True)
+
+    def __str__(self):
+        return f"To: {self.recipient.username} | {self.message[:50]}"
