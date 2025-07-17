@@ -200,7 +200,7 @@
                                 <span class="ml-2 text-xs text-green-600 font-medium px-2 py-1 bg-green-100 rounded-full">Unlimited</span>
                             {% endif %}
                         </td>
-                        <td data-label="Price" class="px-6 py-4">${{ item.item_price|floatformat:2 }}</td>
+                        <td data-label="Price" class="px-6 py-4">{{ item.item_price|floatformat:2 }} ks</td>
                         <td class="text-right px-6 py-4 actions-cell">
                             <!-- Edit -->
                             <button class="text-primary hover:text-secondary mr-3 edit-btn"

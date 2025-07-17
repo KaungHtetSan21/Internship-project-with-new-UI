@@ -14,7 +14,7 @@ from django.contrib.auth import authenticate, login
 from .forms import CustomerRegisterForm
 from .models import UserProfile
 from django.db.models import Sum
-
+from google import genai
 
 
 
@@ -1284,3 +1284,50 @@ def customer_profile_view(request):
     })
 
 
+# def chatbot_view(request):
+    
+#     if request.method == 'POST':
+#         questions = request.POST.get('message')
+#         cb_data = Chatbot.objects.all()
+        
+        
+#         print(questions)
+#         print('This is questions.')
+#     return render(request,'customer/dashboard.html')
+
+# def get_chatbot_reply(message):
+#     # Basic chatbot logic
+#     message = message.lower()
+
+#     if "prescription" in message:
+#         return "You can check your prescription status by logging into your account."
+#     elif "refill" in message:
+#         return "Sure, I can help with that. When was your last refill?"
+#     elif "medicine" in message:
+#         return "Please provide the name of the medicine you'd like information about."
+#     elif "hours" in message or "open" in message:
+#         return "Our pharmacy is open from 8 AM to 8 PM, Monday to Saturday."
+#     else:
+#         return "Sorry, I didn't understand that. Could you please rephrase?"
+
+
+
+
+@csrf_exempt
+def chatbot_view(request):
+    if request.method == 'POST':
+        question = request.POST.get('message', '')
+        print(f"User asked: {question}")
+
+
+    client = genai.Client(api_key="AIzaSyAMUk2hNf5V54vuMUWHMl5nOdes6YDlkX0")
+
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents={question} ,
+    )
+
+    # print(response.text)
+
+
+    return JsonResponse({'reply': response.text })

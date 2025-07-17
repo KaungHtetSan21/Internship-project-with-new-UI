@@ -91,6 +91,9 @@ class stockHistory(admin.ModelAdmin):
 class supplier(admin.ModelAdmin):
     list_display = ['id','supplier_name','phone']
 
+class chatbot(admin.ModelAdmin):
+    list_display = ['id','user','questions', 'answers','timeline']
+
 admin.site.register(Category,category)
 admin.site.register(Item,item)
 admin.site.register(Cart,cart)
@@ -103,4 +106,5 @@ admin.site.register(Possalesreport)
 admin.site.register(customerpos)
 
 admin.site.register(Supplier,supplier)
+admin.site.register(Chatbot,chatbot)
 

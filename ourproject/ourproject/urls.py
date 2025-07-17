@@ -34,7 +34,7 @@ urlpatterns = [
     path('notification/read/<int:noti_id>/', mark_notification_read, name='mark_notification_read'),
     path('orders/confirm/<int:order_id>/', confirm_order_view, name='confirm_order'),
     path('orders/cancel/<int:order_id>/', cancel_order_view, name='cancel_order'),
-    path('customer-dashboard/', customer_dashboard_view, name='customer_dashboard'),
+    path('', customer_dashboard_view, name='customer_dashboard'),
     path('inventory_view/', inventory_view, name= 'inventory_view'),
     path('send_to_promotion/', send_to_promotion, name='send_to_promotion'),
     path('order_view/', order_view, name= 'order_view'),
@@ -65,6 +65,7 @@ urlpatterns = [
     path('place-order/', place_order_view, name='place_order'),
     path('customer/profile/', customer_profile_view, name='customer_profile'),
     path('medicine/delete/<int:item_id>/', delete_item, name='delete_item'),
+    path('chatbot_view/', chatbot_view, name= 'chatbot_view'),
 
 ]
 

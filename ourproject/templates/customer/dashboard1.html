@@ -6,7 +6,6 @@
     <title>Pharmastics - Customer Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <style>
         body {
             background-color: #f8f9fa;
@@ -126,245 +125,6 @@
             border-radius: 5px;
         }
         
-  /* Enhanced Chatbot Styles */
-    .chatbot-container {
-        position: fixed;
-        bottom: 80px;
-        right: 20px;
-        z-index: 1000;
-    }
-    
-    #chatbot-button {
-        width: 60px;
-        height: 60px;
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1001;
-    }
-    
-    .chatbot-modal {
-        position: fixed;
-        bottom: 90px;
-        right: 20px;
-        width: 350px;
-        height: 450px;
-        background: white;
-        border-radius: 10px;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        display: none;
-        flex-direction: column;
-        overflow: hidden;
-        z-index: 1002;
-    }
-    
-    .chatbot-header {
-        background-color: #0d6efd;
-        color: white;
-        padding: 10px 15px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    
-    .chatbot-body {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        padding: 10px;
-        max-height: 400px;
-    }
-    
-    .chatbot-messages {
-        flex: 1;
-        overflow-y: auto;
-        padding: 5px;
-        margin-bottom: 10px;
-        display: flex;
-        flex-direction: column;
-    }
-    
-    .chatbot-messages {
-        flex: 1;
-        overflow-y: auto;
-        padding: 5px;
-        margin-bottom: 10px;
-        display: flex;
-        flex-direction: column;
-        /*New scrollbar styles */
-        scrollbar-width: thin;
-        scrollbar-color: #0d6efd #f1f1f1;
-    }
-    
-    /* For Webkit browsers (Chrome, Safari) */
-    .chatbot-messages::-webkit-scrollbar {
-        width: 6px;
-    }
-    
-    .chatbot-messages::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 3px;
-    }
-    
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .bot-message {
-        background-color: #f1f1f1;
-        align-self: flex-start;
-        border-radius: 5px;
-        padding: 4px;
-        margin-bottom: 3px;
-    }
-    
-    .user-message {
-        background-color: #0d6efd;
-        color: white;
-        align-self: flex-end;
-
-        border-radius: 5px;
-        padding: 3px;
-        margin-bottom: 3px;
-
-    }
-    
-    .chatbot-input {
-        display: flex;
-        gap: 5px;
-    }
-    
-    .chatbot-input input {
-        flex: 1;
-        border: 1px solid #dee2e6;
-        border-radius: 20px;
-        padding: 8px 15px;
-    }
-    
-    .chatbot-input button {
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    
-    .quick-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 5px;
-    }
-    
-    .quick-action {
-        font-size: 0.7rem;
-        padding: 3px 8px;
-        white-space: nowrap;
-    }
-    
-    .prescription-item {
-        border-bottom: 1px solid #eee;
-        padding: 8px 0;
-    }
-    
-    .prescription-item:last-child {
-        border-bottom: none;
-    }
-    
-    .typing-indicator {
-        display: flex;
-        align-items: center;
-        margin-bottom: 10px;
-        align-self: flex-start;
-    }
-    
-    .typing-indicator span {
-        height: 8px;
-        width: 8px;
-        background-color: #6c757d;
-        border-radius: 50%;
-        display: inline-block;
-        margin: 0 2px;
-        animation: bounce 1.5s infinite ease-in-out;
-    }
-    
-    .typing-indicator span:nth-child(2) {
-        animation-delay: 0.2s;
-    }
-    
-    .typing-indicator span:nth-child(3) {
-        animation-delay: 0.4s;
-    }
-    
-    @keyframes bounce {
-        0%, 60%, 100% { transform: translateY(0); }
-        30% { transform: translateY(-5px); }
-    }
-    
-.chatbot-modal {
-    position: fixed;
-    bottom: 80px;
-    right: 20px;
-    width: 320px;
-    max-height: 500px;
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    display: none;
-    flex-direction: column;
-    overflow: hidden;
-    z-index: 1050;
-}
-
-.chatbot-header {
-    background-color: #007bff;
-    color: white;
-    padding: 10px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.chatbot-body {
-    padding: 10px;
-    overflow-y: auto;
-    height: 350px;
-    background: #f8f9fa;
-}
-
-.chatbot-messages {
-    display: flex;
-    flex-direction: column;
-}
-
-.chatbot-message {
-    margin-bottom: 10px;
-    padding: 10px;
-    border-radius: 10px;
-    max-width: 80%;
-}
-
-.user-message {
-    background-color: #d1ecf1;
-    align-self: flex-end;
-}
-
-.bot-message {
-    background-color: #e2e3e5;
-    align-self: flex-start;
-}
-
-.chatbot-input {
-    display: flex;
-    padding: 10px;
-    gap: 8px;
-    border-top: 1px solid #dee2e6;
-    background-color: #fff;
-}
         @media (max-width: 992px) {
             .sidebar {
                 display: none;
@@ -396,8 +156,6 @@
             body {
                 padding-bottom: 60px; /* Adjust padding for smaller screens */
             }
-            
-
         }
     </style>
     <nav>
@@ -461,10 +219,10 @@
                             <span>Customer Account</span>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <!-- <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Profile</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Settings</a></li> -->
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Profile</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Settings</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-danger" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                            <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
                         </ul>
                     </div>
                 </div>
@@ -552,7 +310,7 @@
                     {% for note in notifications %}
                         <li class="list-group-item d-flex justify-content-between align-items-center {% if not note.is_read %}bg-light{% endif %}">
                             <span>{{ note.message }}</span>
-                            <small class="text-muted">{{ note.created_at|date:"M d, Y H:i" }}</small>
+                            <small class="text-muted">{{ note.created_at|date:"M d, Y h:i A" }}</small>
                         </li>
                     {% endfor %}
                 </ul>
@@ -699,47 +457,6 @@
         </div>
     </nav>
 
-<!-- Replace the existing chatbot container with this improved version -->
-<div class="chatbot-container">
-    <!-- Floating action button -->
-    <button id="chatbot-button" class="btn btn-primary rounded-circle shadow-lg">
-        <i class="fas fa-comment-dots fa-lg"></i>
-        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="unread-count" style="display: none;">
-            0
-        </span>
-    </button>
-    
-    <!-- Chatbot modal -->
-    <div id="chatbot-modal" class="chatbot-modal">
-        <div class="chatbot-header">
-            <div class="d-flex align-items-center">
-                <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/120c636b-923a-456a-a13a-39844d5d3a4a.png" alt="Pharmastics logo" style="height: 24px; margin-right: 10px;">
-                <h6 class="mb-0">Pharmastics Assistant</h6>
-            </div>
-            <button id="close-chatbot" class="btn btn-sm btn-link text-white">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div class="chatbot-body">
-            <div class="chatbot-messages">
-   
-                 <div class="chatbot-message bot-message">
-                <p>{{response.text}}</p> 
-                </div> 
-            </div>
-            <div class="Rig chatbot-input">
-                
-                
-                <input type="text" placeholder="Type your message..." name="message" class="form-control" id="chat-input">
-                <button  class="btn btn-primary " id="sendmessagebtn" >
-                    <i class="fas fa-paper-plane"></i>
-                </button>
-                
-            </div>
-        </div>
-    </div>
-</div>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Quantity control functions
@@ -775,88 +492,6 @@
                 }
             });
         });
-
     </script>
-
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script>
-$(document).ready(function () {
-    // Toggle chatbot modal
-    $('#chatbot-button').on('click', function () {
-        $('#chatbot-modal').toggleClass('d-block');  // Show/hide modal
-        $('#unread-count').hide().text('0');
-    });
-
-    // Close chatbot
-    $('#close-chatbot').on('click', function () {
-        $('#chatbot-modal').removeClass('d-block');
-    });
-
-    // Send message on button click
-    $('#sendmessagebtn').on('click', function () {
-        sendMessage();
-    });
-
-    // Send message on Enter key
-    $('#chat-input').on('keypress', function (e) {
-        if (e.which === 13) {
-            sendMessage();
-            e.preventDefault();
-        }
-    });
-
-    // Handle quick-action buttons
-    $('.quick-action').on('click', function () {
-        const action = $(this).data('action');
-        $('#chat-input').val(action);
-        sendMessage();
-    });
-
-    function sendMessage() {
-        const userMessage = $('#chat-input').val().trim();
-        if (userMessage === '') return;
-
-        // Append user message to chat window
-        $('.chatbot-messages').append(`
-            <div class="chatbot-message user-message">
-                <p>${userMessage}</p>
-            </div>
-        `);
-
-        $('#chat-input').val('');
-
-        $.ajax({
-            url: "{% url 'chatbot_view' %}", // your Django chatbot view
-            method: "POST",
-            data: {
-                'message': userMessage,
-                'csrfmiddlewaretoken': '{{ csrf_token }}'
-            },
-            success: function (response) {
-                console.log(response)
-                $('.chatbot-messages').append(`
-                    <div class="chatbot-message bot-message">
-                        <p>${response.reply}</p>
-                    </div>
-                `);
-                scrollToBottom();
-            },
-            error: function () {
-                $('.chatbot-messages').append(`
-                    <div class="chatbot-message bot-message">
-                        <p>Sorry, there was an error. Please try again later.</p>
-                    </div>
-                `);
-                scrollToBottom();
-            }
-        });
-    }
-
-    function scrollToBottom() {
-        const container = $('.chatbot-body');
-        container.scrollTop(container[0].scrollHeight);
-    }
-});
-</script>
 </body>
 </html>

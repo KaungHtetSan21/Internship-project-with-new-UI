@@ -201,3 +201,9 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"To: {self.recipient.username} | {self.message[:50]}"
+    
+class Chatbot(models.Model):
+    user = models.ForeignKey(User,  on_delete=models.CASCADE, blank=True, null= True )
+    questions = models.TextField(blank=True, null= True)
+    answers = models.TextField(blank=True, null= True)
+    timeline = models.DateTimeField(auto_now_add=True, blank=True, null= True)
