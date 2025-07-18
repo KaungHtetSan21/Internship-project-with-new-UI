@@ -255,10 +255,8 @@ def admin_dashboard(request):
 
 
 
-from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseForbidden
-from django.shortcuts import render
-from .models import Sale, SaleItem, Item
+from django.db.models import Sum
+from django.db.models.functions import Coalesce
 import datetime
 
 @login_required
@@ -266,8 +264,23 @@ def pharmacist_dashboard_view(request):
     if request.user.userprofile.role != 'pharmacist':
         return HttpResponseForbidden("Unauthorized")
 
-    # ✅ Total Orders
-    total_orders = Sale.objects.count()
+    # ✅ POS Orders (must be first)
+    pos_orders = Cart.objects.filter(payment_method__in=['cash', 'mobile', 'print'])
+    pos_total = pos_orders.count()
+    pos_revenue = pos_orders.aggregate(total=Coalesce(Sum('total_amount'), 0))['total']
+
+    # ✅ Online Orders
+    online_orders_list = (
+        Sale.objects
+        .exclude(user__userprofile__role='pharmacist')
+        .select_related('user')
+        .order_by('-created_date')
+    )
+    online_total = online_orders_list.count()
+    online_revenue = online_orders_list.aggregate(total=Coalesce(Sum('total_amount'), 0))['total']
+
+    # ✅ FIXED Total Orders (POS + Online)
+    total_orders = pos_total + online_total
 
     # ✅ Low Stock
     low_stock_count = Item.objects.filter(item_quantity__lt=10).count()
@@ -277,22 +290,10 @@ def pharmacist_dashboard_view(request):
     today = datetime.date.today()
     expiring_items = Item.objects.filter(exp_date__lte=today + datetime.timedelta(days=90)).order_by('exp_date')
 
-    # ✅ All Online Orders (instead of just 5)
-    online_orders_list = (
-        Sale.objects
-        .exclude(user__userprofile__role='pharmacist')
-        .select_related('user')
-        .order_by('-created_date')
-    )
-
-    # ✅ POS Orders (from Cart)
-    pos_orders = Cart.objects.filter(payment_method__in=['cash', 'mobile', 'print'])
-    pos_total = pos_orders.count()
-    pos_revenue = pos_orders.aggregate(total=Coalesce(Sum('total_amount'), 0))['total']
-
-    # ✅ Online Orders Summary
-    online_total = online_orders_list.count()
-    online_revenue = online_orders_list.aggregate(total=Coalesce(Sum('total_amount'), 0))['total']
+    # ✅ Display Username if Name is Missing
+    for order in online_orders_list:
+        if not order.name:
+            order.name = order.user.username
 
     # ✅ Dashboard Stats
     dashboard_stats = [
@@ -344,11 +345,37 @@ def pharmacist_dashboard_view(request):
         'dashboard_stats': dashboard_stats,
         'low_stock_items': low_stock_items,
         'expiring_items': expiring_items,
-        'online_orders_list': online_orders_list,  # ✅ context key changed
+        'online_orders_list': online_orders_list,
     }
 
     return render(request, 'pharmacist/dashboard.html', context)
 
+
+from django.http import JsonResponse
+from .models import Sale, SaleItem
+
+@login_required
+def get_order_details(request, order_id):
+    try:
+        order = Sale.objects.get(id=order_id)
+        items = SaleItem.objects.filter(sale=order)
+        data = {
+            "customer": order.name or order.user.username,
+            "invoice": order.invoice_no,
+            "total_amount": order.total_amount,
+            "items": [
+                {
+                    "item_name": i.item.item_name,
+                    "qty": i.quantity,
+                    "price": i.price,
+                    "subtotal": i.price * i.quantity
+                } for i in items
+            ]
+        }
+        return JsonResponse(data)
+    except Sale.DoesNotExist:
+        return JsonResponse({"error": "Order not found"}, status=404)
+    
 @login_required
 def confirm_order_view(request, order_id):
     if request.user.userprofile.role != 'pharmacist':
@@ -498,7 +525,10 @@ def report_view(request):
     # ✅ Top Selling Products (POS)
     top_products = (
         CartProduct.objects
-        .values('item_id', 'item__item_name', 'item__category__name')
+        .values('item_id',
+        'item__item_name',
+        category_name= F('item__category__name')
+        )
         .annotate(total_qty=Sum('qty'), total_revenue=Sum('price'))
         .order_by('-total_qty')[:5]
     )

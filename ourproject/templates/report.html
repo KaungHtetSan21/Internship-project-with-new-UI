@@ -57,7 +57,7 @@
                     {% for product in top_products %}
                         <tr class="border-b">
                             <td class="px-4 py-2">{{ product.item__item_name }}</td>
-                            <td class="px-4 py-2">{{ product.itemcategoryname|default:"-" }}</td>
+                            <td class="px-4 py-2">{{ product.category_name|default:"-" }}</td>
                             <td class="px-4 py-2">{{ product.total_qty }}</td>
                             <td class="px-4 py-2">{{ product.total_revenue }} Ks</td>
                             <td class="px-4 py-2">

@@ -31,6 +31,7 @@ urlpatterns = [
 
     path('admin-dashboard/', admin_dashboard, name='admin_dashboard'),
     path('pharmacist-dashboard/', pharmacist_dashboard_view, name='pharmacist_dashboard'),
+    path('get-order-details/<int:order_id>/',get_order_details, name='get_order_details'),
     path('notification/read/<int:noti_id>/', mark_notification_read, name='mark_notification_read'),
     path('orders/confirm/<int:order_id>/', confirm_order_view, name='confirm_order'),
     path('orders/cancel/<int:order_id>/', cancel_order_view, name='cancel_order'),
