@@ -190,18 +190,19 @@
                 <!-- Product Categories -->
                 <div class="mb-6">
 
-                    <div class="flex overflow-x-auto pb-2 space-x-2">
+<div class="flex overflow-x-auto pb-2 space-x-2">
+    <a href="/order_view/" id="trigger-all"
+        class="px-4 py-2 bg-primary text-white rounded-full text-sm font-medium whitespace-nowrap">
+        All
+    </a>
 
-                        <a href="/order_view/" id="trigger-all"
-                            class="px-4 py-2 bg-primary text-white rounded-full text-sm font-medium whitespace-nowrap">
-                            All
-                        </a>
-
-                        {% for i in categories %}
-                        <a href="/order_view/?cid={{i.id}}"
-                            class="data-category px-4 py-2 bg-gray-200 text-gray-700 rounded-full text-sm font-medium whitespace-nowrap hover:bg-gray-300">{{ i.name }}</a>
-                        {% endfor %}
-                    </div>
+    {% for i in categories %}
+    <a href="/order_view/?cid={{i.id}}"
+        class="data-category px-4 py-2 bg-gray-200 text-gray-700 rounded-full text-sm font-medium whitespace-nowrap hover:bg-gray-300">
+        {{ i.name }}
+    </a>
+    {% endfor %}
+</div>
                 </div>
 
 <!-- Product Grid -->

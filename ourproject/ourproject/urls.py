@@ -24,6 +24,8 @@ from ourapp.views import *
 urlpatterns = [
     path('admin/', admin.site.urls),
 
+    path('',base,name='base'),
+
     path('login/', login_view, name= 'login'),
     path('logout/', logout_view, name= 'logout'),
     path('customer_register/', customer_register, name= 'customer_register'),
@@ -35,7 +37,7 @@ urlpatterns = [
     path('notification/read/<int:noti_id>/', mark_notification_read, name='mark_notification_read'),
     path('orders/confirm/<int:order_id>/', confirm_order_view, name='confirm_order'),
     path('orders/cancel/<int:order_id>/', cancel_order_view, name='cancel_order'),
-    path('', customer_dashboard_view, name='customer_dashboard'),
+    path('customer_dashboard_view/', customer_dashboard_view, name='customer_dashboard'),
     path('inventory_view/', inventory_view, name= 'inventory_view'),
     path('send_to_promotion/', send_to_promotion, name='send_to_promotion'),
     path('order_view/', order_view, name= 'order_view'),
@@ -45,7 +47,8 @@ urlpatterns = [
 
     path('report_view/', report_view, name= 'report_view'),
     path('medicine_list/', medicine_list, name= 'medicine_list'),
- 
+    
+
     path('medicine/edit/<int:item_id>/', edit_item_view, name='edit_item'), 
 
     

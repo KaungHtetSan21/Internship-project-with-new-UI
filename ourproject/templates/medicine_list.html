@@ -232,10 +232,9 @@
                             <span>Customer Account</span>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Profile</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Settings</a></li>
+
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                            <li><a class="dropdown-item text-danger" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
                         </ul>
                     </div>
                 </div>
@@ -260,22 +259,24 @@
                     <!-- Products Tab -->
                     <div class="tab-pane fade show active" id="products" role="tabpanel">
                         <div class="row mb-4">
-                            <div class="col-md-6">
+                            <!-- <div class="col-md-6">
                                 <div class="input-group mb-3">
                                     <input type="text" class="form-control" placeholder="Search products...">
                                     <button class="btn btn-primary" type="button"><i class="fas fa-search"></i></button>
                                 </div>
-                            </div>
-                            <div class="col-md-6">
-                                <select class="form-select">
-                                    <option selected>All Categories</option>
-                                    <option>Prescription Drugs</option>
-                                    <option>Over-the-Counter</option>
-                                    <option>Vitamins & Supplements</option>
-                                    <option>Medical Supplies</option>
-                                    <option>Personal Care</option>
-                                </select>
-                            </div>
+                            </div> -->
+                                <div class="mb-4">
+                                    <select class="form-select"
+                                            onchange="window.location.href='?cid=' + this.value">
+                                        <option value="">All Categories</option>
+                                        {% for c in categories %}
+                                        <option value="{{ c.id }}"
+                                            {% if request.GET.cid|default:'' == c.id|stringformat:'s' %}selected{% endif %}>
+                                            {{ c.name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
                         </div>
 
                         <div class="row g-4">
@@ -297,8 +298,11 @@
                                     
                                     </div>
                                     <button><a href="{% url 'add_to_cart' item.id %}" class="add-to-cart">
-                                    <i class="fas fa-plus"></i>
+                                    <i class="fas fa-cart-plus me-1"></i>
                                     </a></button>
+
+
+
                                 </div>
                                 
                             </div>

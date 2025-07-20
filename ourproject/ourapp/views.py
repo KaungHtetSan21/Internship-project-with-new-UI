@@ -17,6 +17,10 @@ from django.db.models import Sum
 from google import genai
 
 
+def base(request):
+    return render(request,'base.html')
+
+
 
 
 
@@ -429,7 +433,7 @@ def customer_dashboard_view(request):
     total_orders = Sale.objects.filter(user=user).count()
     total_items = SaleItem.objects.filter(sale__user=user).aggregate(total=Coalesce(Sum('quantity'), 0))['total']
     total_spent = Sale.objects.filter(user=user).aggregate(spent=Coalesce(Sum('total_amount'), 0))['spent']
-
+    categories = Category.objects.all()
     dashboard_stats = [
         {
             'label': 'Total Orders',
@@ -458,6 +462,7 @@ def customer_dashboard_view(request):
         'cart': cart,
         'cart_products': cart_products,
         'notifications': notifications,
+        'categories':categories,
         # any other context data needed
     }
     return render(request, 'customer/dashboard.html', context)
@@ -1144,13 +1149,19 @@ def medicine_list(request):
     # ✅ Only customers can access this page
     if not hasattr(user, 'userprofile') or user.userprofile.role != 'customer':
         messages.error(request, "You do not have permission to access this page.")
-        return redirect('homeview')  # Or any fallback
+        return redirect('base')  # Or any fallback
 
     # ✅ Get or create cart
     cart, created = Cart.objects.get_or_create(user=user, defaults={'created_date': timezone.now()})
     cart_products = CartProduct.objects.filter(cart=cart)
-    items = Item.objects.all().order_by('-id')
 
+    cid = request.GET.get('cid')
+    if cid:
+        items = Item.objects.filter(category_id=cid).order_by('-id')
+    else:
+        items = Item.objects.all().order_by('-id')
+
+    categories = Category.objects.all()
     # ✅ Refresh cart total
     cart.update_total_amount()  # Ensure this includes shipping and tax
     cart.refresh_from_db()
@@ -1210,13 +1221,25 @@ def medicine_list(request):
     # ✅ GET request: just show page
     return render(request, 'medicine_list.html', {
         'items': items,
+        'categories':categories,
         'cart': cart,
         'cart_products': cart_products,
         'total_amount': cart.total_amount + 5.99 + 1.00,  # Pass the total to template
     })
 
 
+# def customerorder_view(request):
+#     cid = request.GET.get('cid')
+#     if cid:
+#         items = Item.objects.filter(category_id=cid)
+#     else:
+#         items = Item.objects.all()
 
+#     categories = Category.objects.all()
+#     return render(request, 'medicine_list.html', {
+#         'items': items,
+#         'categories': categories
+#     })
 
 
 @login_required
@@ -1233,7 +1256,7 @@ def place_order_view(request):
     # ✅ Role check
     if not hasattr(user, 'userprofile') or user.userprofile.role != 'customer':
         messages.error(request, "Only customers can place an order.")
-        return redirect('homeview')
+        return redirect('base')
 
     try:
         cart = Cart.objects.get(user=user)
@@ -1241,7 +1264,7 @@ def place_order_view(request):
 
         if not cart_items.exists():
             messages.warning(request, "Your cart is empty.")
-            return redirect('medicine_list')
+            return redirect('base')
 
         # ✅ Create sale
         sale = Sale.objects.create(
