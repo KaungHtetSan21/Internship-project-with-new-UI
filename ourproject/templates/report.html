@@ -9,7 +9,25 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 min-h-screen">
-
+                    <div class="hidden md:block">
+                        <div class="ml-10 flex items-baseline space-x-4">
+                            <a href="#" class="px-3 py-2 rounded-md text-sm font-medium bg-white text-primary flex items-center">
+                                <i class="fas fa-tachometer-alt mr-2"></i> Dashboard
+                            </a>
+                            <a href="{% url 'order_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary hover:bg-opacity-20 flex items-center">
+                                <i class="fas fa-clipboard-list mr-2"></i> Orders
+                            </a>
+                            <a href="{% url 'inventory_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary hover:bg-opacity-20 flex items-center">
+                                <i class="fas fa-pills mr-2"></i> Inventory
+                            </a>
+                            <a href="{% url 'report_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary hover:bg-opacity-20 flex items-center">
+                                <i class="fas fa-chart-bar mr-2"></i> Reports
+                            </a>
+                            <a href="{% url 'purchaseorder_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary hover:bg-opacity-20 flex items-center">
+                                <i class="fas fa-shopping-cart mr-2"></i> Purchase Order
+                            </a>
+                        </div>
+                    </div>
 <div class="max-w-7xl mx-auto px-4 py-8">
     <h1 class="text-3xl font-bold mb-6">Reports</h1>
 

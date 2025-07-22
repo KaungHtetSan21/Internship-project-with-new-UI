@@ -117,13 +117,25 @@
 <i class="fas fa-bars"></i>
 </button>
 </div>
-<div class="hidden md:flex space-x-4">
-<a class="hover:underline" href="#">Dashboard</a>
-<a class="hover:underline" href="#">POS</a>
-<a class="hover:underline" href="#">Inventory</a>
-<a class="hover:underline" href="#">Customer</a>
-<a class="underline" href="#">Medicine</a>
-</div>
+                    <div class="hidden md:block">
+                        <div class="ml-10 flex items-baseline space-x-4">
+                            <a href="#" class="px-3 py-2 rounded-md text-sm font-medium bg-white text-primary flex items-center">
+                                <i class="fas fa-tachometer-alt mr-2"></i> Dashboard
+                            </a>
+                            <a href="{% url 'order_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary hover:bg-opacity-20 flex items-center">
+                                <i class="fas fa-clipboard-list mr-2"></i> Orders
+                            </a>
+                            <a href="{% url 'inventory_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary hover:bg-opacity-20 flex items-center">
+                                <i class="fas fa-pills mr-2"></i> Inventory
+                            </a>
+                            <a href="{% url 'report_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary hover:bg-opacity-20 flex items-center">
+                                <i class="fas fa-chart-bar mr-2"></i> Reports
+                            </a>
+                            <a href="{% url 'purchaseorder_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary hover:bg-opacity-20 flex items-center">
+                                <i class="fas fa-shopping-cart mr-2"></i> Purchase Order
+                            </a>
+                        </div>
+                    </div>
 </div>
 <!-- Mobile menu -->
 <div class="hidden md:hidden bg-darkblue px-4 py-2 flex flex-col space-y-2" id="mobile-menu">

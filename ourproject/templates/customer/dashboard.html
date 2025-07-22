@@ -400,7 +400,11 @@
 
         }
     </style>
-    <nav>
+   
+</head>
+<body>
+
+     <nav>
         <div>
                 {% if request.user.userprofile.role == 'admin' %}
                     <a href="{% url 'admin_dashboard' %}">Admin Dashboard</a>
@@ -422,8 +426,10 @@
         </div>
 
     </nav>
-</head>
-<body>
+
+
+
+
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar (hidden on mobile) -->
@@ -432,21 +438,16 @@
                     <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/120c636b-923a-456a-a13a-39844d5d3a4a.png" alt="Pharmastics logo" class="img-fluid mb-3" style="max-height: 50px;">
                 </div>
                 <div class="px-2">
-                    <a href="#" class="sidebar-link active">
+                    <a href="{% url 'customer_dashboard' %}" class="sidebar-link active">
                         <i class="fas fa-tachometer-alt me-2"></i>Dashboard
                     </a>
-                    <a href="#" class="sidebar-link">
-                        <i class="fas fa-prescription me-2"></i>My Prescriptions
+                    <a href="{% url 'customer_dashboard' %}" class="sidebar-link">
+                        <i class="fas fa-prescription me-2"></i>Medicine
                     </a>
                     <a href="{% url 'customer_profile' %}" class="sidebar-link">
-                        <i class="fas fa-history me-2"></i>Order History
+                        <i class="fas fa-history me-2"></i>My Profile
                     </a>
-                    <a href="#" class="sidebar-link">
-                        <i class="fas fa-file-medical me-2"></i>Health Records
-                    </a>
-                    <a href="#" class="sidebar-link">
-                        <i class="fas fa-cog me-2"></i>Settings
-                    </a>
+
                 </div>
             </div>
 
@@ -469,62 +470,13 @@
                     </div>
                 </div>
 
-                <!-- Dashboard Widgets -->
-                <!-- <div class="row mb-4 g-3">
-                    <div class="col-md-6 col-lg-3">
-                        <div class="dashboard-card p-3 bg-white h-100">
-                            <div class="d-flex align-items-center">
-                                <div class="p-3 rounded-circle bg-primary bg-opacity-10 text-primary me-3">
-                                    <i class="fas fa-prescription-bottle-alt fs-4"></i>
-                                </div>
-                                <div>
-                                    <h5 class="text-muted mb-1">Active Prescriptions</h5>
-                                    <h2 class="text-primary mb-0">3</h2>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 col-lg-3">
-                        <div class="dashboard-card p-3 bg-white h-100">
-                            <div class="d-flex align-items-center">
-                                <div class="p-3 rounded-circle bg-warning bg-opacity-10 text-warning me-3">
-                                    <i class="fas fa-clock fs-4"></i>
-                                </div>
-                                <div>
-                                    <h5 class="text-muted mb-1">Pending Orders</h5>
-                                    <h2 class="text-warning mb-0">1</h2>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 col-lg-3">
-                        <div class="dashboard-card p-3 bg-white h-100">
-                            <div class="d-flex align-items-center">
-                                <div class="p-3 rounded-circle bg-success bg-opacity-10 text-success me-3">
-                                    <i class="fas fa-star fs-4"></i>
-                                </div>
-                                <div>
-                                    <h5 class="text-muted mb-1">Loyalty Points</h5>
-                                    <h2 class="text-success mb-0">1,250</h2>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 col-lg-3">
-                        <div class="dashboard-card p-3 bg-white h-100">
-                            <div class="d-flex align-items-center">
-                                <div class="p-3 rounded-circle bg-info bg-opacity-10 text-info me-3">
-                                    <i class="fas fa-crown fs-4"></i>
-                                </div>
-                                <div>
-                                    <h5 class="text-muted mb-1">Membership Level</h5>
-                                    <h2 class="text-info mb-0">Gold</h2>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div> -->
-                <!-- Dashboard Cards Summary -->
+               
+{% if messages %}
+            {% for message in messages %}
+              <div class="alert alert-success">{{ message }}</div>
+            {% endfor %}
+{% endif %}
+
 <div class="row mb-4">
     {% for stat in dashboard_stats %}
     <div class="col-md-4">
@@ -543,54 +495,52 @@
     {% endfor %}
 </div>
                 <!-- Recent Orders -->
-            <div class="card bg-white rounded shadow p-4 mb-4">
-            <h5 class="fw-bold mb-3">
-                <i class="fas fa-bell me-2 text-warning"></i> Notifications
-            </h5>
-            {% if notifications %}
-                <ul class="list-group">
-                    {% for note in notifications %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center {% if not note.is_read %}bg-light{% endif %}">
-                            <span>{{ note.message }}</span>
-                            <small class="text-muted">{{ note.created_at|date:"M d, Y H:i" }}</small>
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p class="text-muted">No notifications yet.</p>
-            {% endif %}
-        </div>
+<!-- Pharmacy Notifications with Colors -->
+<div class="dashboard-card p-4 mb-4 bg-white rounded shadow">
+    <h4 class="mb-3 fw-semibold text-emerald-800">
+        <i class="fas fa-bell me-2 text-emerald-500"></i> Pharmacy Notifications
+    </h4>
+
+    {% if notifications %}
+        {% for note in notifications %}
+            <div class="d-flex items-start gap-3 rounded p-3 mb-3
+                {% if note.level == 'info' %}
+                    bg-blue-100 text-blue-800
+                {% elif note.level == 'warning' %}
+                    bg-yellow-100 text-yellow-800
+                {% elif note.level == 'danger' %}
+                    bg-red-100 text-red-800
+                {% else %}
+                    bg-gray-100 text-gray-800
+                {% endif %}
+                {% if not note.is_read %} border-2 border-dashed border-gray-400 {% endif %}
+            ">
+                <i class="fas 
+                    {% if note.level == 'info' %}
+                        fa-info-circle text-blue-600
+                    {% elif note.level == 'warning' %}
+                        fa-exclamation-triangle text-yellow-600
+                    {% elif note.level == 'danger' %}
+                        fa-times-circle text-red-600
+                    {% else %}
+                        fa-bell text-gray-600
+                    {% endif %}
+                    fs-5 mt-1
+                "></i>
+                <div>
+                    <div class="fw-bold">{{ note.message|safe }}</div>
+                    <div class="text-sm text-muted">{{ note.created_at|date:"M d, Y H:i" }}</div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p class="text-muted">No notifications yet.</p>
+    {% endif %}
+</div>
 
                 <!-- Current Prescriptions -->
                 <div class="row g-4">
-                    <div class="col-lg-6">
-                        <div class="dashboard-card p-4 bg-white h-100">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h4 class="mb-0 fw-semibold">Active Prescriptions</h4>
-                                <a href="#" class="btn btn-sm btn-outline-primary">
-                                    <i class="fas fa-list me-1"></i>View All
-                                </a>
-                            </div>
-                            <div class="d-flex mb-3 p-3 bg-light rounded">
-                                <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/8c7b131a-4a06-4c5a-b4f0-87d20af6f595.png" alt="Amoxicillin" class="me-3 profile-img">
-                                <div>
-                                    <h5 class="mb-1">Amoxicillin 500mg</h5>
-                                    <p class="text-muted mb-1 small">Dr. Smith - Last filled: Oct 5, 2023</p>
-                                    <p class="mb-1 small"><i class="fas fa-info-circle text-primary me-1"></i>Take 1 tablet every 8 hours</p>
-                                    <span class="badge bg-info rounded-pill"><i class="fas fa-sync-alt me-1"></i>3 refills left</span>
-                                </div>
-                            </div>
-                            <div class="d-flex mb-3 p-3 bg-light rounded">
-                                <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/19267beb-e66b-46a0-89d4-bc14cc2b96b2.png" alt="Lisinopril" class="me-3 profile-img">
-                                <div>
-                                    <h5 class="mb-1">Lisinopril 10mg</h5>
-                                    <p class="text-muted mb-1 small">Dr. Johnson - Last filled: Sep 28, 2023</p>
-                                    <p class="mb-1 small"><i class="fas fa-info-circle text-primary me-1"></i>Take 1 tablet daily</p>
-                                    <span class="badge bg-info rounded-pill"><i class="fas fa-sync-alt me-1"></i>2 refills left</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    
 
                     <!-- Recommended Products -->
                     <div class="col-lg-6">
@@ -602,65 +552,42 @@
                                 </a>
                             </div>
                             <div class="row g-3">
-                                <div class="col-sm-6">
-                                    <div class="card border-0 h-100">
-                                        <div class="card-img-container p-3 text-center" style="height: 150px; background-color: #f8f9fa;">
-                                            <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/b21cc3d5-0786-45a5-9127-6963e75799eb.png" alt="Vitamin D" class="img-fluid h-100" style="object-fit: contain;">
-                                        </div>
-                                        <div class="card-body">
-                                            <h6 class="card-title fw-semibold">Vitamin D3 1000IU</h6>
-                                            <p class="card-text text-primary fw-bold">$12.99</p>
-                                            <div class="quantity-control">
-                                                <div class="quantity-btn" onclick="decrementQuantity(this)">-</div>
-                                                <input type="number" class="quantity-input" value="1" min="1" max="10">
-                                                <div class="quantity-btn" onclick="incrementQuantity(this)">+</div>
-                                            </div>
-                                            <button class="btn btn-primary btn-sm add-to-cart-btn">
-                                                <i class="fas fa-cart-plus me-1"></i>Add to Cart
-                                            </button>
-                                        </div>
+                             {% for item in items %}
+                            <div class="col-sm-6">
+                                
+                                <div class="dashboard-card p-3 h-100">
+                                    <div class="text-center mb-3">
+                                    {% if item.item_photo %}
+                                        <img src="{{ item.item_photo.url }}" alt="{{ item.item_name }}" class="product-img img-fluid">
+                                    {% else %}
+                                    <i class="fas fa-pills text-blue-500 text-4xl"></i>                                    {% endif %}
                                     </div>
-                                </div>
-                                <div class="col-sm-6">
-                                    <div class="card border-0 h-100">
-                                        <div class="card-img-container p-3 text-center" style="height: 150px; background-color: #f8f9fa;">
-                                            <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/b0194fce-103a-43e3-bfd6-adb8a09e0347.png" alt="Blood Pressure Monitor" class="img-fluid h-100" style="object-fit: contain;">
-                                        </div>
-                                        <div class="card-body">
-                                            <h6 class="card-title fw-semibold">Blood Pressure Monitor</h6>
-                                            <p class="card-text text-primary fw-bold">$39.99</p>
-                                            <div class="quantity-control">
-                                                <div class="quantity-btn" onclick="decrementQuantity(this)">-</div>
-                                                <input type="number" class="quantity-input" value="1" min="1" max="3">
-                                                <div class="quantity-btn" onclick="incrementQuantity(this)">+</div>
-                                            </div>
-                                            <button class="btn btn-primary btn-sm add-to-cart-btn">
-                                                <i class="fas fa-cart-plus me-1"></i>Add to Cart
-                                            </button>
-                                        </div>
+                                    <h5 class="fw-semibold">{{ item.item_name }}</h5>
+                                    
+                                    <div class="d-flex justify-content-between align-items-center mt-3">
+                                        <h5 class="text-primary mb-0">{{ item.item_price }}</h5>
+                                    
                                     </div>
+                                    <button><a href="{% url 'add_to_cart' item.id %}" class="add-to-cart">
+                                    <i class="fas fa-cart-plus me-1"></i>
+                                    </a></button>
+
+
+
                                 </div>
+                                
                             </div>
+                            {% endfor %}
+                                
+                                    
+                            
                         </div>
                     </div>
+                    
                 </div>
 
                 <!-- Pharmacy Notifications -->
-                <div class="dashboard-card p-4 mb-4 bg-white">
-                    <h4 class="mb-3 fw-semibold">Pharmacy Notifications</h4>
-                    <div class="alert alert-info d-flex align-items-center">
-                        <i class="fas fa-info-circle me-3 fs-4"></i>
-                        <div>
-                            <strong>Prescription Ready:</strong> Your refill of Lisinopril is ready for pickup.
-                        </div>
-                    </div>
-                    <div class="alert alert-warning d-flex align-items-center">
-                        <i class="fas fa-exclamation-triangle me-3 fs-4"></i>
-                        <div>
-                            <strong>Prescription Expiring:</strong> Your Amoxicillin prescription will expire in 7 days.
-                        </div>
-                    </div>
-                </div>
+
             </div>
         </div>  
     </div>
@@ -724,7 +651,7 @@
             <div class="chatbot-messages">
    
                  <div class="chatbot-message bot-message">
-                <p>{{response.text}}</p> 
+                
                 </div> 
             </div>
             <div class="Rig chatbot-input">
@@ -740,8 +667,9 @@
     </div>
 </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
         // Quantity control functions
         function incrementQuantity(button) {
             const input = button.parentElement.querySelector('.quantity-input');
@@ -776,9 +704,10 @@
             });
         });
 
-    </script>
+</script>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
 <script>
 $(document).ready(function () {
     // Toggle chatbot modal
@@ -857,6 +786,8 @@ $(document).ready(function () {
         container.scrollTop(container[0].scrollHeight);
     }
 });
+
 </script>
+
 </body>
 </html>

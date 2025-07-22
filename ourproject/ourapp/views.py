@@ -1,28 +1,50 @@
 
+# Standard library imports
+import json
+import datetime
+from datetime import date, timedelta
 
-
-
-
-
-
-from django.contrib.auth.models import User
-
+# Django core imports
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse, HttpResponseForbidden
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+from django.views import View
+from django.core.paginator import Paginator
+from django.utils import timezone
+from django.utils.dateparse import parse_date
+
+# Django auth imports
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
+from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 
-from django.contrib.auth import authenticate, login
+# Django ORM utilities
+from django.db.models import (
+    Sum, Count, Q, F, FloatField, ExpressionWrapper
+)
+from django.db.models.functions import Coalesce
+
+# Project-specific imports (models, forms)
 from .forms import CustomerRegisterForm
-from .models import UserProfile
-from django.db.models import Sum
-from google import genai
+from .models import *
+
+# Third-party imports
+from google import genai  # if used, otherwise remove
 
 
 def base(request):
-    return render(request,'base.html')
-
-
-
-
+    items = Item.objects.all().order_by('-id')[:2]
+    categories = Category.objects.all()
+    context = {'items':items,
+               'categories': categories,
+                       
+                # 'cart': cart,
+                # 'cart_products': cart_products,
+                # 'total_amount': cart.total_amount + 5.99 + 1.00,
+               }
+    return render(request,'base.html',context)
 
 def customer_register(request):
     # ✅ Already logged in user များကို register ခွင့်မပေးဘူး
@@ -69,88 +91,6 @@ def customer_register(request):
 
     return render(request, 'register.html', {'form': form})
 
-# from django.views.decorators.csrf import csrf_exempt
-# from django.contrib.auth.models import User
-# from django.http import JsonResponse
-
-# import json
-
-# @csrf_exempt
-# def register_customer_ajax(request):
-#     if request.method == 'POST':
-#         try:
-#             data = json.loads(request.body)
-
-#             username = data.get('username', '').strip().lower()
-#             password = data.get('password')
-#             phone = data.get('phone')
-
-#             # ✅ Check if username already exists
-#             user = User.objects.filter(username=username).first()
-
-#             if user:
-#                 if UserProfile.objects.filter(user=user).exists():
-#                     return JsonResponse({'error': 'UserProfile already exists for this user'}, status=400)
-#             else:
-#                 user = User.objects.create_user(username=username, password=password)
-
-#             # ✅ Double-check again
-#             if UserProfile.objects.filter(user=user).exists():
-#                 return JsonResponse({'error': 'Profile already exists'}, status=400)
-
-#             UserProfile.objects.create(user=user, role='customer', phone=phone)
-
-#             return JsonResponse({'message': 'Customer registered successfully'})
-
-#         except Exception as e:
-#             return JsonResponse({'error': f'Exception: {str(e)}'}, status=500)
-
-#     return JsonResponse({'error': 'Invalid request'}, status=400)
-from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth.models import User
-from django.http import JsonResponse
-from .models import UserProfile
-import json
-
-# @csrf_exempt
-# def register_customer_ajax(request):
-#     if request.method == 'POST':
-#         try:
-#             data = json.loads(request.body)
-
-#             username = data.get('username', '').strip()
-#             password = data.get('password')
-#             phone = data.get('phone')
-
-#             print("Phone received:", phone)
-
-#             # ✅ Step 1: Check if username already exists
-#             if User.objects.filter(username=username).exists():
-#                 return JsonResponse({'error': 'Username already exists'}, status=400)
-
-#             # ✅ Step 2: Create new user
-#             user = User.objects.create_user(username=username, password=password)
-
-#             # ✅ Step 3: Double-check if profile already exists for this user
-#             if UserProfile.objects.filter(user=user).exists():
-#                 return JsonResponse({'error': 'UserProfile already exists for this user'}, status=400)
-
-#             # ✅ Step 4: Create the UserProfile
-#             UserProfile.objects.create(user=user, role='customer', phone=phone)
-
-#             return JsonResponse({'message': 'Customer registered successfully'})
-
-#         except Exception as e:
-#             return JsonResponse({'error': f'Exception: {str(e)}'}, status=500)
-
-#     return JsonResponse({'error': 'Invalid request'}, status=400)
-
-
-from .models import customerpos
-from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse
-import json
-
 @csrf_exempt
 def register_customer_ajax(request):
     if request.method == 'POST':
@@ -178,12 +118,6 @@ def register_customer_ajax(request):
 
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
-
-
-
-from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login
-from django.contrib import messages
 
 def login_view(request):
     if request.method == 'POST':
@@ -215,53 +149,18 @@ def login_view(request):
             messages.error(request, 'Invalid username or password.')
 
     return render(request, 'login.html')    
-# views.py
-from django.contrib.auth import logout
-from django.contrib import messages
+
 
 def logout_view(request):
     logout(request)
     messages.success(request, "You have been logged out.")
     return redirect('login')
 
-
-from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseForbidden
-from django.shortcuts import render
-
-
-from datetime import date, timedelta
-
-
-
-
-# views.py
-from django.shortcuts import redirect
-from django.contrib.auth.decorators import login_required
-
-
-
-    
-
-# views.py
-from django.shortcuts import render, redirect
-from django.http import HttpResponseForbidden
-from django.contrib.auth.decorators import login_required
-
 @login_required
 def admin_dashboard(request):
     if request.user.userprofile.role != 'admin':
         return HttpResponseForbidden("Admins only.")
     return render(request, 'admin/dashboard.html')
-
-
-
-
-
-
-from django.db.models import Sum
-from django.db.models.functions import Coalesce
-import datetime
 
 @login_required
 def pharmacist_dashboard_view(request):
@@ -355,9 +254,6 @@ def pharmacist_dashboard_view(request):
     return render(request, 'pharmacist/dashboard.html', context)
 
 
-from django.http import JsonResponse
-from .models import Sale, SaleItem
-
 @login_required
 def get_order_details(request, order_id):
     try:
@@ -426,7 +322,7 @@ def mark_notification_read(request, noti_id):
 @login_required
 def customer_dashboard_view(request):
     user = request.user
-
+    items = Item.objects.all().order_by('-id')[:2]
     cart = Cart.objects.filter(user=user).last()
     cart_products = CartProduct.objects.filter(cart=cart) if cart else []
 
@@ -459,6 +355,7 @@ def customer_dashboard_view(request):
     ).order_by('-created_at')  # newest first
     context = {
         'dashboard_stats': dashboard_stats,
+        'items': items,
         'cart': cart,
         'cart_products': cart_products,
         'notifications': notifications,
@@ -466,25 +363,6 @@ def customer_dashboard_view(request):
         # any other context data needed
     }
     return render(request, 'customer/dashboard.html', context)
-
-
-
-
-
-
-
-
-
-from django.db.models import Sum
-from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseForbidden
-from django.shortcuts import render
-from .models import Sale, SaleItem, Cart, CartProduct
-
-
-# ✅ All your existing views remain same (register, login, logout, dashboards...)
-from django.db.models import Sum, Count, F, FloatField, ExpressionWrapper
-from django.db.models.functions import Coalesce
 
 
 @login_required
@@ -646,12 +524,6 @@ def delete_item(request, item_id):
     return redirect('medicine_diseaseview')  # your template name
 
 
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib import messages
-from django.utils.dateparse import parse_date
-from django.contrib.auth.decorators import login_required
-from .models import Item, Category, Supplier
-
 @login_required
 def inventory_view(request):
     if request.user.userprofile.role != 'pharmacist':
@@ -739,7 +611,7 @@ def inventory_view(request):
         'categories': categories,
     })
 
-from django.views.decorators.http import require_POST
+
 
 @require_POST
 @login_required
@@ -759,12 +631,6 @@ def send_to_promotion(request):
     return redirect('inventory_view')
 
 
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib import messages
-from ourapp.models import *
-from .models import *
-from django.utils import timezone
 @login_required
 def order_view(request):
     if request.user.userprofile.role != 'pharmacist':
@@ -783,11 +649,6 @@ def order_view(request):
         'items': items,
     }
     return render(request, 'POS.html', context)
-
-from django.views import View  # ✅ OK
-from django.http import JsonResponse
-from .models import Cart, CartProduct, Item, StockHistory, Possalesreport, Sale, SaleItem
-import json
 
 # views.py
 class SaveOrderView(View):
@@ -863,13 +724,6 @@ def print_preview(request):
     })
     
 
-
-
-
-
-from django.db.models import Q
-from django.http import JsonResponse
-
 def search_customer(request):
     query = request.GET.get('q', '').strip()
     results = []
@@ -887,60 +741,6 @@ def search_customer(request):
 
     return JsonResponse(results, safe=False)
 
-    
-
-
-
-# from django.shortcuts import render, redirect, get_object_or_404
-# from django.contrib import messages
-# from .models import Supplier
-
-# def purchaseorder_view(request):
-#     suppliers = Supplier.objects.all()
-#     return render(request, 'purchaseorder.html', {'suppliers': suppliers})
-
-# def create_supplier(request):
-#     if request.method == 'POST':
-#         Supplier.objects.create(
-#             supplier_name=request.POST.get('supplier_name'),
-#             company=request.POST.get('company'),
-#             contact_person=request.POST.get('contact_person'),
-#             email=request.POST.get('email'),
-#             phone=request.POST.get('phone'),
-#             address=request.POST.get('address'),
-#             status=request.POST.get('status') == 'active'
-#         )
-#         messages.success(request, "Supplier created successfully.")
-#         return redirect('purchaseorder_view')
-
-# def edit_supplier(request, pk):
-#     supplier = get_object_or_404(Supplier, pk=pk)
-#     if request.method == 'POST':
-#         supplier.supplier_name = request.POST.get('supplier_name')
-#         supplier.company = request.POST.get('company')
-#         supplier.contact_person = request.POST.get('contact_person')
-#         supplier.email = request.POST.get('email')
-#         supplier.phone = request.POST.get('phone')
-#         supplier.address = request.POST.get('address')
-#         supplier.status = request.POST.get('status') == 'active'
-#         supplier.save()
-#         messages.success(request, "Supplier updated successfully.")
-#         return redirect('purchaseorder_view')
-#     return render(request, 'edit_supplier.html', {'supplier': supplier})
-
-# def delete_supplier(request, pk):
-#     supplier = get_object_or_404(Supplier, pk=pk)
-#     if request.method == 'POST':
-#         supplier.delete()
-#         messages.success(request, "Supplier deleted successfully.")
-#         return redirect('purchaseorder_view')
-#     return render(request, 'confirm_delete.html', {'supplier': supplier})
-
-
-from django.shortcuts import render, redirect, get_object_or_404
-from django.core.paginator import Paginator
-from django.contrib import messages
-from .models import Supplier
 
 def purchaseorder_view(request):
     # Get all suppliers ordered by name and paginate them
@@ -1103,8 +903,6 @@ def remove_from_cart(request, item_id):
 
     return redirect('medicine_list')
 
-from django.views.decorators.http import require_POST
-
 @require_POST
 @login_required
 def update_quantity(request, item_id):
@@ -1142,14 +940,17 @@ def update_quantity(request, item_id):
     return redirect('medicine_list')
 
 
-@login_required
+#@login_required
 def medicine_list(request):
     user = request.user
+    categories = Category.objects.all()
+    items = Item.objects.all().order_by('-id')
+    context = {'categories':categories,'items':items}
 
-    # ✅ Only customers can access this page
+    #✅ Only customers can access this page
     if not hasattr(user, 'userprofile') or user.userprofile.role != 'customer':
         messages.error(request, "You do not have permission to access this page.")
-        return redirect('base')  # Or any fallback
+        return render(request,'medicine_list.html',context)
 
     # ✅ Get or create cart
     cart, created = Cart.objects.get_or_create(user=user, defaults={'created_date': timezone.now()})
@@ -1161,7 +962,7 @@ def medicine_list(request):
     else:
         items = Item.objects.all().order_by('-id')
 
-    categories = Category.objects.all()
+    
     # ✅ Refresh cart total
     cart.update_total_amount()  # Ensure this includes shipping and tax
     cart.refresh_from_db()
@@ -1226,21 +1027,6 @@ def medicine_list(request):
         'cart_products': cart_products,
         'total_amount': cart.total_amount + 5.99 + 1.00,  # Pass the total to template
     })
-
-
-# def customerorder_view(request):
-#     cid = request.GET.get('cid')
-#     if cid:
-#         items = Item.objects.filter(category_id=cid)
-#     else:
-#         items = Item.objects.all()
-
-#     categories = Category.objects.all()
-#     return render(request, 'medicine_list.html', {
-#         'items': items,
-#         'categories': categories
-#     })
-
 
 @login_required
 def place_order_view(request):
@@ -1307,18 +1093,6 @@ def place_order_view(request):
         messages.error(request, "No active cart found.")
         return redirect('medicine_list')
     
-# def kpaydemo_payment():
-#     if request.method == "GET":
-#         payment_success = True
-#         if payment_success:
-#             return 
-#         else:
-#         pass
-#         messages()
-#         return redirect('medicine_list')
-    
-
-
 
 @login_required
 def customer_profile_view(request):
@@ -1337,34 +1111,6 @@ def customer_profile_view(request):
     })
 
 
-# def chatbot_view(request):
-    
-#     if request.method == 'POST':
-#         questions = request.POST.get('message')
-#         cb_data = Chatbot.objects.all()
-        
-        
-#         print(questions)
-#         print('This is questions.')
-#     return render(request,'customer/dashboard.html')
-
-# def get_chatbot_reply(message):
-#     # Basic chatbot logic
-#     message = message.lower()
-
-#     if "prescription" in message:
-#         return "You can check your prescription status by logging into your account."
-#     elif "refill" in message:
-#         return "Sure, I can help with that. When was your last refill?"
-#     elif "medicine" in message:
-#         return "Please provide the name of the medicine you'd like information about."
-#     elif "hours" in message or "open" in message:
-#         return "Our pharmacy is open from 8 AM to 8 PM, Monday to Saturday."
-#     else:
-#         return "Sorry, I didn't understand that. Could you please rephrase?"
-
-
-
 
 @csrf_exempt
 def chatbot_view(request):
@@ -1373,7 +1119,7 @@ def chatbot_view(request):
         print(f"User asked: {question}")
 
 
-    client = genai.Client(api_key="AIzaSyAMUk2hNf5V54vuMUWHMl5nOdes6YDlkX0")
+    client = genai.Client(api_key="AIzaSyAuE0XYFF61K9Po0sJlLDfgvZn6XDVu3D4")
 
     response = client.models.generate_content(
         model="gemini-2.5-flash",

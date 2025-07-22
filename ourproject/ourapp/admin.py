@@ -11,38 +11,33 @@ class UserProfileInline(admin.StackedInline):
     can_delete = False
     verbose_name_plural = 'Profile'
     fk_name = 'user'
-    extra = 0
 
-# Custom User Admin
 class CustomUserAdmin(BaseUserAdmin):
     inlines = (UserProfileInline,)
-    list_display = ('username', 'email', 'first_name', 'last_name', 'get_role', 'is_staff', 'is_active')
+    list_display = ('username', 'email', 'first_name', 'last_name', 'get_role', 'is_staff')
+
     list_select_related = ('userprofile',)
 
     def get_role(self, instance):
-        return instance.userprofile.role
+        return instance.userprofile.role if hasattr(instance, 'userprofile') else '-'
     get_role.short_description = 'Role'
 
     def get_queryset(self, request):
-        queryset = super().get_queryset(request)
-        return queryset.select_related('userprofile')
+        return super().get_queryset(request).select_related('userprofile')
 
-    # ✅ This avoids showing profile inline on add form (prevents IntegrityError)
     def get_inline_instances(self, request, obj=None):
-        if not obj:  # If adding new User (not editing)
-            return []
+        if not obj:
+            return []  # create page မှာ profile inline မထည့်
         return super().get_inline_instances(request, obj)
 
-# Unregister original User admin
 admin.site.unregister(User)
-
-# Register the new one
 admin.site.register(User, CustomUserAdmin)
+
 
 # Optional: view UserProfile as standalone
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'role')
+    list_display = ('user', 'role', 'phone', 'address', 'gender', 'date_of_birth')
     list_filter = ('role',)
     search_fields = ('user__username', 'role')
 

@@ -94,14 +94,21 @@
                     </div>
                     <div class="hidden md:block">
                         <div class="ml-10 flex items-baseline space-x-4">
-                            <a href="pharmastic dashboard.html"
-                                class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary">Dashboard</a>
-                            <a href="{% url 'order_view' %}"
-                                class="px-3 py-2 rounded-md text-sm font-medium bg-white text-primary">Orders</a>
-                            <a href="{% url 'inventory_view' %}"
-                                class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary">Inventory</a>
-                            <a href="{% url 'report_view' %}"
-                                class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary">Reports</a>
+                            <a href="#" class="px-3 py-2 rounded-md text-sm font-medium bg-white text-primary flex items-center">
+                                <i class="fas fa-tachometer-alt mr-2"></i> Dashboard
+                            </a>
+                            <a href="{% url 'order_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary hover:bg-opacity-20 flex items-center">
+                                <i class="fas fa-clipboard-list mr-2"></i> Orders
+                            </a>
+                            <a href="{% url 'inventory_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary hover:bg-opacity-20 flex items-center">
+                                <i class="fas fa-pills mr-2"></i> Inventory
+                            </a>
+                            <a href="{% url 'report_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary hover:bg-opacity-20 flex items-center">
+                                <i class="fas fa-chart-bar mr-2"></i> Reports
+                            </a>
+                            <a href="{% url 'purchaseorder_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary hover:bg-opacity-20 flex items-center">
+                                <i class="fas fa-shopping-cart mr-2"></i> Purchase Order
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -289,7 +296,7 @@
                             </div>
 
                             <!-- Discount and Total -->
-                            <div class="border-t border-gray-200 pt-4 mb-4">
+                            <!-- <div class="border-t border-gray-200 pt-4 mb-4">
                                 <div class="flex justify-between mb-2">
                                     <span class="text-sm text-gray-600">Subtotal</span>
                                     <span class="text-sm font-medium" id="subtotal">$89.98</span>
@@ -310,7 +317,7 @@
                                     <span>Total</span>
                                     <span id="total">$96.28</span>
                                 </div>
-                            </div>
+                            </div> -->
 
                             <!-- Payment Buttons -->
                             <div class="grid grid-cols-2 gap-3">
@@ -322,10 +329,10 @@
                                     class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm font-medium transition">
                                     <i class="fas fa-money-bill-wave mr-2"></i> Cash
                                 </button>
+                                    <!-- Hidden QR Modal -->
+                                <!-- <button id="mobile-btn" class="bg-purple-600 text-white">📱 Mobile</button>
 
-                                <button id="mobile-btn" class="bg-purple-600 text-white">📱 Mobile</button>
-
-                                <!-- Hidden QR Modal -->
+                                
                                 <div id="qr-modal"
                                     class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
                                     <div class="bg-white p-4 rounded-lg text-center">
@@ -335,12 +342,9 @@
                                         <button id="confirm-kpay"
                                             class="mt-4 bg-blue-600 text-white px-4 py-2 rounded">I've Paid</button>
                                     </div>
-                                </div>
+                                </div> -->
 
-                                <button id="trigger-all"
-                                    class="bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-md text-sm font-medium transition">
-                                    <i class="fas fa-th-list mr-2"></i> All
-                                </button>
+
                             </div>
                         </div>
                     </div>

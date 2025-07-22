@@ -7,7 +7,6 @@ class CustomerRegisterForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput)
     confirm_password = forms.CharField(widget=forms.PasswordInput)
     
-    # ✅ UserProfile fields
     phone = forms.CharField(max_length=20, required=True)
     address = forms.CharField(max_length=255, required=False)
     gender = forms.ChoiceField(choices=[('male', 'Male'), ('female', 'Female')], required=False)
@@ -17,27 +16,19 @@ class CustomerRegisterForm(forms.ModelForm):
         model = User
         fields = ['username', 'email', 'first_name', 'last_name', 'password']
 
+    def __init__(self, *args, **kwargs):
+        super(CustomerRegisterForm, self).__init__(*args, **kwargs)
+        # Mark fields as required
+        self.fields['first_name'].required = True
+        self.fields['last_name'].required = True
+        self.fields['email'].required = True
+
     def clean(self):
         cleaned_data = super().clean()
         password = cleaned_data.get("password")
         confirm = cleaned_data.get("confirm_password")
         if password != confirm:
             raise forms.ValidationError("Passwords do not match.")
-        return cleaned_data
-    
+        return cleaned_data    
 
 
-# class SupplierForm(forms.ModelForm):
-#     class Meta:
-#         model = Supplier
-#         fields = ['supplier_name', 'supplier_phnumber', 'supplier_location']
-
-# class PurchaseOrderForm(forms.ModelForm):
-#     class Meta:
-#         model = PurchaseOrder
-#         fields = ['supplier', 'po_number', 'order_date', 'status', 'notes']
-
-# class PurchaseItemForm(forms.ModelForm):
-#     class Meta:
-#         model = PurchaseItem
-#         fields = ['medicine_name', 'batch_number', 'quantity', 'unit_price']
