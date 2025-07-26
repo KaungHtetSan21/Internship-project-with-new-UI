@@ -13,14 +13,39 @@
 
     {% if user.userprofile.role == 'pharmacist' %}
 
-            {{ user.username }}
-            {{ user.userprofile.role }}
+    <div class="text-end p-3 bg-white border-bottom">
+  <form action="{% url 'set_language' %}" method="post" class="d-inline">
+      {% csrf_token %}
+      <input name="language" type="hidden" value="en">
+      <button type="submit" class="btn btn-outline-primary btn-sm">English</button>
+  </form>
+  <form action="{% url 'set_language' %}" method="post" class="d-inline">
+      {% csrf_token %}
+      <input name="language" type="hidden" value="my">
+      <button type="submit" class="btn btn-outline-success btn-sm">မြန်မာ</button>
+  </form>
+</div>
+
+            <!-- {{ user.username }} -->
+            <!-- {{ user.userprofile.role }} -->
             {% include 'pharmacist/dashboard.html' %}
     
     {% else %}
     
-            {{ user.userprofile.role }} 
+            <!-- {{ user.userprofile.role }}  -->
              {% include 'customer/dashboard.html' %}
+             <div class="text-end p-3 bg-white border-bottom">
+  <form action="{% url 'set_language' %}" method="post" class="d-inline">
+      {% csrf_token %}
+      <input name="language" type="hidden" value="en">
+      <button type="submit" class="btn btn-outline-primary btn-sm">English</button>
+  </form>
+  <form action="{% url 'set_language' %}" method="post" class="d-inline">
+      {% csrf_token %}
+      <input name="language" type="hidden" value="my">
+      <button type="submit" class="btn btn-outline-success btn-sm">မြန်မာ</button>
+  </form>
+</div>
 
     {% endif %}
 

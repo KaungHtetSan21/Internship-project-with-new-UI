@@ -7,28 +7,195 @@
     <title>Reports | Pharmacy Pro</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e40af',
+                        secondary: '#3b82f6',
+                        lightblue: '#dbeafe',
+                        darkblue: '#1e3a8a',
+                        success: '#10b981',
+                        warning: '#f59e0b',
+                        danger: '#ef4444',
+                        info: '#3b82f6'
+                    },
+                    boxShadow: {
+                        card: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                        'card-hover': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @media (max-width: 640px) {
+            .responsive-table {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+            .mobile-card {
+                min-width: 300px;
+            }
+        }
+        @media (max-width: 768px) {
+            .grid-cols-1-md {
+                grid-template-columns: repeat(1, minmax(0, 1fr));
+            }
+        }
+        .card {
+            transition: all 0.3s ease;
+            box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow-hover);
+        }
+        .status-badge {
+            transition: all 0.2s ease;
+        }
+        .smooth-transition {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
-                    <div class="hidden md:block">
-                        <div class="ml-10 flex items-baseline space-x-4">
-                            <a href="#" class="px-3 py-2 rounded-md text-sm font-medium bg-white text-primary flex items-center">
-                                <i class="fas fa-tachometer-alt mr-2"></i> Dashboard
-                            </a>
-                            <a href="{% url 'order_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary hover:bg-opacity-20 flex items-center">
-                                <i class="fas fa-clipboard-list mr-2"></i> Orders
-                            </a>
-                            <a href="{% url 'inventory_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary hover:bg-opacity-20 flex items-center">
-                                <i class="fas fa-pills mr-2"></i> Inventory
-                            </a>
-                            <a href="{% url 'report_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary hover:bg-opacity-20 flex items-center">
-                                <i class="fas fa-chart-bar mr-2"></i> Reports
-                            </a>
-                            <a href="{% url 'purchaseorder_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary hover:bg-opacity-20 flex items-center">
-                                <i class="fas fa-shopping-cart mr-2"></i> Purchase Order
-                            </a>
+<body class="bg-gray-50 flex flex-col min-h-screen">
+<!-- Navigation -->
+{% if user.userprofile.role == 'pharmacist' %}
+<nav class="bg-[#1e40af] text-white shadow-md">  <!-- Changed to explicit primary color -->
+    <div class="mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 flex items-center">
+                    <span class="text-2xl mr-2">🏥</span>
+                    <span class="font-semibold text-lg">PharmaCare</span>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#" class="px-3 py-2 rounded-md text-sm font-medium bg-white text-[#1e40af] flex items-center">
+                            <span class="mr-2">📊</span> Dashboard
+                        </a>
+                        <a href="{% url 'order_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-[#3b82f6] hover:bg-opacity-20 flex items-center">
+                            <span class="mr-2">📋</span> Orders
+                        </a>
+                        <a href="{% url 'inventory_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-[#3b82f6] hover:bg-opacity-20 flex items-center">
+                            <span class="mr-2">💊</span> Inventory
+                        </a>
+                        <a href="{% url 'report_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-[#3b82f6] hover:bg-opacity-20 flex items-center">
+                            <span class="mr-2">📈</span> Reports
+                        </a>
+                        <a href="{% url 'purchaseorder_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-[#3b82f6] hover:bg-opacity-20 flex items-center">
+                            <span class="mr-2">🛒</span> Purchase Order
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center">
+                <!-- Notification Bell -->
+                <div class="ml-3 relative">
+                    <button id="notif-bell" class="p-1 rounded-full text-white focus:outline-none relative hover:bg-[#3b82f6] hover:bg-opacity-20">
+                        <span class="text-xl">🔔</span>
+                        {% if expiring_items %}
+                        <span class="absolute -top-1 -right-1 bg-[#ef4444] text-white text-xs rounded-full px-1.5 py-0.5">
+                            {{ expiring_items|length }}
+                        </span>
+                        {% endif %}
+                    </button>
+                    <!-- Dropdown -->
+                    <div id="notif-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-white shadow-lg rounded-md z-50 border border-gray-200">
+                        <div class="px-4 py-3 border-b bg-gray-50 text-sm font-semibold text-gray-700 flex justify-between items-center">
+                            <span>Notifications</span>
+                            <span class="text-xs text-[#1e40af] cursor-pointer">Mark all as read</span>
+                        </div>
+                        <ul class="max-h-60 overflow-y-auto divide-y divide-gray-100">
+                            {% for item in expiring_items %}
+                            <li class="px-4 py-3 hover:bg-gray-50">
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0 pt-0.5">
+                                        <div class="h-8 w-8 rounded-full bg-red-100 flex items-center justify-center">
+                                            <span class="text-red-500">⚠️</span>
+                                        </div>
+                                    </div>
+                                    <div class="ml-3 flex-1">
+                                        <p class="text-sm font-medium text-gray-900">{{ item.item_name }}</p>
+                                        <p class="text-xs text-gray-500">Expires on {{ item.exp_date|date:"M d, Y" }}</p>
+                                    </div>
+                                    <span class="text-xs text-red-600">{{ item.exp_date|timeuntil }}</span>
+                                </div>
+                            </li>
+                            {% empty %}
+                            <li class="px-4 py-4 text-center">
+                                <span class="text-gray-300 text-2xl mb-2">🔕</span>
+                                <p class="text-gray-500 text-sm">No new notifications</p>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        <div class="px-4 py-2 border-t bg-gray-50 text-center">
+                            <a href="#" class="text-xs text-[#1e40af] font-medium">View all notifications</a>
                         </div>
                     </div>
-<div class="max-w-7xl mx-auto px-4 py-8">
+                </div>
+                
+                <!-- User Profile -->
+                <div class="ml-3 relative">
+                    <div class="flex items-center">
+                        <div class="text-sm mr-3 hidden md:block">
+                            <div class="text-gray-300 text-xs">Pharmacist</div>
+                        </div>
+                        <div class="ml-3 relative">
+                            <button id="user-menu-button" class="flex items-center space-x-2 bg-[#1e3a8a] hover:bg-[#1e40af] text-white px-4 py-2 rounded-lg transition-all shadow-md hover:shadow-lg">
+                                Pharmacist Account
+                                <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                            </button>
+                            <div id="user-menu" class="hidden absolute right-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                                <div class="py-1">
+                                    <div class="border-t border-gray-200"></div>
+                                    <a href="{% url 'logout' %}" class="block px-4 py-2 text-[#ef4444] hover:bg-gray-100 hover:text-[#dc2626] transition">🚪 Logout</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<script>
+    // Notification dropdown toggle
+    document.addEventListener('DOMContentLoaded', function() {
+        const notifBell = document.getElementById('notif-bell');
+        const notifDropdown = document.getElementById('notif-dropdown');
+        
+        notifBell.addEventListener('click', function(e) {
+            e.stopPropagation();
+            notifDropdown.classList.toggle('hidden');
+        });
+
+        // User menu dropdown toggle
+        const userMenuButton = document.getElementById('user-menu-button');
+        const userMenu = document.getElementById('user-menu');
+        
+        userMenuButton.addEventListener('click', function(e) {
+            e.stopPropagation();
+            userMenu.classList.toggle('hidden');
+        });
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function() {
+            notifDropdown.classList.add('hidden');
+            userMenu.classList.add('hidden');
+        });
+    });
+</script>
+{% else %}
+{{ user.userprofile.role }}  
+{% endif %}
+<div class="w-full px-4 py-8">
     <h1 class="text-3xl font-bold mb-6">Reports</h1>
 
     <!-- ✅ Tabs -->

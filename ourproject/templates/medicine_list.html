@@ -1,561 +1,430 @@
+{% load i18n %}
 {% load cart_extras %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pharmastics - Products</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Pharmastics - Customer Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body {
-            background-color: #f8f9fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            padding-bottom: 70px;
-        }
-        .sidebar {
-            background-color: #0d6efd;
-            color: white;
-            height: 100vh;
-            position: fixed;
-            width: 250px;
-        }
-        .sidebar-link {
-            color: white;
-            padding: 10px 15px;
-            display: block;
-            text-decoration: none;
-            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
         }
         .sidebar-link:hover {
-            background-color: rgba(255,255,255,0.1);
+            background-color: rgba(255, 255, 255, 0.1);
+            transform: translateX(2px);
         }
         .sidebar-link.active {
-            background-color: rgba(255,255,255,0.2);
-            font-weight: 500;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-left: 3px solid white;
         }
-        .dashboard-card {
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
-            border: none;
-        }
-        .dashboard-card:hover {
-            box-shadow: 0 10px 15px rgba(0,0,0,0.1);
-            transform: translateY(-2px);
-        }
-        .main-content {
-            margin-left: 250px;
-            width: calc(100% - 250px);
-        }
-        .product-img {
-            height: 200px;
-            object-fit: contain;
-            background-color: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-        }
-        .quantity-control {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        .quantity-btn {
-            width: 30px;
-            height: 30px;
-            border: 1px solid #dee2e6;
-            background-color: #f8f9fa;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            user-select: none;
-        }
-        .quantity-btn:first-child {
-            border-radius: 4px 0 0 4px;
-        }
-        .quantity-btn:last-child {
-            border-radius: 0 4px 4px 0;
-        }
-        .quantity-input {
-            width: 50px;
-            height: 30px;
-            text-align: center;
-            border: 1px solid #dee2e6;
-            border-left: none;
-            border-right: none;
-        }
-        .quantity-input:focus {
-            outline: none;
-            box-shadow: none;
-        }
-        .cart-item-img {
-            width: 60px;
-            height: 60px;
-            object-fit: contain;
-            border-radius: 4px;
-            background-color: #f8f9fa;
-            padding: 5px;
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
         }
         .tab-content {
-            background-color: white;
-            border-radius: 0 0 10px 10px;
-            padding: 20px;
-            border: 1px solid #dee2e6;
-            border-top: none;
+            border-bottom-left-radius: 0.75rem;
+            border-bottom-right-radius: 0.75rem;
         }
         .nav-tabs .nav-link {
-            border: 1px solid #dee2e6;
             border-bottom: none;
-            border-radius: 10px 10px 0 0;
-            margin-right: 5px;
-            color: #495057;
-            font-weight: 500;
+            position: relative;
         }
         .nav-tabs .nav-link.active {
-            background-color: white;
-            color: #0d6efd;
-            border-bottom: 1px solid white;
-            margin-bottom: -1px;
+            border-bottom: 2px solid #3b82f6;
+            color: #3b82f6;
         }
-        .mobile-footer-nav {
-            display: none;
-            position: fixed;
-            bottom: 0;
+        .nav-tabs .nav-link.active:after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
             left: 0;
             right: 0;
-            background-color: #0d6efd;
-            z-index: 1000;
-            padding: 5px 0;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-        }
-        .mobile-footer-nav .nav-item {
-            text-align: center;
-            padding: 5px 0;
-        }
-        .mobile-footer-nav .nav-link {
-            color: white;
-            font-size: 0.75rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 5px 10px;
-        }
-        .mobile-footer-nav .nav-link i {
-            font-size: 1.25rem;
-            margin-bottom: 3px;
-        }
-        .mobile-footer-nav .nav-link.active {
-            color: white;
-            background-color: rgba(255,255,255,0.2);
-            border-radius: 5px;
-        }
-        @media (max-width: 992px) {
-            .sidebar {
-                display: none;
-            }
-            .main-content {
-                margin-left: 0;
-                width: 100%;
-            }
-            .mobile-footer-nav {
-                display: flex;
-                justify-content: space-around;
-            }
-        }
-        @media (max-width: 576px) {
-            .product-img {
-                height: 150px;
-            }
-            .cart-item-img {
-                width: 40px;
-                height: 40px;
-            }
-            body {
-                padding-bottom: 60px;
-            }
+            height: 1px;
+            background: white;
         }
     </style>
-            {% if messages %}
-        <div class="mb-6">
-            {% for message in messages %}
-            <div class="p-4 mb-3 rounded-md text-white font-medium
-                {% if message.tags == 'success' %} bg-green-500
-                {% elif message.tags == 'error' %} bg-red-500
-                {% elif message.tags == 'warning' %} bg-yellow-500
-                {% else %} bg-blue-500
-                {% endif %}">
-                {{ message }}
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
 </head>
-<body>
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar -->
-            <div class="col-md-3 col-lg-2 d-md-block sidebar p-0 d-none">
-                <div class="text-center p-3">
-                    <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/120c636b-923a-456a-a13a-39844d5d3a4a.png" alt="Pharmastics logo" class="img-fluid mb-3" style="max-height: 50px;">
-                </div>
-                <div class="px-2">
-                    <a href="#" class="sidebar-link">
-                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
-                    </a>
-                    <a href="#" class="sidebar-link active">
-                        <i class="fas fa-shopping-bag me-2"></i>Products
-                    </a>
-                    <a href="#" class="sidebar-link">
-                        <i class="fas fa-prescription me-2"></i>My Prescriptions
-                    </a>
-                    <a href="#" class="sidebar-link">
-                        <i class="fas fa-history me-2"></i>Order History
-                    </a>
-                    <a href="#" class="sidebar-link">
-                        <i class="fas fa-file-medical me-2"></i>Health Records
-                    </a>
-                    <a href="#" class="sidebar-link">
-                        <i class="fas fa-cog me-2"></i>Settings
-                    </a>
+<body class="bg-gray-50">
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside class="hidden lg:block w-64 bg-blue-600 text-white fixed h-full">
+            <div class="p-4 text-center border-b border-blue-500">
+                <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/120c636b-923a-456a-a13a-39844d5d3a4a.png" class="h-12 mx-auto mb-2">
+                <h2 class="font-bold text-lg">Pharmastics</h2>
+            </div>
+            <nav class="mt-4 space-y-1 px-2">
+                <a href="{% url 'customer_dashboard' %}" class="sidebar-link active block px-4 py-2 rounded transition">
+                    📊 {% trans "Dashboard" %}
+                </a>
+                <a href="{% url 'medicine_list' %}" class="sidebar-link block px-4 py-2 rounded transition">
+                    💊 {% trans "Medicine" %}
+                </a>
+                <a href="{% url 'customer_profile' %}" class="sidebar-link block px-4 py-2 rounded transition">
+                    👤 {% trans "My Profile" %}
+                </a>
+                <a href="{% url 'logout' %}" class="block px-4 py-2 bg-red-500 hover:bg-red-600 rounded transition mt-4">
+                    {% trans "Logout" %}
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 lg:ml-64 p-4 lg:p-8">
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-2xl font-bold text-gray-800">{% trans "Pharmacy Products" %}</h1>
+                                    
+                    <div class="flex space-x-2">
+                        <form action="{% url 'set_language' %}" method="post">
+                            {% csrf_token %}
+                            <input name="next" type="hidden" value="{{ request.path }}">
+                            <input name="language" type="hidden" value="en">
+                            <button type="submit" class="px-3 py-1 text-sm border border-blue-500 rounded hover:bg-blue-50 transition">English</button>
+                        </form>
+                        <form action="{% url 'set_language' %}" method="post">
+                            {% csrf_token %}
+                            <input name="next" type="hidden" value="{{ request.path }}">
+                            <input name="language" type="hidden" value="my">
+                            <button type="submit" class="px-3 py-1 text-sm border border-green-500 rounded hover:bg-green-50 transition">မြန်မာ</button>
+                        </form>
+                    </div>
+                <div class="flex items-center space-x-4">
+                    <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/8637fe83-4dd7-4a12-acb3-070973d2f38d.png" class="w-8 h-8 rounded-full border-2 border-blue-500">
+                    <div class="relative">
+                        <button onclick="toggleDropdown()" class="bg-blue-600 text-white px-4 py-2 rounded-lg inline-flex items-center hover:bg-blue-700 transition">
+                            {% trans "Customer Account" %}
+                            <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+                        <div id="dropdownMenu" class="absolute right-0 mt-1 w-48 hidden bg-white border rounded-lg shadow-lg z-10 overflow-hidden">
+                            <a href="{% url 'customer_register' %}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">👤 {% trans "Register" %}</a>
+                            <a href="{% url 'logout' %}" class="block px-4 py-2 text-red-600 hover:bg-gray-100 transition">🚪 {% trans "Logout" %}</a>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Main Content -->
-            <div class="col-md-9 col-lg-10 ms-sm-auto px-md-4 py-4 main-content">
-                <!-- Header -->
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2 class="fw-bold">Pharmacy Products</h2>
-                    <div class="dropdown">
-                        <button class="btn btn-outline-primary dropdown-toggle d-flex align-items-center" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown">
-                            <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/8637fe83-4dd7-4a12-acb3-070973d2f38d.png" alt="User profile" class="rounded-circle me-2" style="width: 32px; height: 32px;">
-                            <span>Customer Account</span>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end">
+            {% if messages %}
+                <div class="mb-6">
+                    {% for message in messages %}
+                    <div class="p-3 rounded-lg text-white font-medium mb-2
+                        {% if message.tags == 'success' %} bg-green-500
+                        {% elif message.tags == 'error' %} bg-red-500
+                        {% elif message.tags == 'warning' %} bg-yellow-500
+                        {% else %} bg-blue-500
+                        {% endif %}">
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
 
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-danger" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
-                        </ul>
+            <!-- Tabs -->
+            <div class="border-b border-gray-200 mb-6">
+                <ul class="flex flex-wrap -mb-px" id="myTab" role="tablist">
+                    <li class="mr-2" role="presentation">
+                        <button class="nav-link inline-block p-4 border-b-2 rounded-t-lg active" id="products-tab" data-tabs-target="#products" type="button" role="tab">
+                            {% trans "Products" %}
+                        </button>
+                    </li>
+                    <li class="mr-2" role="presentation">
+                        <button class="nav-link inline-block p-4 border-b-2 rounded-t-lg" id="cart-tab" data-tabs-target="#cart" type="button" role="tab">
+                            🛒 {% trans "Cart" %} <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full ml-1">{{ cart_products|length }}</span>
+                        </button>
+                    </li>
+                    <li class="mr-2" role="presentation">
+                        <button class="nav-link inline-block p-4 border-b-2 rounded-t-lg" id="checkout-tab" data-tabs-target="#checkout" type="button" role="tab">
+                            {% trans "Checkout" %}
+                        </button>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="tab-content">
+                <!-- Products Tab -->
+                <div class="tab-pane active p-4 bg-white rounded-lg shadow" id="products" role="tabpanel">
+                    <div class="mb-6">
+                        <select class="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                                onchange="window.location.href='?cid=' + this.value">
+                            <option value="">{% trans "All Categories" %}</option>
+                            {% for c in categories %}
+                            <option value="{{ c.id }}"
+                                {% if request.GET.cid|default:'' == c.id|stringformat:'s' %}selected{% endif %}>
+                                {{ c.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {% for item in items %}
+                        <div class="product-card bg-white border border-gray-200 rounded-lg shadow transition duration-300">
+                            <div class="p-4 flex justify-center">
+                                {% if item.item_photo %}
+                                    <img src="{{ item.item_photo.url }}" alt="{{ item.item_name }}" class="h-40 object-contain">
+                                {% else %}
+                                    <div class="h-40 flex items-center justify-center text-blue-500 text-5xl">💊</div>
+                                {% endif %}
+                            </div>
+                            <div class="p-4 pt-0">
+                                <h3 class="text-lg font-semibold text-gray-900">{{ item.item_name }}</h3>
+                                <div class="flex justify-between items-center mt-3">
+                                    <span class="text-xl font-bold text-blue-600">{{ item.item_price }}</span>
+                                    <a href="{% url 'add_to_cart' item.id %}" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 transition">
+                                        {% trans "Add to Cart" %}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
                     </div>
                 </div>
 
-                <!-- Tabs for Products/Cart/Checkout -->
-<ul class="nav nav-tabs mb-0" id="myTab" role="tablist">
-    <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="products-tab" data-bs-toggle="tab" data-bs-target="#products" type="button" role="tab">Products</button>
-    </li>
-    <li class="nav-item" role="presentation">
-        <button class="nav-link" id="cart-tab" data-bs-toggle="tab" data-bs-target="#cart" type="button" role="tab">
-            <i class="fas fa-shopping-cart me-1"></i>Cart <span class="badge bg-primary rounded-pill" id="cart-count">{{ cart_products|length }}</span>
-        </button>
-    </li>
-    <li class="nav-item" role="presentation">
-        <button class="nav-link" id="checkout-tab" data-bs-toggle="tab" data-bs-target="#checkout" type="button" role="tab">Checkout</button>
-    </li>
-</ul>
-
-                <!-- Tab Content -->
-                <div class="tab-content" id="myTabContent">
-                    <!-- Products Tab -->
-                    <div class="tab-pane fade show active" id="products" role="tabpanel">
-                        <div class="row mb-4">
-                            <!-- <div class="col-md-6">
-                                <div class="input-group mb-3">
-                                    <input type="text" class="form-control" placeholder="Search products...">
-                                    <button class="btn btn-primary" type="button"><i class="fas fa-search"></i></button>
-                                </div>
-                            </div> -->
-                                <div class="mb-4">
-                                    <select class="form-select"
-                                            onchange="window.location.href='?cid=' + this.value">
-                                        <option value="">All Categories</option>
-                                        {% for c in categories %}
-                                        <option value="{{ c.id }}"
-                                            {% if request.GET.cid|default:'' == c.id|stringformat:'s' %}selected{% endif %}>
-                                            {{ c.name }}
-                                        </option>
+                <!-- Cart Tab -->
+                <div class="tab-pane hidden p-4 bg-white rounded-lg shadow" id="cart" role="tabpanel">
+                    <div class="flex flex-col lg:flex-row gap-6">
+                        <div class="lg:w-2/3">
+                            <h3 class="text-xl font-semibold mb-4">{% trans "Your Shopping Cart" %} ({{ cart_products|length }} {% trans "items" %})</h3>
+                            
+                            {% if cart_products %}
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm text-left text-gray-500">
+                                    <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                                        <tr>
+                                            <th scope="col" class="px-6 py-3">{% trans "Product" %}</th>
+                                            <th scope="col" class="px-6 py-3">{% trans "Price" %}</th>
+                                            <th scope="col" class="px-6 py-3">{% trans "Quantity" %}</th>
+                                            <th scope="col" class="px-6 py-3">{% trans "Total" %}</th>
+                                            <th scope="col" class="px-6 py-3">{% trans "Action" %}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for cp in cart_products %}
+                                        <tr class="bg-white border-b hover:bg-gray-50">
+                                            <td class="px-6 py-4 font-medium text-gray-900">
+                                                {{ cp.item.item_name }}
+                                            </td>
+                                            <td class="px-6 py-4">{{ cp.item.item_price }}</td>
+                                            <td class="px-6 py-4">
+                                                <div class="flex items-center space-x-2">
+                                                    <a href="{% url 'decrease_quantity' cp.item.id %}" class="inline-flex items-center justify-center p-1 text-sm font-medium h-6 w-6 text-gray-500 bg-white border border-gray-300 rounded-full hover:bg-gray-100 focus:outline-none">
+                                                        -
+                                                    </a>
+                                                    <span class="px-2">{{ cp.qty }}</span>
+                                                    <a href="{% url 'increase_quantity' cp.item.id %}" class="inline-flex items-center justify-center p-1 text-sm font-medium h-6 w-6 text-gray-500 bg-white border border-gray-300 rounded-full hover:bg-gray-100 focus:outline-none">
+                                                        +
+                                                    </a>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4">{{ cp.qty|multiply:cp.item.item_price }}</td>
+                                            <td class="px-6 py-4">
+                                                <a href="{% url 'remove_from_cart' cp.item.id %}" class="font-medium text-red-600 hover:underline">{% trans "Remove" %}</a>
+                                            </td>
+                                        </tr>
                                         {% endfor %}
-                                    </select>
-                                </div>
-                        </div>
-
-                        <div class="row g-4">
-                            <!-- Product 1 -->
-                             {% for item in items %}
-                            <div class="col-md-6 col-lg-4">
-                                
-                                <div class="dashboard-card p-3 h-100">
-                                    <div class="text-center mb-3">
-                                    {% if item.item_photo %}
-                                        <img src="{{ item.item_photo.url }}" alt="{{ item.item_name }}" class="product-img img-fluid">
-                                    {% else %}
-                                    <i class="fas fa-pills text-blue-500 text-4xl"></i>                                    {% endif %}
-                                    </div>
-                                    <h5 class="fw-semibold">{{ item.item_name }}</h5>
-                                    
-                                    <div class="d-flex justify-content-between align-items-center mt-3">
-                                        <h5 class="text-primary mb-0">{{ item.item_price }}</h5>
-                                    
-                                    </div>
-                                    <button><a href="{% url 'add_to_cart' item.id %}" class="add-to-cart">
-                                    <i class="fas fa-cart-plus me-1"></i>
-                                    </a></button>
-
-
-
-                                </div>
-                                
+                                    </tbody>
+                                </table>
                             </div>
-                            {% endfor %}
-
-                            
-                       
-                        </div>
-                    </div>
-
-                    <!-- Cart Tab -->
-                    <div class="tab-pane fade" id="cart" role="tabpanel">
-                        <div class="row">
-                            <div class="col-lg-8">
-                                <h5 class="mb-4">Your Shopping Cart (<span id="cart-items-count">0</span> items)</h5>
-                                
-                                <div class="table-responsive">
-                                    <table class="table">
-                                        <thead>
-                                            <tr>
-                                                <th>Product</th>
-                                                <th>Price</th>
-                                                <th>Quantity</th>
-                                                <th>Total</th>
-
-                                                <th>Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="cart-items">
-                                            <!-- Cart items will be added here dynamically -->
-                                        {% if cart_products %}
-                                            {% for cp in cart_products %}
-
-                                            <tr>
-                                                <td>{{ cp.item.item_name }}</td>
-                                                <td>${{ cp.item.item_price }}</td>
-                                                <td>
-                                                    <!-- Manual quantity input form -->
-                                                    <form method="POST" action="{% url 'update_quantity' cp.item.id %}" class="d-flex align-items-center" enctype="multipart/form-data">
-                                                        {% csrf_token %}
-                                                        
-                                                    <a href="{% url 'decrease_quantity' cp.item.id %}" class="btn btn-sm btn-outline-secondary">-</a>
-                                                    {{ cp.qty }}
-                                                    <a href="{% url 'increase_quantity' cp.item.id %}" class="btn btn-sm btn-outline-secondary">+</a>
-                                                
-                                                        
-                                                    </form>
-                                                </td>
-                                                <td>${{ cp.qty|multiply:cp.item.item_price }}</td>
-                                                <td>
-                                                    <a href="{% url 'remove_from_cart' cp.item.id %}" class="btn btn-sm btn-danger">Remove</a>
-                                                </td>
-                                            </tr>
-                                             {% endfor %}   
-                                            {% else %}
-
-                                            <tr id="empty-cart-message">
-                                                <td colspan="5" class="text-center py-4">
-                                                    <i class="fas fa-shopping-cart fa-2x text-muted mb-3"></i>
-                                                    <p class="text-muted">Your cart is empty</p>
-                                                    <!-- <button class="btn btn-primary" onclick="switchToProductsTab()">
-                                                        <i class="fas fa-arrow-left me-1"></i>Browse Products
-                                                    </button> -->
-                                                </td>
-                                            </tr>
-                                        {% endif %}
-
-                                           
-                                        </tbody>
-                                    </table>
-                                </div>
+                            {% else %}
+                            <div class="text-center py-8">
+                                <div class="text-gray-400 text-5xl mb-3">🛒</div>
+                                <h4 class="text-lg font-medium text-gray-500 mb-2">{% trans "Your cart is empty" %}</h4>
+                                <p class="text-gray-400 mb-4">{% trans "Browse our products and add items to your cart" %}</p>
+                                <a href="#products" class="text-blue-600 hover:underline" onclick="switchTab('products-tab')">{% trans "View Products" %}</a>
                             </div>
-                            
-                            <div class="col-lg-4">
-                                <div class="dashboard-card p-4">
-                                    <h5 class="fw-semibold mb-3">Order Summary</h5>
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <span>Subtotal:</span>
-                                        <span id="cart-subtotal">{{ cart.total_amount }}</span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="lg:w-1/3">
+                            <div class="bg-white border border-gray-200 rounded-lg shadow p-6">
+                                <h3 class="text-lg font-semibold mb-4">{% trans "Order Summary" %}</h3>
+                                <div class="space-y-3 mb-4">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">{% trans "Subtotal" %}:</span>
+                                        <span class="font-medium">{{ cart.total_amount }}</span>
                                     </div>
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <span>Shipping:</span>
-                                        <span id="cart-shipping">$5.99</span>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">{% trans "Shipping" %}:</span>
+                                        <span class="font-medium">1000 Ks</span>
                                     </div>
-                                    <div class="d-flex justify-content-between mb-3">
-                                        <span>Tax:</span>
-                                        <span id="cart-tax">$0.00</span>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">{% trans "Tax" %}:</span>
+                                        <span class="font-medium">500 Ks</span>
                                     </div>
-                                    <hr>
-                                        <div class="d-flex justify-content-between fw-bold mb-4">
-                                            <span>Total:</span>
-                                            {% with total=cart.total_amount|add:"5.99" %}
-                                            <span id="cart-total">${{ total_amount|floatformat:2 }}</span>
-                                            {% endwith %}
-                                        </div>
-                               <!-- <a href="#checkout" class="btn btn-primary w-100" data-bs-toggle="tab">Proceed to Checkout</a> -->
                                 </div>
+                                <hr class="my-4">
+                                <div class="flex justify-between text-lg font-bold mb-6">
+                                    <span>{% trans "Total" %}:</span>
+                                    {% with total=cart.total_amount|add:"1000" %}
+                                    <span id="cart-total">{{ total_amount|floatformat:2 }} Ks</span>
+                                    {% endwith %}
+                                </div>
+                                <a href="#checkout" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg py-2.5 px-5 transition text-center block" onclick="switchTab('checkout-tab')">
+                                    {% trans "Proceed to Checkout" %}
+                                </a>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Checkout Tab -->
-                    <div class="tab-pane fade" id="checkout" role="tabpanel">
-                        <form action="{% url 'place_order' %}" method="get">
-                        <!-- {% csrf_token %} -->
-                        <div class="row">
-                            <div class="col-lg-7">
-                                <h5 class="mb-4">Checkout</h5>
+                <!-- Checkout Tab -->
+                <div class="tab-pane hidden p-4 bg-white rounded-lg shadow" id="checkout" role="tabpanel">
+                    <form action="{% url 'place_order' %}" method="get">
+                        <div class="flex flex-col lg:flex-row gap-6">
+                            <div class="lg:w-2/3">
+                                <h3 class="text-xl font-semibold mb-4">{% trans "Checkout" %}</h3>
                                 
-                                <div class="dashboard-card p-4 mb-4">
-                                    <h6 class="fw-semibold mb-3"><i class="fas fa-user me-2"></i>Contact Information</h6>
-                                    <div class="row g-3">
-                                        <div class="col-md-6">
-                                            <label class="form-label"> Name</label>
-                                            <input type="text" class="form-control" name="name" value="John">
+                                <div class="bg-white border border-gray-200 rounded-lg shadow p-6 mb-6">
+                                    <h4 class="text-lg font-medium mb-4 flex items-center">
+                                        <span class="bg-blue-100 text-blue-800 p-2 rounded-full mr-3">
+                                            👤
+                                        </span>
+                                        {% trans "Contact Information" %}
+                                    </h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block mb-2 text-sm font-medium text-gray-900">{% trans "Name" %}</label>
+                                            <input type="text" name="name" value="John" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
                                         </div>
-
-
-                                        <div class="col-12">
-                                            <label class="form-label">Phone</label>
-                                            <input type="tel" class="form-control" name="phone" value="(555) 123-4567">
+                                        <div>
+                                            <label class="block mb-2 text-sm font-medium text-gray-900">{% trans "Phone" %}</label>
+                                            <input type="tel" name="phone" value="(555) 123-4567" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
                                         </div>
                                     </div>
                                 </div>
                                 
-                                <div class="dashboard-card p-4 mb-4">
-                                    <h6 class="fw-semibold mb-3"><i class="fas fa-truck me-2"></i>Shipping Address</h6>
-                                    <div class="form-check mb-3">
-                                        <input class="form-check-input" type="checkbox"  id="same-as-billing" checked>
-                                        <label class="form-check-label"  for="same-as-billing">
-                                            Same as billing address
-                                        </label>
+                                <div class="bg-white border border-gray-200 rounded-lg shadow p-6">
+                                    <h4 class="text-lg font-medium mb-4 flex items-center">
+                                        <span class="bg-blue-100 text-blue-800 p-2 rounded-full mr-3">
+                                            🚚
+                                        </span>
+                                        {% trans "Shipping Address" %}
+                                    </h4>
+                                    <div class="flex items-center mb-4">
+                                        <input id="same-as-billing" type="checkbox" checked class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500">
+                                        <label for="same-as-billing" class="ml-2 text-sm font-medium text-gray-900">{% trans "Same as billing address" %}</label>
                                     </div>
-                                     <div class="row g-3">
-                                        <div class="col-12">
-                                            <label class="form-label">Address</label>
-                                            <input type="text" class="form-control" name="address" value="123 Main St">
-                                        </div> 
-    
-                                       
-
-                                    </div> 
+                                    <div>
+                                        <label class="block mb-2 text-sm font-medium text-gray-900">{% trans "Address" %}</label>
+                                        <input type="text" name="address" value="123 Main St" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                                    </div>
                                 </div>
-                                <button></button>
-
-                                <!-- <div class="dashboard-card p-4"> 
-                                    <h6 class="fw-semibold mb-3"><i class="fas fa-credit-card me-2"></i>Payment Method</h6>
-                                    <div class="form-check mb-3">
-                                        <input class="form-check-input" type="radio" name="paymentMethod" id="creditCard" checked>
-                                        <label class="form-check-label" for="creditCard">
-                                            Credit Card
-                                        </label>
-                                    </div>
-                                    <div class="row g-3">
-                                        <div class="col-12">
-                                            <label class="form-label">Card Number</label>
-                                            <input type="text" class="form-control" placeholder="1234 5678 9012 3456">
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label">Expiration Date</label>
-                                            <input type="text" class="form-control" placeholder="MM/YY">
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label">Security Code</label>
-                                            <input type="text" class="form-control" placeholder="CVC">
-                                        </div>
-                                        <div class="col-12">
-                                            <label class="form-label">Name on Card</label>
-                                            <input type="text" class="form-control" placeholder="John Doe">
-                                        </div>
-                                    </div>
-                                    <hr>
-                                    <div class="form-check mb-3">
-                                        <input class="form-check-input" type="checkbox" id="savePayment" checked>
-                                        <label class="form-check-label" for="savePayment">
-                                            Save payment information for next time
-                                        </label>
-                                    </div>
-                                </div>  -->
                             </div>
                             
-                            <div class="col-lg-5">
-                                <div class="dashboard-card p-4 sticky-top" style="top: 20px;">
-                                    <h5 class="fw-semibold mb-3">Order Summary</h5>
-                                    {% for cp in cart_products %}
-                                    <div id="checkout-items">
-                                        <!-- Order items will be added here dynamically -->
-                                        <span>{{ cp.item.item_name }} × {{ cp.qty }}</span>
-                                        <span>${{ cp.qty|multiply:cp.item.item_price }}</span>
-                                    </div>
-                                    {% endfor %}
-                                    <hr>
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <span>Subtotal:</span>
-                                        <span id="checkout-subtotal">{{ cart.total_amount }}</span>
-                                    </div>
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <span>Shipping:</span>
-                                        <span id="checkout-shipping">$5.99</span>
-                                    </div>
-                                    <div class="d-flex justify-content-between mb-3">
-                                        <span>Tax:</span>
-                                        <span id="checkout-tax">$0.00</span>
-                                    </div>
-                                    <hr>
-                                        <div class="d-flex justify-content-between fw-bold mb-4">
-                                            <span>Total:</span>
-                                            {% with total=cart.total_amount|add:"5.99" %}
-                                            <span id="cart-total">${{ total_amount|floatformat:2 }}</span>
-                                            {% endwith %}
+                            <div class="lg:w-1/3">
+                                <div class="bg-white border border-gray-200 rounded-lg shadow p-6 sticky top-4">
+                                    <h3 class="text-lg font-semibold mb-4">{% trans "Order Summary" %}</h3>
+                                    <div class="space-y-3 mb-4">
+                                        {% for cp in cart_products %}
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600">{{ cp.item.item_name }} × {{ cp.qty }}</span>
+                                            <span class="font-medium">{{ cp.qty|multiply:cp.item.item_price }}</span>
                                         </div>
-                                    <button type="submit" class="btn btn-primary w-100">
-                                        <i class="fas fa-lock me-1"></i>Place Order
+                                        {% endfor %}
+                                    </div>
+                                    <hr class="my-4">
+                                    <div class="space-y-3 mb-4">
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600">{% trans "Subtotal" %}:</span>
+                                            <span class="font-medium">{{ cart.total_amount }}</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600">{% trans "Shipping" %}:</span>
+                                            <span class="font-medium">1000 Ks</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600">{% trans "Tax" %}:</span>
+                                            <span class="font-medium">500 KS</span>
+                                        </div>
+                                    </div>
+                                    <hr class="my-4">
+                                    <div class="flex justify-between text-lg font-bold mb-6">
+                                        <span>{% trans "Total" %}:</span>
+                                        {% with total=cart.total_amount|add:"1000" %}
+                                        <span id="cart-total">{{ total_amount|floatformat:2 }} Ks</span>
+                                        {% endwith %}
+                                    </div>
+                                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg py-2.5 px-5 transition">
+                                        {% trans "Place Order" %}
                                     </button>
                                 </div>
                             </div>
                         </div>
-                        </form>
-                    </div>
+                    </form>
                 </div>
             </div>
-        </div>
+        </main>
     </div>
 
-    <!-- Mobile Footer Navigation -->
-    <nav class="mobile-footer-nav">
-        <div class="nav-item">
-            <a href="#" class="nav-link">
-                <i class="fas fa-tachometer-alt"></i>
-                <span>Dashboard</span>
-            </a>
-        </div>
-        <div class="nav-item">
-            <a href="#" class="nav-link active">
-                <i class="fas fa-shopping-bag"></i>
-                <span>Products</span>
-            </a>
-        </div>
-        <div class="nav-item">
-            <a href="#" class="nav-link">
-                <i class="fas fa-prescription"></i>
-                <span>Prescriptions</span>
-            </a>
-        </div>
-        <div class="nav-item">
-            <a href="#" class="nav-link">
-                <i class="fas fa-cog"></i>
-                <span>Settings</span>
-            </a>
-        </div>
+    <!-- Mobile Footer -->
+    <nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-blue-600 text-white flex justify-around py-3 shadow-lg">
+        <a href="{% url 'customer_dashboard' %}" class="flex flex-col items-center text-xs">
+            <span class="text-lg">🏠</span>
+            <span>{% trans "Dashboard" %}</span>
+        </a>
+        <a href="{% url 'medicine_list' %}" class="flex flex-col items-center text-xs">
+            <span class="text-lg">💊</span>
+            <span>{% trans "Medicine" %}</span>
+        </a>
+        <a href="{% url 'customer_profile' %}" class="flex flex-col items-center text-xs">
+            <span class="text-lg">👤</span>
+            <span>{% trans "Profile" %}</span>
+        </a>
     </nav>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
+</body>
+
+    <script>
+        // Toggle dropdown
+        function toggleDropdown() {
+            document.getElementById("dropdownMenu").classList.toggle("hidden");
+        }
+
+        // Close dropdown if clicked outside
+        window.addEventListener("click", function(event) {
+            const dropdown = document.getElementById("dropdownMenu");
+            if (!event.target.closest(".relative")) {
+                dropdown.classList.add("hidden");
+            }
+        });
+
+        // Tab switching functionality
+        function switchTab(tabId) {
+            // Hide all tab panes
+            document.querySelectorAll('.tab-pane').forEach(pane => {
+                pane.classList.add('hidden');
+                pane.classList.remove('active');
+            });
+            
+            // Deactivate all tab buttons
+            document.querySelectorAll('[role="tab"]').forEach(tab => {
+                tab.classList.remove('active', 'border-blue-600', 'text-blue-600');
+                tab.classList.add('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300');
+            });
+            
+            // Show selected pane and activate tab
+            const tab = document.getElementById(tabId);
+            const paneId = tab.getAttribute('data-tabs-target');
+            const pane = document.querySelector(paneId);
+            
+            tab.classList.add('active', 'border-blue-600', 'text-blue-600');
+            tab.classList.remove('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300');
+            pane.classList.remove('hidden');
+            pane.classList.add('active');
+        }
+
+        // Initialize tab functionality
+        document.querySelectorAll('[role="tab"]').forEach(tab => {
+            tab.addEventListener('click', function() {
+                switchTab(this.id);
+            });
+        });
+    </script>
 </body>
 </html>

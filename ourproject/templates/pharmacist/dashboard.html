@@ -1,10 +1,10 @@
+{% load i18n %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pharmacy Dashboard</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -62,44 +62,56 @@
 </head>
 <body class="bg-gray-50 flex flex-col min-h-screen">
     <!-- Navigation -->
-     <!-- {{ user.username }}
-    gg {{ user.userprofile.role }} -->
-     {% if user.userprofile.role == 'pharmacist' %}
-    <nav class="bg-primary text-white shadow-md">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    {% if user.userprofile.role == 'pharmacist' %}
+    <nav class="bg-[#1e40af] text-white shadow-md">
+        <div class="mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
                 <div class="flex items-center">
                     <div class="flex-shrink-0 flex items-center">
-                        <i class="fas fa-clinic-medical text-2xl mr-2"></i>
-                        <span class="font-semibold text-lg">PharmaCare</span>
+                        <span class="text-2xl mr-2">🏥</span>
+                        <span class="font-semibold text-lg">{% trans "PharmaCare" %}</span>
                     </div>
                     <div class="hidden md:block">
                         <div class="ml-10 flex items-baseline space-x-4">
-                            <a href="#" class="px-3 py-2 rounded-md text-sm font-medium bg-white text-primary flex items-center">
-                                <i class="fas fa-tachometer-alt mr-2"></i> Dashboard
+                            <a href="#" class="px-3 py-2 rounded-md text-sm font-medium bg-white text-[#1e40af] flex items-center">
+                                <span class="mr-2">📊</span> {% trans "Dashboard" %}
                             </a>
-                            <a href="{% url 'order_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary hover:bg-opacity-20 flex items-center">
-                                <i class="fas fa-clipboard-list mr-2"></i> Orders
+                            <a href="{% url 'order_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-[#3b82f6] hover:bg-opacity-20 flex items-center">
+                                <span class="mr-2">📋</span> {% trans "Orders" %}
                             </a>
-                            <a href="{% url 'inventory_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary hover:bg-opacity-20 flex items-center">
-                                <i class="fas fa-pills mr-2"></i> Inventory
+                            <a href="{% url 'inventory_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-[#3b82f6] hover:bg-opacity-20 flex items-center">
+                                <span class="mr-2">💊</span> {% trans "Inventory" %}
                             </a>
-                            <a href="{% url 'report_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary hover:bg-opacity-20 flex items-center">
-                                <i class="fas fa-chart-bar mr-2"></i> Reports
+                            <a href="{% url 'report_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-[#3b82f6] hover:bg-opacity-20 flex items-center">
+                                <span class="mr-2">📈</span> {% trans "Reports" %}
                             </a>
-                            <a href="{% url 'purchaseorder_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary hover:bg-opacity-20 flex items-center">
-                                <i class="fas fa-shopping-cart mr-2"></i> Purchase Order
+                            <a href="{% url 'purchaseorder_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-[#3b82f6] hover:bg-opacity-20 flex items-center">
+                                <span class="mr-2">🛒</span> {% trans "Purchase Order" %}
                             </a>
                         </div>
+                    </div>
+                                    <div class="flex items-center space-x-4">
+                    <!-- Language Switch -->
+                    <div class="flex space-x-2">
+                        <form action="{% url 'set_language' %}" method="post">
+                            {% csrf_token %}
+                            <input name="language" type="hidden" value="en">
+                            <button type="submit" class="px-3 py-1 text-sm border border-blue-500 rounded hover:bg-blue-50 transition">English</button>
+                        </form>
+                        <form action="{% url 'set_language' %}" method="post">
+                            {% csrf_token %}
+                            <input name="language" type="hidden" value="my">
+                            <button type="submit" class="px-3 py-1 text-sm border border-green-500 rounded hover:bg-green-50 transition">မြန်မာ</button>
+                        </form>
                     </div>
                 </div>
                 <div class="flex items-center">
                     <!-- Notification Bell -->
                     <div class="ml-3 relative">
-                        <button id="notif-bell" class="p-1 rounded-full text-white focus:outline-none relative hover:bg-secondary hover:bg-opacity-20 smooth-transition">
-                            <i class="fas fa-bell text-xl"></i>
+                        <button id="notif-bell" class="p-1 rounded-full text-white focus:outline-none relative hover:bg-[#3b82f6] hover:bg-opacity-20">
+                            <span class="text-xl">🔔</span>
                             {% if expiring_items %}
-                            <span class="absolute -top-1 -right-1 bg-danger text-white text-xs rounded-full px-1.5 py-0.5">
+                            <span class="absolute -top-1 -right-1 bg-[#ef4444] text-white text-xs rounded-full px-1.5 py-0.5">
                                 {{ expiring_items|length }}
                             </span>
                             {% endif %}
@@ -107,34 +119,34 @@
                         <!-- Dropdown -->
                         <div id="notif-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-white shadow-lg rounded-md z-50 border border-gray-200">
                             <div class="px-4 py-3 border-b bg-gray-50 text-sm font-semibold text-gray-700 flex justify-between items-center">
-                                <span>Notifications</span>
-                                <span class="text-xs text-primary cursor-pointer">Mark all as read</span>
+                                <span>{% trans "Notifications" %}</span>
+                                <span class="text-xs text-[#1e40af] cursor-pointer">{% trans "Mark all as read" %}</span>
                             </div>
                             <ul class="max-h-60 overflow-y-auto divide-y divide-gray-100">
                                 {% for item in expiring_items %}
-                                <li class="px-4 py-3 hover:bg-gray-50 smooth-transition">
+                                <li class="px-4 py-3 hover:bg-gray-50">
                                     <div class="flex items-start">
                                         <div class="flex-shrink-0 pt-0.5">
                                             <div class="h-8 w-8 rounded-full bg-red-100 flex items-center justify-center">
-                                                <i class="fas fa-exclamation-circle text-red-500"></i>
+                                                <span class="text-red-500">⚠️</span>
                                             </div>
                                         </div>
                                         <div class="ml-3 flex-1">
                                             <p class="text-sm font-medium text-gray-900">{{ item.item_name }}</p>
-                                            <p class="text-xs text-gray-500">Expires on {{ item.exp_date|date:"M d, Y" }}</p>
+                                            <p class="text-xs text-gray-500">{% trans "Expires on" %} {{ item.exp_date|date:"M d, Y" }}</p>
                                         </div>
                                         <span class="text-xs text-red-600">{{ item.exp_date|timeuntil }}</span>
                                     </div>
                                 </li>
                                 {% empty %}
                                 <li class="px-4 py-4 text-center">
-                                    <i class="fas fa-bell-slash text-gray-300 text-2xl mb-2"></i>
-                                    <p class="text-gray-500 text-sm">No new notifications</p>
+                                    <span class="text-gray-300 text-2xl mb-2">🔕</span>
+                                    <p class="text-gray-500 text-sm">{% trans "No new notifications" %}</p>
                                 </li>
                                 {% endfor %}
                             </ul>
                             <div class="px-4 py-2 border-t bg-gray-50 text-center">
-                                <a href="#" class="text-xs text-primary font-medium">View all notifications</a>
+                                <a href="#" class="text-xs text-[#1e40af] font-medium">{% trans "View all notifications" %}</a>
                             </div>
                         </div>
                     </div>
@@ -143,25 +155,20 @@
                     <div class="ml-3 relative">
                         <div class="flex items-center">
                             <div class="text-sm mr-3 hidden md:block">
-                                <div class="font-medium text-white">Dr. Sarah Miller</div>
-                                <div class="text-gray-300 text-xs">Pharmacist</div>
+                                <div class="text-gray-300 text-xs">{% trans "Pharmacist" %}</div>
                             </div>
-                            <div class="relative group">
-                                <div class="h-9 w-9 rounded-full bg-white bg-opacity-20 flex items-center justify-center cursor-pointer">
-                                    <i class="fas fa-user text-white"></i>
-                                </div>
-                                <!-- Dropdown menu -->
-                                <div class="hidden group-hover:block absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border border-gray-200">
-                                    <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 smooth-transition flex items-center">
-                                        <i class="fas fa-user-circle mr-2 text-gray-500"></i> Profile
-                                    </a>
-                                    <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 smooth-transition flex items-center">
-                                        <i class="fas fa-cog mr-2 text-gray-500"></i> Settings
-                                    </a>
-                                    <div class="border-t border-gray-100"></div>
-                                    <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-danger hover:bg-gray-100 smooth-transition flex items-center">
-                                        <i class="fas fa-sign-out-alt mr-2"></i> Logout
-                                    </a>
+                            <div class="ml-3 relative">
+                                <button id="user-menu-button" class="flex items-center space-x-2 bg-[#1e3a8a] hover:bg-[#1e40af] text-white px-4 py-2 rounded-lg transition-all shadow-md hover:shadow-lg">
+                                    {% trans "Pharmacist Account" %}
+                                    <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                </button>
+                                <div id="user-menu" class="hidden absolute right-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                                    <div class="py-1">
+                                        <div class="border-t border-gray-200"></div>
+                                        <a href="{% url 'logout' %}" class="block px-4 py-2 text-[#ef4444] hover:bg-gray-100 hover:text-[#dc2626] transition">🚪 {% trans "Logout" %}</a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -170,24 +177,23 @@
             </div>
         </div>
     </nav>
+
     {% else %}
-    
     {{ user.userprofile.role }}  
     {% endif %}
 
     <!-- Main Content -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow">
+    <div class="w-full px-4 py-8">
         <!-- Dashboard Header -->
         <div class="mb-8">
             <div class="flex justify-between items-center">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-900">Dashboard Overview</h1>
-                    <p class="mt-2 text-gray-600">Welcome back, Dr. Sarah! Here's what's happening today.</p>
+                    <h1 class="text-3xl font-bold text-gray-900">{% trans "Dashboard Overview" %}</h1>
                 </div>
                 <div class="flex items-center space-x-2">
                     <span class="text-sm text-gray-500 hidden md:block">{{ current_date|date:"l, F j, Y" }}</span>
                     <div class="bg-white rounded-lg px-3 py-1 shadow-sm border border-gray-200">
-                        <i class="far fa-clock text-primary mr-1"></i>
+                        <span class="text-primary mr-1">⏱</span>
                         <span class="text-sm font-medium" id="current-time"></span>
                     </div>
                 </div>
@@ -195,22 +201,16 @@
         </div>
 
         <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {% for stat in dashboard_stats %}
             <div class="card bg-white rounded-lg p-6 shadow hover:shadow-lg smooth-transition">
                 <div class="flex items-center">
                     <div class="rounded-full {{ stat.bg }} p-3 mr-4">
-                        <i class="fas {{ stat.icon }} {{ stat.text }} text-xl"></i>
+                        <span class="{{ stat.text }} text-xl">{{ stat.icon }}</span>
                     </div>
                     <div>
-                        <p class="text-gray-500 text-sm">{{ stat.label }}</p>
+                        <p class="text-gray-500 text-sm">{% trans stat.label %}</p>
                         <p class="text-2xl font-bold text-gray-800">{{ stat.value }}</p>
-                        {% if stat.change %}
-                        <p class="text-xs mt-1 {{ stat.change_color }} flex items-center">
-                            <i class="fas {{ stat.change_icon }} mr-1"></i>
-                            {{ stat.change }}% from last week
-                        </p>
-                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -221,58 +221,53 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Recent Orders (2/3 width) -->
             <div class="lg:col-span-2">
-<!-- ✅ Online Orders Full List -->
+                <div class="card bg-white rounded-lg p-6 shadow mb-8">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-4">{% trans "Online Orders" %}</h2>
 
+                    {% if online_orders_list %}
+                        <div class="space-y-4">
+                            {% for order in online_orders_list %}
+                                <div class="border border-gray-200 rounded p-4 hover:bg-gray-50 transition">
+                                    <div class="flex justify-between items-start flex-wrap">
+                                        <div class="text-sm text-gray-700 space-y-1">
+                                            <p><strong>{% trans "Customer:" %}</strong> {{ order.name|default:order.user.username }}</p>
+                                            <p><strong>{% trans "Phone:" %}</strong> {{ order.phone|default:"-" }}</p>
+                                            <p><strong>{% trans "Address:" %}</strong> {{ order.address|default:"-" }}</p>
+                                        </div>
+                                        <div class="text-sm text-gray-600 text-right space-y-1 mt-3 md:mt-0">
+                                            <p><strong>{% trans "Invoice:" %}</strong> {{ order.invoice_no }}</p>
+                                            <p><strong>{% trans "Date:" %}</strong> {{ order.created_date|date:"M d, Y H:i" }}</p>
+                                            <p><strong>{% trans "Total:" %}</strong> {{ order.total_amount }} {% trans "Ks" %}</p>
+                                            <p><strong>{% trans "Status:" %}</strong>
+                                                {% if order.status == "pending" %}
+                                                    <span class="text-yellow-600 font-medium">{% trans "Pending" %}</span>
+                                                {% elif order.status == "confirmed" %}
+                                                    <span class="text-green-600 font-medium">{% trans "Confirmed" %}</span>
+                                                {% elif order.status == "cancelled" %}
+                                                    <span class="text-red-600 font-medium">{% trans "Cancelled" %}</span>
+                                                {% endif %}
+                                            </p>
+                                        </div>
+                                    </div>
 
-<div class="card bg-white rounded-lg p-6 shadow mb-8">
-    <h2 class="text-lg font-semibold text-gray-800 mb-4">Online Orders</h2>
-
-    {% if online_orders_list %}
-        <div class="space-y-4">
-            {% for order in online_orders_list %}
-                <div class="border border-gray-200 rounded p-4 hover:bg-gray-50 transition">
-                    <div class="flex justify-between items-start flex-wrap">
-                        <div class="text-sm text-gray-700 space-y-1">
-                            <p><strong>Customer:</strong> {{ order.name|default:order.user.username }}</p>
-                            <p><strong>Phone:</strong> {{ order.phone|default:"-" }}</p>
-                            <p><strong>Address:</strong> {{ order.address|default:"-" }}</p>
+                                    {% if order.status == "pending" %}
+                                        <div class="mt-3 flex space-x-3">
+                                            <a href="{% url 'confirm_order' order.id %}" class="bg-green-600 text-white px-4 py-1 rounded text-sm hover:bg-green-700">{% trans "Confirm" %}</a>
+                                            <a href="{% url 'cancel_order' order.id %}" class="bg-red-600 text-white px-4 py-1 rounded text-sm hover:bg-red-700">{% trans "Cancel" %}</a>
+                                        </div>
+                                    {% endif %}
+                                    
+                                    <button onclick="viewOrderDetail({{ order.id }})"
+                                            class="mt-3 bg-blue-600 text-white px-4 py-1 rounded text-sm hover:bg-blue-700">
+                                        {% trans "View Detail" %}
+                                    </button>
+                                </div>
+                            {% endfor %}
                         </div>
-                        <div class="text-sm text-gray-600 text-right space-y-1 mt-3 md:mt-0">
-                            <p><strong>Invoice:</strong> {{ order.invoice_no }}</p>
-                            <p><strong>Date:</strong> {{ order.created_date|date:"M d, Y H:i" }}</p>
-                            <p><strong>Total:</strong> {{ order.total_amount }} Ks</p>
-                            <p><strong>Status:</strong>
-                                {% if order.status == "pending" %}
-                                    <span class="text-yellow-600 font-medium">Pending</span>
-                                {% elif order.status == "confirmed" %}
-                                    <span class="text-green-600 font-medium">Confirmed</span>
-                                {% elif order.status == "cancelled" %}
-                                    <span class="text-red-600 font-medium">Cancelled</span>
-                                {% endif %}
-                            </p>
-                        </div>
-                    </div>
-
-                    {% if order.status == "pending" %}
-                        <div class="mt-3 flex space-x-3">
-                            <a href="{% url 'confirm_order' order.id %}" class="bg-green-600 text-white px-4 py-1 rounded text-sm hover:bg-green-700">Confirm</a>
-                            <a href="{% url 'cancel_order' order.id %}" class="bg-red-600 text-white px-4 py-1 rounded text-sm hover:bg-red-700">Cancel</a>
-                        </div>
+                    {% else %}
+                        <p class="text-gray-500">{% trans "No online orders yet." %}</p>
                     {% endif %}
-                    
-            <button onclick="viewOrderDetail({{ order.id }})"
-                    class="mt-3 bg-blue-600 text-white px-4 py-1 rounded text-sm hover:bg-blue-700">
-                View Detail
-            </button>
                 </div>
-            {% endfor %}
-        </div>
-    {% else %}
-        <p class="text-gray-500">No online orders yet.</p>
-    {% endif %}
-</div>
-
-
             </div>
 
             <!-- Right Sidebar (1/3 width) -->
@@ -280,14 +275,14 @@
                 <!-- Inventory Alerts -->
                 <div class="card bg-white rounded-lg shadow overflow-hidden">
                     <div class="px-6 py-4 border-b border-gray-200">
-                        <h2 class="text-lg font-semibold text-gray-800">Inventory Alerts</h2>
+                        <h2 class="text-lg font-semibold text-gray-800">{% trans "Inventory Alerts" %}</h2>
                     </div>
                     <div class="divide-y divide-gray-200">
                         <!-- Low Stock Section -->
                         <div class="p-4">
                             <div class="flex justify-between items-center mb-3">
                                 <h3 class="text-sm font-medium text-gray-900 flex items-center">
-                                    <i class="fas fa-box-open text-danger mr-2"></i> Low Stock Items
+                                    <span class="text-danger mr-2">📦</span> {% trans "Low Stock Items" %}
                                 </h3>
                                 <span class="bg-danger text-white text-xs font-medium px-2 py-0.5 rounded-full">
                                     {{ low_stock_items|length }}
@@ -303,12 +298,12 @@
                                     <span class="text-xs font-semibold px-2 py-1 rounded-full 
                                         {% if item.item_quantity < 5 %}bg-red-100 text-red-800
                                         {% else %}bg-yellow-100 text-yellow-800{% endif %}">
-                                        {{ item.item_quantity }} left
+                                        {{ item.item_quantity }} {% trans "left" %}
                                     </span>
                                 </li>
                                 {% empty %}
                                 <li class="text-center text-sm text-gray-500 py-2">
-                                    No low stock items
+                                    {% trans "No low stock items" %}
                                 </li>
                                 {% endfor %}
                             </ul>
@@ -318,7 +313,7 @@
                         <div class="p-4">
                             <div class="flex justify-between items-center mb-3">
                                 <h3 class="text-sm font-medium text-gray-900 flex items-center">
-                                    <i class="fas fa-clock text-warning mr-2"></i> Expiring Soon
+                                    <span class="text-warning mr-2">⏳</span> {% trans "Expiring Soon" %}
                                 </h3>
                                 <span class="bg-warning text-white text-xs font-medium px-2 py-0.5 rounded-full">
                                     {{ expiring_items|length }}
@@ -329,7 +324,7 @@
                                 <li class="flex justify-between items-center">
                                     <div>
                                         <p class="text-sm font-medium text-gray-900">{{ item.item_name }}</p>
-                                        <p class="text-xs text-gray-500">Batch: {{ item.batch_number|default:"N/A" }}</p>
+                                        <p class="text-xs text-gray-500">{% trans "Batch:" %} {{ item.batch_number|default:"N/A" }}</p>
                                     </div>
                                     <span class="text-xs font-semibold px-2 py-1 rounded-full bg-orange-100 text-orange-800">
                                         {{ item.exp_date|date:"M d" }}
@@ -337,121 +332,49 @@
                                 </li>
                                 {% empty %}
                                 <li class="text-center text-sm text-gray-500 py-2">
-                                    No items expiring soon
+                                    {% trans "No items expiring soon" %}
                                 </li>
                                 {% endfor %}
                             </ul>
                         </div>
                     </div>
                 </div>
-
-                <!-- Quick Actions -->
-                <div class="card bg-white rounded-lg shadow overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-200">
-                        <h2 class="text-lg font-semibold text-gray-800">Quick Actions</h2>
-                    </div>
-                    <div class="p-4">
-                        <div class="grid grid-cols-2 gap-3">
-                            <a href="#" class="flex flex-col items-center justify-center p-3 bg-lightblue rounded-lg text-primary hover:bg-blue-100 smooth-transition">
-                                <div class="h-10 w-10 rounded-full bg-white flex items-center justify-center mb-2">
-                                    <i class="fas fa-plus-circle text-xl"></i>
-                                </div>
-                                <span class="text-xs font-medium text-center">New Order</span>
-                            </a>
-                            <a href="#" class="flex flex-col items-center justify-center p-3 bg-lightblue rounded-lg text-primary hover:bg-blue-100 smooth-transition">
-                                <div class="h-10 w-10 rounded-full bg-white flex items-center justify-center mb-2">
-                                    <i class="fas fa-search text-xl"></i>
-                                </div>
-                                <span class="text-xs font-medium text-center">Find Patient</span>
-                            </a>
-                            <a href="{% url 'report_view' %}" class="flex flex-col items-center justify-center p-3 bg-lightblue rounded-lg text-primary hover:bg-blue-100 smooth-transition">
-                                <div class="h-10 w-10 rounded-full bg-white flex items-center justify-center mb-2">
-                                    <i class="fas fa-file-invoice text-xl"></i>
-                                </div>
-                                <span class="text-xs font-medium text-center">Reports</span>
-                            </a>
-                            <button onclick="document.getElementById('expiryModal').classList.remove('hidden')"
-                                class="flex flex-col items-center justify-center p-3 bg-lightblue rounded-lg text-primary hover:bg-blue-100 smooth-transition">
-                                <div class="h-10 w-10 rounded-full bg-white flex items-center justify-center mb-2">
-                                    <i class="fas fa-exclamation-triangle text-xl"></i>
-                                </div>
-                                <span class="text-xs font-medium text-center">Expiry Alert</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
 
-
-        <!-- ✅ Tailwind Order Detail Modal -->
-<div id="orderDetailModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
-    <div class="bg-white w-full max-w-2xl rounded-lg shadow-lg">
-        <div class="flex justify-between items-center px-6 py-4 border-b bg-gray-50">
-            <h2 class="text-lg font-bold text-gray-800">Order Details</h2>
-            <button onclick="closeOrderModal()" class="text-gray-500 hover:text-danger text-xl">&times;</button>
+        <!-- Order Detail Modal -->
+        <div id="orderDetailModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+            <div class="bg-white w-full max-w-2xl rounded-lg shadow-lg">
+                <div class="flex justify-between items-center px-6 py-4 border-b bg-gray-50">
+                    <h2 class="text-lg font-bold text-gray-800">{% trans "Order Details" %}</h2>
+                    <button onclick="closeOrderModal()" class="text-gray-500 hover:text-danger text-xl">&times;</button>
+                </div>
+                <div class="p-4">
+                    <p><strong>{% trans "Customer:" %}</strong> <span id="modalCustomer"></span></p>
+                    <p><strong>{% trans "Invoice:" %}</strong> <span id="modalInvoice"></span></p>
+                    <p><strong>{% trans "Total Amount:" %}</strong> <span id="modalTotal"></span> {% trans "Ks" %}</p>
+                    <hr class="my-3">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">{% trans "Item" %}</th>
+                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">{% trans "Qty" %}</th>
+                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">{% trans "Price" %}</th>
+                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">{% trans "Subtotal" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modalItemsTable" class="bg-white divide-y divide-gray-200">
+                            <!-- JS will fill here -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="px-4 py-3 border-t bg-gray-50 text-right">
+                    <button onclick="closeOrderModal()" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-darkblue">
+                        {% trans "Close" %}
+                    </button>
+                </div>
+            </div>
         </div>
-        <div class="p-4">
-            <p><strong>Customer:</strong> <span id="modalCustomer"></span></p>
-            <p><strong>Invoice:</strong> <span id="modalInvoice"></span></p>
-            <p><strong>Total Amount:</strong> <span id="modalTotal"></span> Ks</p>
-            <hr class="my-3">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Item</th>
-                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Qty</th>
-                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
-                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Subtotal</th>
-                    </tr>
-                </thead>
-                <tbody id="modalItemsTable" class="bg-white divide-y divide-gray-200">
-                    <!-- JS will fill here -->
-                <script>
-                function viewOrderDetail(orderId) {
-                    fetch(`/get-order-details/${orderId}/`)
-                    .then(response => response.json())
-                    .then(data => {
-                        document.getElementById('modalCustomer').innerText = data.customer;
-                        document.getElementById('modalInvoice').innerText = data.invoice;
-                        document.getElementById('modalTotal').innerText = data.total_amount;
-
-                        const tbody = document.getElementById('modalItemsTable');
-                        tbody.innerHTML = '';
-                        data.items.forEach(item => {
-                        tbody.innerHTML += `
-                            <tr class="hover:bg-gray-50">
-                            <td class="px-3 py-2 text-sm text-gray-700">${item.item_name}</td>
-                            <td class="px-3 py-2 text-sm text-gray-700">${item.qty}</td>
-                            <td class="px-3 py-2 text-sm text-gray-700">${item.price}</td>
-                            <td class="px-3 py-2 text-sm text-gray-700">${item.subtotal}</td>
-                            </tr>`;
-                        });
-
-                        document.getElementById('orderDetailModal').classList.remove('hidden');
-                    })
-                    .catch(error => {
-                        alert("Error loading order detail.");
-                        console.error(error);
-                    });
-                }
-
-                function closeOrderModal() {
-                    document.getElementById('orderDetailModal').classList.add('hidden');
-                }
-                </script>
-                </tbody>
-            </table>
-        </div>
-        <div class="px-4 py-3 border-t bg-gray-50 text-right">
-            <button onclick="closeOrderModal()" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-darkblue">
-                Close
-            </button>
-        </div>
-    </div>
-</div>
-
-
     </div>
 
     <!-- Footer -->
@@ -460,53 +383,53 @@
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <div>
                     <h3 class="text-lg font-semibold mb-4 flex items-center">
-                        <i class="fas fa-clinic-medical text-primary mr-2"></i> PharmaCare
+                        <span class="text-primary mr-2">🏥</span> {% trans "PharmaCare" %}
                     </h3>
-                    <p class="text-gray-400 text-sm">Advanced pharmacy management solution for modern healthcare providers.</p>
+                    <p class="text-gray-400 text-sm">{% trans "Advanced pharmacy management solution for modern healthcare providers." %}</p>
                 </div>
                 <div>
-                    <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
+                    <h3 class="text-lg font-semibold mb-4">{% trans "Quick Links" %}</h3>
                     <ul class="space-y-2">
-                        <li><a href="#" class="text-gray-400 hover:text-white text-sm flex items-center"><i class="fas fa-chevron-right text-xs mr-2"></i> Dashboard</a></li>
-                        <li><a href="{% url 'order_view' %}" class="text-gray-400 hover:text-white text-sm flex items-center"><i class="fas fa-chevron-right text-xs mr-2"></i> Orders</a></li>
-                        <li><a href="{% url 'inventory_view' %}" class="text-gray-400 hover:text-white text-sm flex items-center"><i class="fas fa-chevron-right text-xs mr-2"></i> Inventory</a></li>
-                        <li><a href="{% url 'report_view' %}" class="text-gray-400 hover:text-white text-sm flex items-center"><i class="fas fa-chevron-right text-xs mr-2"></i> Reports</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white text-sm flex items-center"><span class="text-xs mr-2">➡️</span> {% trans "Dashboard" %}</a></li>
+                        <li><a href="{% url 'order_view' %}" class="text-gray-400 hover:text-white text-sm flex items-center"><span class="text-xs mr-2">➡️</span> {% trans "Orders" %}</a></li>
+                        <li><a href="{% url 'inventory_view' %}" class="text-gray-400 hover:text-white text-sm flex items-center"><span class="text-xs mr-2">➡️</span> {% trans "Inventory" %}</a></li>
+                        <li><a href="{% url 'report_view' %}" class="text-gray-400 hover:text-white text-sm flex items-center"><span class="text-xs mr-2">➡️</span> {% trans "Reports" %}</a></li>
                     </ul>
                 </div>
                 <div>
-                    <h3 class="text-lg font-semibold mb-4">Resources</h3>
+                    <h3 class="text-lg font-semibold mb-4">{% trans "Resources" %}</h3>
                     <ul class="space-y-2">
-                        <li><a href="#" class="text-gray-400 hover:text-white text-sm flex items-center"><i class="fas fa-chevron-right text-xs mr-2"></i> Documentation</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white text-sm flex items-center"><i class="fas fa-chevron-right text-xs mr-2"></i> Support Center</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white text-sm flex items-center"><i class="fas fa-chevron-right text-xs mr-2"></i> Community</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white text-sm flex items-center"><i class="fas fa-chevron-right text-xs mr-2"></i> Changelog</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white text-sm flex items-center"><span class="text-xs mr-2">➡️</span> {% trans "Documentation" %}</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white text-sm flex items-center"><span class="text-xs mr-2">➡️</span> {% trans "Support Center" %}</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white text-sm flex items-center"><span class="text-xs mr-2">➡️</span> {% trans "Community" %}</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white text-sm flex items-center"><span class="text-xs mr-2">➡️</span> {% trans "Changelog" %}</a></li>
                     </ul>
                 </div>
                 <div>
-                    <h3 class="text-lg font-semibold mb-4">Contact Us</h3>
+                    <h3 class="text-lg font-semibold mb-4">{% trans "Contact Us" %}</h3>
                     <ul class="space-y-3 text-sm text-gray-400">
                         <li class="flex items-start">
-                            <i class="fas fa-map-marker-alt mt-1 mr-3 text-primary"></i>
-                            <span>123 Medical Street, Health City, HC 12345</span>
+                            <span class="mt-1 mr-3">📍</span>
+                            <span>{% trans "123 Medical Street, Health City, HC 12345" %}</span>
                         </li>
                         <li class="flex items-center">
-                            <i class="fas fa-phone-alt mr-3 text-primary"></i>
+                            <span class="mr-3">📞</span>
                             <span>(555) 123-4567</span>
                         </li>
                         <li class="flex items-center">
-                            <i class="fas fa-envelope mr-3 text-primary"></i>
+                            <span class="mr-3">✉️</span>
                             <span>support@pharmacare.com</span>
                         </li>
                     </ul>
                 </div>
             </div>
             <div class="border-t border-gray-700 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
-                <p class="text-gray-400 text-sm">© 2023 PharmaCare. All rights reserved.</p>
+                <p class="text-gray-400 text-sm">© {% now "Y" %} {% trans "PharmaCare. All rights reserved." %}</p>
                 <div class="flex space-x-4 mt-4 md:mt-0">
-                    <a href="#" class="text-gray-400 hover:text-white smooth-transition"><i class="fab fa-facebook-f"></i></a>
-                    <a href="#" class="text-gray-400 hover:text-white smooth-transition"><i class="fab fa-twitter"></i></a>
-                    <a href="#" class="text-gray-400 hover:text-white smooth-transition"><i class="fab fa-linkedin-in"></i></a>
-                    <a href="#" class="text-gray-400 hover:text-white smooth-transition"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white smooth-transition">📱</a>
+                    <a href="#" class="text-gray-400 hover:text-white smooth-transition">🐦</a>
+                    <a href="#" class="text-gray-400 hover:text-white smooth-transition">🔗</a>
+                    <a href="#" class="text-gray-400 hover:text-white smooth-transition">📸</a>
                 </div>
             </div>
         </div>
@@ -516,20 +439,20 @@
     <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
         <div class="flex justify-around">
             <a href="#" class="p-3 text-primary flex flex-col items-center">
-                <i class="fas fa-tachometer-alt text-lg"></i>
-                <span class="text-xs mt-1">Dashboard</span>
+                <span class="text-lg">📊</span>
+                <span class="text-xs mt-1">{% trans "Dashboard" %}</span>
             </a>
             <a href="{% url 'order_view' %}" class="p-3 text-gray-500 flex flex-col items-center">
-                <i class="fas fa-clipboard-list text-lg"></i>
-                <span class="text-xs mt-1">Orders</span>
+                <span class="text-lg">📋</span>
+                <span class="text-xs mt-1">{% trans "Orders" %}</span>
             </a>
             <a href="{% url 'inventory_view' %}" class="p-3 text-gray-500 flex flex-col items-center">
-                <i class="fas fa-pills text-lg"></i>
-                <span class="text-xs mt-1">Inventory</span>
+                <span class="text-lg">💊</span>
+                <span class="text-xs mt-1">{% trans "Inventory" %}</span>
             </a>
             <a href="{% url 'report_view' %}" class="p-3 text-gray-500 flex flex-col items-center">
-                <i class="fas fa-chart-bar text-lg"></i>
-                <span class="text-xs mt-1">Reports</span>
+                <span class="text-lg">📈</span>
+                <span class="text-xs mt-1">{% trans "Reports" %}</span>
             </a>
         </div>
     </div>
@@ -539,17 +462,17 @@
         <div class="bg-white rounded-lg p-6 max-w-sm w-full mx-4 shadow-xl">
             <div class="flex items-start">
                 <div class="flex-shrink-0 h-10 w-10 rounded-full bg-red-100 flex items-center justify-center mr-3 mt-0.5">
-                    <i class="fas fa-exclamation text-red-500"></i>
+                    <span class="text-red-500">⚠️</span>
                 </div>
                 <div>
-                    <h3 class="text-lg font-medium text-gray-900 mb-2">Confirm Logout</h3>
-                    <p class="text-gray-600 text-sm">Are you sure you want to log out of your account?</p>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">{% trans "Confirm Logout" %}</h3>
+                    <p class="text-gray-600 text-sm">{% trans "Are you sure you want to log out of your account?" %}</p>
                     <div class="flex justify-end space-x-3 mt-4">
                         <button id="cancel-logout" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 smooth-transition">
-                            Cancel
+                            {% trans "Cancel" %}
                         </button>
                         <button id="confirm-logout" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-white bg-danger hover:bg-red-700 smooth-transition">
-                            Logout
+                            {% trans "Logout" %}
                         </button>
                     </div>
                 </div>
@@ -557,19 +480,17 @@
         </div>
     </div>
 
-
-
     <!-- Expiry Modal -->
     <div id="expiryModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
         <div class="bg-white w-full max-w-3xl rounded-lg shadow-lg overflow-hidden">
             <div class="flex justify-between items-center px-6 py-4 border-b bg-gray-50">
                 <h2 class="text-lg font-bold text-gray-800 flex items-center">
-                    <i class="fas fa-exclamation-triangle text-warning mr-2"></i> 
-                    Expiring Medicines (Next 90 Days)
+                    <span class="text-warning mr-2">⚠️</span> 
+                    {% trans "Expiring Medicines (Next 90 Days)" %}
                 </h2>
                 <button onclick="document.getElementById('expiryModal').classList.add('hidden')" 
                     class="text-gray-500 hover:text-danger text-xl smooth-transition">
-                    &times;
+                    ×
                 </button>
             </div>
             <div class="p-4">
@@ -578,11 +499,11 @@
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Medicine</th>
-                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Batch</th>
-                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
-                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Expiry Date</th>
-                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Days Left</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{% trans "Medicine" %}</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{% trans "Batch" %}</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{% trans "Quantity" %}</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{% trans "Expiry Date" %}</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{% trans "Days Left" %}</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
@@ -591,7 +512,7 @@
                                 <td class="px-4 py-3 whitespace-nowrap">
                                     <div class="flex items-center">
                                         <div class="flex-shrink-0 h-8 w-8 bg-blue-50 rounded-md flex items-center justify-center mr-2">
-                                            <i class="fas fa-pills text-blue-500 text-sm"></i>
+                                            <span class="text-blue-500 text-sm">💊</span>
                                         </div>
                                         <div>
                                             <a href="{% url 'inventory_view' %}?highlight_id={{ item.id }}" 
@@ -615,7 +536,7 @@
                                     <span class="px-2 py-1 text-xs font-medium rounded-full 
                                         {% if item.days_until_expiry < 30 %}bg-red-100 text-red-800
                                         {% else %}bg-yellow-100 text-yellow-800{% endif %}">
-                                        {{ item.days_until_expiry }} days
+                                        {{ item.days_until_expiry }} {% trans "days" %}
                                     </span>
                                 </td>
                             </tr>
@@ -625,24 +546,19 @@
                 </div>
                 {% else %}
                 <div class="text-center py-8">
-                    <i class="fas fa-check-circle text-success text-4xl mb-3"></i>
-                    <p class="text-gray-600">No items expiring within 90 days.</p>
+                    <span class="text-success text-4xl mb-3">✅</span>
+                    <p class="text-gray-600">{% trans "No items expiring within 90 days." %}</p>
                 </div>
                 {% endif %}
             </div>
             <div class="px-4 py-3 border-t bg-gray-50 text-right">
                 <button onclick="document.getElementById('expiryModal').classList.add('hidden')"
                     class="px-4 py-2 bg-primary text-white rounded-md hover:bg-darkblue smooth-transition">
-                    Close
+                    {% trans "Close" %}
                 </button>
             </div>
         </div>
     </div>
-
-
-          
-        
-
 
     <script>
         // Update current time
@@ -670,20 +586,51 @@
         });
 
         // Logout functionality
-        document.getElementById('logout-button').addEventListener('click', function(e) {
+        document.getElementById('logout-button')?.addEventListener('click', function(e) {
             e.preventDefault();
             document.getElementById('logout-modal').classList.remove('hidden');
         });
 
-        document.getElementById('cancel-logout').addEventListener('click', function() {
+        document.getElementById('cancel-logout')?.addEventListener('click', function() {
             document.getElementById('logout-modal').classList.add('hidden');
         });
 
-        document.getElementById('confirm-logout').addEventListener('click', function() {
-            // Here you would typically redirect to logout URL or handle session
+        document.getElementById('confirm-logout')?.addEventListener('click', function() {
             window.location.href = "{% url 'logout' %}";
         });
-    </script>
 
+        // Order detail modal functions
+        function viewOrderDetail(orderId) {
+            fetch(`/get-order-details/${orderId}/`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('modalCustomer').innerText = data.customer;
+                document.getElementById('modalInvoice').innerText = data.invoice;
+                document.getElementById('modalTotal').innerText = data.total_amount;
+
+                const tbody = document.getElementById('modalItemsTable');
+                tbody.innerHTML = '';
+                data.items.forEach(item => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-50">
+                    <td class="px-3 py-2 text-sm text-gray-700">${item.item_name}</td>
+                    <td class="px-3 py-2 text-sm text-gray-700">${item.qty}</td>
+                    <td class="px-3 py-2 text-sm text-gray-700">${item.price}</td>
+                    <td class="px-3 py-2 text-sm text-gray-700">${item.subtotal}</td>
+                    </tr>`;
+                });
+
+                document.getElementById('orderDetailModal').classList.remove('hidden');
+            })
+            .catch(error => {
+                alert("{% trans 'Error loading order detail.' %}");
+                console.error(error);
+            });
+        }
+
+        function closeOrderModal() {
+            document.getElementById('orderDetailModal').classList.add('hidden');
+        }
+    </script>
 </body>
 </html>

@@ -1,0 +1,897 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-07-26 14:50+0630\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: .\ourapp\models.py:10
+msgid "Admin"
+msgstr "အုပ်ချုပ်ရေး"
+
+#: .\ourapp\models.py:11 .\templates\POS.html:170
+#: .\templates\pharmacist\dashboard.html:158
+msgid "Pharmacist"
+msgstr "ဆေးဝါးကျွမ်းကျင်သူ"
+
+#: .\ourapp\models.py:12 .\templates\POS.html:308
+msgid "Customer"
+msgstr "ဖောက်သည်"
+
+#: .\ourapp\models.py:16
+msgid "Male"
+msgstr "အမျိုးသား"
+
+#: .\ourapp\models.py:17
+msgid "Female"
+msgstr "အမျိုးသမီး"
+
+#: .\ourapp\models.py:32 .\templates\medicine_list.html:291
+msgid "Name"
+msgstr "အမည်"
+
+#: .\ourapp\models.py:33 .\ourapp\models.py:62
+msgid "Description"
+msgstr "ဖော်ပြချက်"
+
+#: .\ourapp\models.py:40
+msgid "Supplier Name"
+msgstr "ပေးသွင်းသူအမည်"
+
+#: .\ourapp\models.py:41
+msgid "Company"
+msgstr "ကုမ္ပဏီ"
+
+#: .\ourapp\models.py:42
+msgid "Contact Person"
+msgstr "ဆက်သွယ်ရမည့်ပုဂ္ဂိုလ်"
+
+#: .\ourapp\models.py:43 .\templates\register.html:157
+msgid "Email"
+msgstr "အီးမေးလ်"
+
+#: .\ourapp\models.py:44 .\ourapp\models.py:151 .\ourapp\models.py:202
+#: .\templates\medicine_list.html:295
+msgid "Phone"
+msgstr "ဖုန်း"
+
+#: .\ourapp\models.py:45 .\ourapp\models.py:152 .\ourapp\models.py:203
+#: .\templates\POS.html:217 .\templates\medicine_list.html:313
+#: .\templates\register.html:225
+msgid "Address"
+msgstr "နေရပ်လိပ်စာ"
+
+#: .\ourapp\models.py:46
+msgid "Active"
+msgstr "အသုံးပြုနေသည်"
+
+#: .\ourapp\models.py:49
+msgid "Unnamed Supplier"
+msgstr "အမည်မသိ ပေးသွင်းသူ"
+
+#: .\ourapp\models.py:53 .\templates\POS.html:472
+msgid "Category"
+msgstr "အမျိုးအစား"
+
+#: .\ourapp\models.py:54
+msgid "Photo"
+msgstr "ဓာတ်ပုံ"
+
+#: .\ourapp\models.py:55
+msgid "Primary Supplier"
+msgstr "အဓိကပေးသွင်းသူ"
+
+#: .\ourapp\models.py:56
+msgid "Strength"
+msgstr "ခွန်အား"
+
+#: .\ourapp\models.py:57
+msgid "Item Name"
+msgstr "ပစ္စည်းအမည်"
+
+#: .\ourapp\models.py:58 .\ourapp\models.py:101 .\ourapp\models.py:134
+#: .\ourapp\models.py:164 .\ourapp\models.py:180 .\ourapp\models.py:191
+#: .\templates\POS.html:466 .\templates\medicine_list.html:201
+#: .\templates\pharmacist\dashboard.html:504
+msgid "Quantity"
+msgstr "အရေအတွက်"
+
+#: .\ourapp\models.py:59
+msgid "Selling Price"
+msgstr "ရောင်းဈေး"
+
+#: .\ourapp\models.py:60
+msgid "Purchase Price"
+msgstr "ဝယ်ဈေး"
+
+#: .\ourapp\models.py:61
+msgid "Reorder Level"
+msgstr "ပြန်မှာရမည့်အနိမ့်ဆုံးအဆင့်"
+
+#: .\ourapp\models.py:63 .\templates\pharmacist\dashboard.html:505
+msgid "Expiry Date"
+msgstr "သက်တမ်းကုန်နေ့"
+
+#: .\ourapp\models.py:64
+msgid "Brand Name"
+msgstr "အမှတ်တံဆိပ်အမည်"
+
+#: .\ourapp\models.py:65 .\ourapp\models.py:100
+msgid "Batch Number"
+msgstr "အုပ်စုနံပါတ်"
+
+#: .\ourapp\models.py:66
+msgid "Minimum Stock"
+msgstr "အနိမ့်ဆုံးသိုလှောင်အရေအတွက်"
+
+#: .\ourapp\models.py:67
+msgid "Limited Stock"
+msgstr "အရေအတွက်ကန့်သတ်"
+
+#: .\ourapp\models.py:68
+msgid "Maximum Quantity"
+msgstr "အများဆုံးအရေအတွက်"
+
+#: .\ourapp\models.py:69
+msgid "Last Ordered"
+msgstr "နောက်ဆုံးမှာယူသောနေ့"
+
+#: .\ourapp\models.py:77 .\ourapp\models.py:143
+#: .\templates\pharmacist\dashboard.html:243
+msgid "Pending"
+msgstr "ဆိုင်းငံ့နေသည်"
+
+#: .\ourapp\models.py:78
+msgid "Completed"
+msgstr "ပြီးစီးသည်"
+
+#: .\ourapp\models.py:79 .\ourapp\models.py:145
+#: .\templates\pharmacist\dashboard.html:247
+msgid "Cancelled"
+msgstr "ဖျက်သိမ်းပြီး"
+
+#: .\ourapp\models.py:82 .\ourapp\models.py:99 .\ourapp\models.py:133
+#: .\ourapp\models.py:163 .\ourapp\models.py:177 .\ourapp\models.py:189
+#: .\templates\pharmacist\dashboard.html:360
+msgid "Item"
+msgstr "ပစ္စည်း"
+
+#: .\ourapp\models.py:84 .\ourapp\models.py:178
+msgid "Supplier"
+msgstr "ပေးသွင်းသူ"
+
+#: .\ourapp\models.py:85
+msgid "PO Number"
+msgstr "အမှာစာနံပါတ်"
+
+#: .\ourapp\models.py:86
+msgid "Order Date"
+msgstr "မှာယူသည့်နေ့"
+
+#: .\ourapp\models.py:87 .\ourapp\models.py:155
+msgid "Status"
+msgstr "အခြေအနေ"
+
+#: .\ourapp\models.py:88
+msgid "Notes"
+msgstr "မှတ်စုများ"
+
+#: .\ourapp\models.py:89 .\ourapp\models.py:115 .\ourapp\models.py:153
+msgid "Total Amount"
+msgstr "စုစုပေါင်းပမာဏ"
+
+#: .\ourapp\models.py:90
+msgid "Total Cost"
+msgstr "စုစုပေါင်းကုန်ကျစရိတ်"
+
+#: .\ourapp\models.py:91 .\ourapp\models.py:116 .\ourapp\models.py:154
+#: .\ourapp\models.py:194
+msgid "Created Date"
+msgstr "ဖန်တီးသည့်နေ့"
+
+#: .\ourapp\models.py:98
+msgid "Order"
+msgstr "အမှာစာ"
+
+#: .\ourapp\models.py:102
+msgid "Unit Price"
+msgstr "တစ်ခုလျှင်စျေးနှုန်း"
+
+#: .\ourapp\models.py:113 .\ourapp\models.py:148 .\ourapp\models.py:190
+#: .\ourapp\models.py:220
+msgid "User"
+msgstr "အသုံးပြုသူ"
+
+#: .\ourapp\models.py:114 .\ourapp\models.py:150 .\ourapp\models.py:201
+#: .\templates\POS.html:207
+msgid "Customer Name"
+msgstr "ဖောက်သည်အမည်"
+
+#: .\ourapp\models.py:117
+msgid "Payment Method"
+msgstr "ငွေပေးချေမှုနည်းလမ်း"
+
+#: .\ourapp\models.py:120 .\templates\POS.html:372 .\templates\POS.html:407
+msgid "POS"
+msgstr "POS"
+
+#: .\ourapp\models.py:120
+msgid "Online"
+msgstr "အွန်လိုင်း"
+
+#: .\ourapp\models.py:122
+msgid "Source"
+msgstr "ရင်းမြစ်"
+
+#: .\ourapp\models.py:132 .\templates\medicine_list.html:136
+msgid "Cart"
+msgstr "စျေးဝယ်ခြင်းထဲ"
+
+#: .\ourapp\models.py:135 .\ourapp\models.py:165 .\ourapp\models.py:192
+#: .\templates\POS.html:336 .\templates\POS.html:461
+#: .\templates\medicine_list.html:200 .\templates\pharmacist\dashboard.html:362
+msgid "Price"
+msgstr "စျေးနှုန်း"
+
+#: .\ourapp\models.py:144 .\templates\pharmacist\dashboard.html:245
+msgid "Confirmed"
+msgstr "အတည်ပြုပြီး"
+
+#: .\ourapp\models.py:149 .\templates\customer_profile.html:119
+msgid "Invoice No"
+msgstr "ငွေတောင်းခံလွှာနံပါတ်"
+
+#: .\ourapp\models.py:162
+msgid "Sale"
+msgstr "ရောင်းချမှု"
+
+#: .\ourapp\models.py:168
+msgid "Unknown Item"
+msgstr "အမည်မသိပစ္စည်း"
+
+#: .\ourapp\models.py:173
+msgid "In"
+msgstr "ဝင်"
+
+#: .\ourapp\models.py:174
+msgid "Out"
+msgstr "ထွက်"
+
+#: .\ourapp\models.py:179 .\templates\medicine_list.html:203
+msgid "Action"
+msgstr "လုပ်ဆောင်ချက်"
+
+#: .\ourapp\models.py:181
+msgid "Note"
+msgstr "မှတ်ချက်"
+
+#: .\ourapp\models.py:182 .\templates\customer_profile.html:121
+msgid "Date"
+msgstr "နေ့စွဲ"
+
+#: .\ourapp\models.py:193
+msgid "Amount"
+msgstr "ပမာဏ"
+
+#: .\ourapp\models.py:210
+msgid "Recipient"
+msgstr "လက်ခံသူ"
+
+#: .\ourapp\models.py:211
+msgid "Message"
+msgstr "မက်ဆေ့ခ်ျ"
+
+#: .\ourapp\models.py:212
+msgid "Read"
+msgstr "ဖတ်ပြီး"
+
+#: .\ourapp\models.py:213
+msgid "Created At"
+msgstr "ဖန်တီးချိန်"
+
+#: .\ourapp\models.py:221
+msgid "Questions"
+msgstr "မေးခွန်းများ"
+
+#: .\ourapp\models.py:222
+msgid "Answers"
+msgstr "ဖြေချက်များ"
+
+#: .\ourapp\models.py:223
+msgid "Timestamp"
+msgstr "အချိန်မှတ်တမ်း"
+
+#: .\templates\POS.html:8
+msgid "Pharmacy POS | Pharmacy Pro"
+msgstr "ဆေးဆိုင် POS | ဆေးဆိုင် Pro"
+
+#: .\templates\POS.html:81
+msgid "Item added successfully!"
+msgstr "ပစ္စည်းထည့်သွင်းမှုအောင်မြင်ပါသည်!"
+
+#: .\templates\POS.html:98 .\templates\pharmacist\dashboard.html:72
+#: .\templates\pharmacist\dashboard.html:386
+msgid "PharmaCare"
+msgstr "ဆေးဝါးစောင့်ရှောက်မှု"
+
+#: .\templates\POS.html:200
+msgid "Register New Customer"
+msgstr "ဖောက်သည်အသစ်မှတ်ပုံတင်ရန်"
+
+#: .\templates\POS.html:233
+msgid "Pharmacy Point of Sale"
+msgstr "ဆေးဆိုင် ရောင်းချမှုအချက်"
+
+#: .\templates\POS.html:234
+msgid "Process prescriptions and over-the-counter sales"
+msgstr "ဆေးညွှန်းများနှင့် ကန်တာရောင်းချမှုများကို လုပ်ဆောင်ပါ"
+
+#: .\templates\POS.html:238
+msgid "Search medications..."
+msgstr "ဆေးဝါးများရှာဖွေရန်..."
+
+#: .\templates\POS.html:254
+msgid "All"
+msgstr "အားလုံး"
+
+#: .\templates\POS.html:283 .\templates\POS.html:547 .\templates\POS.html:570 
+#: .\templates\POS.html:583 .\templates\POS.html:584 .\templates\POS.html:585 
+#: .\templates\POS.html:586
+msgid "ks"
+msgstr "ကျပ်"
+
+#: .\templates\POS.html:301
+msgid "Current Transaction"
+msgstr "လက်ရှိ ငွေလွှဲပြောင်းမှု"
+
+#: .\templates\POS.html:302
+msgid "Clear All"
+msgstr "အားလုံးဖျက်ရန်"
+
+#: .\templates\POS.html:308
+msgid "optional"
+msgstr "ရွေးချယ်နိုင်သည်"
+
+#: .\templates\POS.html:312
+msgid "Search customer by name or phone"
+msgstr "ဖောက်သည်အမည် သို့မဟုတ် ဖုန်းဖြင့်ရှာဖွေရန်"
+
+#: .\templates\POS.html:325
+msgid "Selected"
+msgstr "ရွေးချယ်ထားသည်"
+
+#: .\templates\POS.html:330
+msgid "Add Customer"
+msgstr "ဖောက်သည်ထည့်ရန်"
+
+#: .\templates\POS.html:347 .\templates\POS.html:660
+msgid "Print"
+msgstr "ပရင့်ထုတ်ရန်"
+
+#: .\templates\POS.html:351 .\templates\POS.html:650
+msgid "Cash"
+msgstr "ငွေသား"
+
+#: .\templates\POS.html:365
+msgid "Pharmacy Pro"
+msgstr "ဆေးဆိုင် Pro"
+
+#: .\templates\POS.html:403
+msgid "Home"
+msgstr "ပင်မ"
+
+#: .\templates\POS.html:411
+msgid "Stock"
+msgstr "ပစ္စည်းလက်ကျန်"
+
+#: .\templates\POS.html:424
+msgid "Add New Medication"
+msgstr "ဆေးအသစ်ထည့်ရန်"
+
+#: .\templates\POS.html:431
+msgid "Medication Name"
+msgstr "ဆေးအမည်"
+
+#: .\templates\POS.html:436
+msgid "Generic Name"
+msgstr "ယေဘုယျအမည်"
+
+#: .\templates\POS.html:442
+msgid "Dosage"
+msgstr "ဆေးပမာဏ"
+
+#: .\templates\POS.html:447
+msgid "Form"
+msgstr "ပုံစံ"
+
+#: .\templates\POS.html:450
+msgid "Tablet"
+msgstr "ဆေးပြား"
+
+#: .\templates\POS.html:451
+msgid "Capsule"
+msgstr "ဆေးတောင့်"
+
+#: .\templates\POS.html:452
+msgid "Liquid"
+msgstr "အရည်"
+
+#: .\templates\POS.html:453
+msgid "Injection"
+msgstr "ဆေးထိုး"
+
+#: .\templates\POS.html:454
+msgid "Cream"
+msgstr "ခရင်မ်"
+
+#: .\templates\POS.html:455
+msgid "Inhaler"
+msgstr "ရှူဆေး"
+
+#: .\templates\POS.html:475
+msgid "Prescription"
+msgstr "ဆေးညွှန်း"
+
+#: .\templates\POS.html:476
+msgid "OTC"
+msgstr "ဆေးညွှန်းမလိုသော"
+
+#: .\templates\POS.html:477
+msgid "Vitamins"
+msgstr "ဗီတာမင်များ"
+
+#: .\templates\POS.html:478
+msgid "First Aid"
+msgstr "အရေးပေါ်ကုသမှု"
+
+#: .\templates\POS.html:479
+msgid "Personal Care"
+msgstr "ကိုယ်ရေးကိုယ်တာစောင့်ရှောက်မှု"
+
+#: .\templates\POS.html:486
+msgid "Add Medication"
+msgstr "ဆေးထည့်ရန်"
+
+#: .\templates\POS.html:546
+msgid "No items in cart."
+msgstr "စျေးခြင်းတောင်းထဲတွင် ပစ္စည်းမရှိပါ။"
+
+#: .\templates\POS.html:610
+msgid "Added"
+msgstr "ထည့်သွင်းပြီး"
+
+#: .\templates\POS.html:610
+msgid "successfully!"
+msgstr "အောင်မြင်စွာ!"
+
+#: .\templates\POS.html:647
+msgid "Processing..."
+msgstr "လုပ်ဆောင်နေသည်..."
+
+#: .\templates\POS.html:649
+msgid "Cash payment completed!"
+msgstr "ငွေသားဖြင့်ပေးချေမှု ပြီးမြောက်ပါပြီ!"
+
+#: .\templates\POS.html:656
+msgid "Printing..."
+msgstr "ပရင့်ထုတ်နေသည်..."
+
+#: .\templates\POS.html:671
+msgid "Mobile Payment Confirmed!"
+msgstr "မိုဘိုင်းငွေလွှဲမှုအတည်ပြုပြီး!"
+
+#: .\templates\POS.html:744
+msgid "Something went wrong"
+msgstr "တစ်ခုခုမှားယွင်းနေပါသည်"
+
+msgid "Cart is empty!"
+msgstr "သင့်စျေးခြင်းတောင်းသည် ဗလာဖြစ်နေပါသည်"
+
+
+msgid "Error saving order"
+msgstr "မှာယူမှုအသေးစိတ်ဖွင့်ရန်အမှားတစ်ခုဖြစ်နေသည်။"
+
+#: .\templates\customer\dashboard.html:36
+msgid "Admin Dashboard"
+msgstr "အုပ်ချုပ်ရေး ဒက်ရှ်ဘုတ်"
+
+#: .\templates\customer\dashboard.html:40
+msgid "Pharmacist Dashboard"
+msgstr "ဆေးဝါးဌာန ဒက်ရှ်ဘုတ်"
+
+#: .\templates\customer\dashboard.html:44
+#: .\templates\customer\dashboard.html:68
+msgid "Customer Dashboard"
+msgstr "ဖောက်သည် ဒက်ရှ်ဘုတ်"
+
+#: .\templates\customer\dashboard.html:48
+#: .\templates\customer\dashboard.html:204 .\templates\customer_profile.html:38
+#: .\templates\customer_profile.html:174 .\templates\medicine_list.html:63
+#: .\templates\medicine_list.html:372 .\templates\pharmacist\dashboard.html:502
+msgid "Medicine"
+msgstr "ဆေးဝါး"
+
+#: .\templates\customer\dashboard.html:51
+#: .\templates\customer\dashboard.html:208 .\templates\customer_profile.html:41
+#: .\templates\medicine_list.html:66
+msgid "My Profile"
+msgstr "ကျွန်ုပ်၏ ကိုယ်ရေးအချက်အလက်"
+
+#: .\templates\customer\dashboard.html:59 .\templates\login.html:5
+#: .\templates\login.html:30 .\templates\login.html:50
+msgid "Login"
+msgstr "လော့ဂ်အင်"
+
+#: .\templates\customer\dashboard.html:87 .\templates\customer_profile.html:77
+#: .\templates\medicine_list.html:98
+msgid "Customer Account"
+msgstr "ဖောက်သည်အကောင့်"
+
+#: .\templates\customer\dashboard.html:92
+msgid "register"
+msgstr "မှတ်ပုံတင်မည်"
+
+#: .\templates\customer\dashboard.html:142
+msgid "Pharmacy Notifications"
+msgstr "ဆေးဆိုင် အသိပေးချက်များ"
+
+#: .\templates\customer\dashboard.html:158
+msgid "No notifications yet."
+msgstr "အသိပေးချက် မရှိသေးပါ။"
+
+#: .\templates\customer\dashboard.html:168
+msgid "Recommended For You"
+msgstr "သင့်အတွက် အကြံပြုထားသည်"
+
+#: .\templates\customer\dashboard.html:171
+msgid "Browse More"
+msgstr "နောက်ထပ်ကြည့်ရှုရန်"
+
+#: .\templates\customer\dashboard.html:187 .\templates\medicine_list.html:179
+msgid "Add to Cart"
+msgstr "‌ေစျးဝယ်ခြင်းထဲထည့်"
+
+#: .\templates\customer_profile.html:44 .\templates\customer_profile.html:56
+msgid "Purchase History"
+msgstr "ဝယ်ဈေး"
+
+#: .\templates\customer_profile.html:111
+msgid "My Purchase History"
+msgstr "သင့်စျေးဝယ်မှတ်တမ်း"
+
+#: .\templates\customer_profile.html:120 .\templates\medicine_list.html:202
+#: .\templates\medicine_list.html:262 .\templates\medicine_list.html:347
+msgid "Total"
+msgstr "စုစုပေါင်းကုန်ကျစရိတ်"
+
+#: .\templates\customer_profile.html:132 .\templates\customer_profile.html:140
+#: .\templates\pharmacist\dashboard.html:240
+#: .\templates\pharmacist\dashboard.html:355
+msgid "Ks"
+msgstr "ကျပ်"
+
+#: .\templates\customer_profile.html:139
+msgid "pcs"
+msgstr "ခု"
+
+#: .\templates\customer_profile.html:155
+msgid "No purchases yet."
+msgstr "ဝယ်ယူမှုမရှိသေးပါ"
+
+#: .\templates\customer_profile.html:156
+msgid "Your purchase history will appear here once you make orders."
+msgstr "သင့်အနေဖြင့် အမှာစာများပြုလုပ်ပြီးပါက သင့်ဝယ်ယူမှုမှတ်တမ်းများကို ဤနေရာတွင် မြင်တွေ့ရမည်ဖြစ်ပါသည်။"
+
+#: .\templates\customer_profile.html:158
+msgid "Shop Now"
+msgstr "ယခုဝယ်ယူမည်"
+
+#: .\templates\customer_profile.html:178 .\templates\medicine_list.html:376
+msgid "Profile"
+msgstr "ကိုယ်ရေးအချက်အလက်"
+
+#: .\templates\customer_profile.html:182
+msgid "History"
+msgstr "မှတ်တမ်း"
+
+#: .\templates\login.html:41 .\templates\register.html:146
+msgid "Username"
+msgstr "အသုံးပြုသူအမည်"
+
+#: .\templates\login.html:46 .\templates\register.html:184
+msgid "Password"
+msgstr "စကားဝှက်"
+
+#: .\templates\login.html:54
+msgid "Don't have an account?"
+msgstr "အကောင့်မရှိဘူးလား?"
+
+#: .\templates\login.html:54
+msgid "Register Here"
+msgstr "ဤနေရာတွင် မှတ်ပုံတင်ပါ"
+
+#: .\templates\medicine_list.html:78
+#, fuzzy
+#| msgid "Pharmacy Notifications"
+msgid "Pharmacy Products"
+msgstr "ဆေးဆိုင် အသိပေးချက်များ"
+
+#: .\templates\medicine_list.html:131
+msgid "Products"
+msgstr "ထုတ်ကုန်"
+
+#: .\templates\medicine_list.html:141 .\templates\medicine_list.html:280
+msgid "Checkout"
+msgstr "ဘေရှင်းမည်"
+
+#: .\templates\medicine_list.html:154
+msgid "All Categories"
+msgstr "အမျိုးအစား"
+
+#: .\templates\medicine_list.html:192
+msgid "Your Shopping Cart"
+msgstr "စျေးဝယ်ကဒ်"
+
+#: .\templates\medicine_list.html:192
+msgid "items"
+msgstr "ပစ္စည်း"
+
+#: .\templates\medicine_list.html:199
+msgid "Product"
+msgstr "ထုတ်ကုန်"
+
+#: .\templates\medicine_list.html:236
+msgid "Your cart is empty"
+msgstr "သင့်စျေးခြင်းတောင်းသည် ဗလာဖြစ်နေပါသည်"
+
+#: .\templates\medicine_list.html:237
+msgid "Browse our products and add items to your cart"
+msgstr "ကျွန်ုပ်တို့၏ထုတ်ကုန်များကိုကြည့်ရှုပြီး စျေးခြင်းတောင်းထဲသို့ထည့်ပါ"
+
+#: .\templates\medicine_list.html:238
+msgid "View Products"
+msgstr "ထုတ်ကုန်များကြည့်ရှုရန်"
+
+#: .\templates\medicine_list.html:245 .\templates\medicine_list.html:321
+msgid "Order Summary"
+msgstr "မှာယူမှုအကျဉ်းချုပ်"
+
+#: .\templates\medicine_list.html:248 .\templates\medicine_list.html:333
+#: .\templates\pharmacist\dashboard.html:363
+msgid "Subtotal"
+msgstr "အကြမ်းတန်ဖိုး"
+
+#: .\templates\medicine_list.html:252 .\templates\medicine_list.html:337
+msgid "Shipping"
+msgstr "ပို့ဆောင်ခ"
+
+#: .\templates\medicine_list.html:256 .\templates\medicine_list.html:341
+msgid "Tax"
+msgstr "အခွန်"
+
+#: .\templates\medicine_list.html:268
+msgid "Proceed to Checkout"
+msgstr "ငွေရှင်းရန်ဆက်လက်လုပ်ဆောင်ပါ"
+
+#: .\templates\medicine_list.html:287
+msgid "Contact Information"
+msgstr "ဆက်သွယ်ရန်အချက်အလက်"
+
+#: .\templates\medicine_list.html:306
+msgid "Shipping Address"
+msgstr "ပို့ဆောင်ရန်လိပ်စာ"
+
+#: .\templates\medicine_list.html:310
+msgid "Same as billing address"
+msgstr "ဘေလ်လိပ်စာနှင့်အတူတူ"
+
+#: .\templates\medicine_list.html:353
+msgid "Place Order"
+msgstr "မှာယူမည်"
+
+#: .\templates\pharmacist\dashboard.html:191
+msgid "Dashboard Overview"
+msgstr "ဒက်ရှ်ဘုတ်အချက်အလက်များ"
+
+#: .\templates\pharmacist\dashboard.html:225
+msgid "Online Orders"
+msgstr "အွန်လိုင်းမှာယူမှုများ"
+
+#: .\templates\pharmacist\dashboard.html:233
+#: .\templates\pharmacist\dashboard.html:353
+msgid "Customer:"
+msgstr "ဖောက်သည် -"
+
+#: .\templates\pharmacist\dashboard.html:234
+msgid "Phone:"
+msgstr "ဖုန်း -"
+
+#: .\templates\pharmacist\dashboard.html:235
+msgid "Address:"
+msgstr "လိပ်စာ -"
+
+#: .\templates\pharmacist\dashboard.html:238
+#: .\templates\pharmacist\dashboard.html:354
+msgid "Invoice:"
+msgstr "ငွေတောင်းခံလွှာ -"
+
+#: .\templates\pharmacist\dashboard.html:239
+msgid "Date:"
+msgstr "ရက်စွဲ -"
+
+#: .\templates\pharmacist\dashboard.html:240
+msgid "Total:"
+msgstr "စုစုပေါင်း -"
+
+#: .\templates\pharmacist\dashboard.html:241
+msgid "Status:"
+msgstr "အခြေအနေ -"
+
+#: .\templates\pharmacist\dashboard.html:255
+msgid "Confirm"
+msgstr "အတည်ပြုမည်"
+
+#: .\templates\pharmacist\dashboard.html:262
+msgid "View Detail"
+msgstr "အသေးစိတ်ကြည့်ရန်"
+
+#: .\templates\pharmacist\dashboard.html:268
+msgid "No online orders yet."
+msgstr "အွန်လိုင်းမှာယူမှုမရှိသေးပါ။"
+
+#: .\templates\pharmacist\dashboard.html:278
+msgid "Inventory Alerts"
+msgstr "ပစ္စည်းစာရင်းသတိပေးချက်များ"
+
+#: .\templates\pharmacist\dashboard.html:285
+msgid "Low Stock Items"
+msgstr "ပစ္စည်းလက်ကျန်နည်းနေသောပစ္စည်းများ"
+
+#: .\templates\pharmacist\dashboard.html:301
+msgid "left"
+msgstr "လက်ကျန်"
+
+#: .\templates\pharmacist\dashboard.html:306
+msgid "No low stock items"
+msgstr "ပစ္စည်းလက်ကျန်နည်းနေသောပစ္စည်းမရှိပါ"
+
+#: .\templates\pharmacist\dashboard.html:316
+msgid "Expiring Soon"
+msgstr "သက်တမ်းကုန်ဆုံးတော့မည့်ပစ္စည်းများ"
+
+#: .\templates\pharmacist\dashboard.html:327
+msgid "Batch:"
+msgstr "လတ် -"
+
+#: .\templates\pharmacist\dashboard.html:335
+msgid "No items expiring soon"
+msgstr "သက်တမ်းကုန်ဆုံးတော့မည့်ပစ္စည်းမရှိပါ"
+
+#: .\templates\pharmacist\dashboard.html:349
+msgid "Order Details"
+msgstr "မှာယူမှုအသေးစိတ်"
+
+#: .\templates\pharmacist\dashboard.html:355
+msgid "Total Amount:"
+msgstr "စုစုပေါင်းပမာဏ -"
+
+#: .\templates\pharmacist\dashboard.html:361
+msgid "Qty"
+msgstr "အရေအတွက်"
+
+#: .\templates\pharmacist\dashboard.html:373
+#: .\templates\pharmacist\dashboard.html:557
+msgid "Close"
+msgstr "ပိတ်မည်"
+
+#: .\templates\pharmacist\dashboard.html:388
+msgid "Advanced pharmacy management solution for modern healthcare providers."
+msgstr "ခေတ်မီကျန်းမာရေးစောင့်ရှောက်မှုအတွက် အဆင့်မြင့်ဆေးဝါးစီမံခန့်ခွဲမှုစနစ်"
+
+#: .\templates\pharmacist\dashboard.html:400
+msgid "Resources"
+msgstr "အရင်းအမြစ်များ"
+
+#: .\templates\pharmacist\dashboard.html:402
+msgid "Documentation"
+msgstr "စာရွက်စာတမ်းများ"
+
+#: .\templates\pharmacist\dashboard.html:403
+msgid "Support Center"
+msgstr "အကူအညီစင်တာ"
+
+#: .\templates\pharmacist\dashboard.html:404
+msgid "Community"
+msgstr "အသိုင်းအဝိုင်း"
+
+#: .\templates\pharmacist\dashboard.html:405
+msgid "Changelog"
+msgstr "ပြောင်းလဲမှုမှတ်တမ်း"
+
+#: .\templates\pharmacist\dashboard.html:413
+msgid "123 Medical Street, Health City, HC 12345"
+msgstr "၁၂၃ ဆေးဝါးလမ်း၊ ကျန်းမာရေးမြို့၊ HC ၁၂၃၄၅"
+
+#: .\templates\pharmacist\dashboard.html:427
+msgid "PharmaCare. All rights reserved."
+msgstr "PharmaCare။ မူပိုင်ခွင့်အားလုံးရှိသည်။"
+
+#: .\templates\pharmacist\dashboard.html:489
+msgid "Expiring Medicines (Next 90 Days)"
+msgstr "သက်တမ်းကုန်ဆုံးတော့မည့်ဆေးဝါးများ (လာမည့် ၉၀ ရက်)"
+
+#: .\templates\pharmacist\dashboard.html:503
+msgid "Batch"
+msgstr "လတ်"
+
+#: .\templates\pharmacist\dashboard.html:506
+msgid "Days Left"
+msgstr "ကျန်ရက်များ"
+
+#: .\templates\pharmacist\dashboard.html:539
+msgid "days"
+msgstr "ရက်"
+
+#: .\templates\pharmacist\dashboard.html:550
+msgid "No items expiring within 90 days."
+msgstr "၉၀ ရက်အတွင်းသက်တမ်းကုန်ဆုံးမည့်ပစ္စည်းမရှိပါ။"
+
+#: .\templates\pharmacist\dashboard.html:626
+msgid "Error loading order detail."
+msgstr "မှာယူမှုအသေးစိတ်ဖွင့်ရန်အမှားတစ်ခုဖြစ်နေသည်။"
+
+#: .\templates\register.html:8
+msgid "Pharmacy Registration"
+msgstr "ဆေးဆိုင် မှတ်ပုံတင်ခြင်း"
+
+#: .\templates\register.html:134
+msgid "Pharmacy Wholesale & Retail Registration"
+msgstr "ဆေးဘောက်၊ ဆေးလက်လီ မှတ်ပုံတင်ခြင်း"
+
+#: .\templates\register.html:167
+msgid "First Name"
+msgstr "အမည်"
+
+#: .\templates\register.html:174
+msgid "Last Name"
+msgstr "အမျိုးအမည်"
+
+#: .\templates\register.html:191
+msgid "Confirm Password"
+msgstr "စကားဝှက်အတည်ပြုပါ"
+
+#: .\templates\register.html:208
+msgid "Gender"
+msgstr "လိင်"
+
+#: .\templates\register.html:218
+msgid "Date of Birth"
+msgstr "မွေးသက္ကရာဇ်"
+
+#~ msgid "Records"
+#~ msgstr "မှတ်တမ်းများ"
+
+#~ msgid "Settings"
+#~ msgstr "ဆက်တင်များ"
+
+#~ msgid "Pharmastics Assistant"
+#~ msgstr "Pharmastics အကူအညီပေးသူ"
+
+#~ msgid "Type your message..."
+#~ msgstr "သင့်မက်ဆေ့ချ်ကို ရိုက်ထည့်ပါ..."
+
+#~ msgid "Change Language"
+#~ msgstr "ဘာသာစကား ပြောင်းရန်"

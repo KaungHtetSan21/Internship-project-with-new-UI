@@ -1,215 +1,223 @@
 
-
-
-
-# models.py
 from django.contrib.auth.models import User
 from django.db import models
-
 from django.utils import timezone
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-from django.contrib.auth.models import User
-# models.py
-from django.db import models
+from django.utils.translation import gettext_lazy as _
+
 
 class UserProfile(models.Model):
     ROLE_CHOICES = (
-        ('admin', 'Admin'),
-        ('pharmacist', 'Pharmacist'),
-        ('customer', 'Customer'),
+        ('admin', _('Admin')),
+        ('pharmacist', _('Pharmacist')),
+        ('customer', _('Customer')),
+    )
+
+    GENDER_CHOICES = (
+        ('male', _('Male')),
+        ('female', _('Female')),
     )
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     role = models.CharField(max_length=50, choices=ROLE_CHOICES)
-
     phone = models.CharField(max_length=20, blank=True, null=True)
     address = models.CharField(max_length=255, blank=True, null=True)
-    gender = models.CharField(max_length=10, choices=[('male', 'Male'), ('female', 'Female')], blank=True, null=True)
+    gender = models.CharField(max_length=10, choices=GENDER_CHOICES, blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
 
-    def __str__(self):
+    def str(self):
         return f"{self.user.username} ({self.role})"
 
 
-
-
-
 class Category(models.Model):
-    name = models.CharField(max_length=100, unique=True)
-    description = models.TextField(blank=True, null=True)
+    name = models.CharField(max_length=100, unique=True, verbose_name=_("Name"))
+    description = models.TextField(blank=True, null=True, verbose_name=_("Description"))
 
-    def __str__(self):
+    def str(self):
         return self.name
-    
-
-
-    
-
 
 
 class Supplier(models.Model):
-    supplier_name = models.CharField(max_length=255, blank=True, null= True)
-    company = models.CharField(max_length=255, blank=True, null= True)
-    contact_person = models.CharField(max_length=255, blank= True, null= True)
-    email = models.EmailField(blank=True, null= True)
-    phone = models.CharField(blank=True,null= True)
-    address = models.TextField(blank=True, null= True)
-    status = models.BooleanField(blank=True, null= True)
-    def __str__(self):
-        return self.supplier_name or "Unnamed Supplier"
-    
+    supplier_name = models.CharField(max_length=255, blank=True, null=True, verbose_name=_("Supplier Name"))
+    company = models.CharField(max_length=255, blank=True, null=True, verbose_name=_("Company"))
+    contact_person = models.CharField(max_length=255, blank=True, null=True, verbose_name=_("Contact Person"))
+    email = models.EmailField(blank=True, null=True, verbose_name=_("Email"))
+    phone = models.CharField(max_length=50, blank=True, null=True, verbose_name=_("Phone"))
+    address = models.TextField(blank=True, null=True, verbose_name=_("Address"))
+    status = models.BooleanField(blank=True, null=True, verbose_name=_("Active"))
+
+    def str(self):
+        return self.supplier_name or _("Unnamed Supplier")
+
 
 class Item(models.Model):
-    category = models.ForeignKey(Category, on_delete= models.CASCADE)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, verbose_name=_("Category"))
+    item_photo = models.ImageField(upload_to='photos', verbose_name=_("Photo"))
+    primary_supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, blank=True, null=True, verbose_name=_("Primary Supplier"))
+    strength = models.CharField(max_length=50, blank=True, null=True, verbose_name=_("Strength"))
+    item_name = models.CharField(max_length=255, verbose_name=_("Item Name"))
+    item_quantity = models.PositiveIntegerField(verbose_name=_("Quantity"))
+    item_price = models.PositiveIntegerField(verbose_name=_("Selling Price"))
+    purcharse_price = models.PositiveIntegerField(default=0, verbose_name=_("Purchase Price"))
+    reorder_level = models.PositiveIntegerField(default=0, blank=True, null=True, verbose_name=_("Reorder Level"))
+    item_description = models.TextField(verbose_name=_("Description"))
+    exp_date = models.DateField(verbose_name=_("Expiry Date"))
+    brand_name = models.CharField(max_length=255, blank=True, null=True, verbose_name=_("Brand Name"))
+    batch_number = models.CharField(max_length=100, blank=True, null=True, verbose_name=_("Batch Number"))
+    stock_minimum = models.PositiveIntegerField(default=10, verbose_name=_("Minimum Stock"))
+    is_limited = models.BooleanField(default=False, verbose_name=_("Limited Stock"))
+    max_quantity = models.PositiveIntegerField(default=5, verbose_name=_("Maximum Quantity"))
+    last_ordered = models.DateField(blank=True, null=True, verbose_name=_("Last Ordered"))
 
-    item_photo = models.ImageField(upload_to='photos')
-
-    primary_supplier = models.ForeignKey(Supplier, on_delete= models.CASCADE, blank=True, null=True)
-    strength = models.CharField(max_length=50, blank=True, null=True)
-    item_name = models.CharField(max_length=255)
-    item_quantity =models.PositiveIntegerField()
-    item_price = models.PositiveIntegerField()
-    purcharse_price = models.PositiveIntegerField(default=0)
-    reorder_level = models.PositiveIntegerField(default=0, blank= True, null= True)
-    item_description = models.TextField()
-    exp_date = models.DateField()
-    brand_name = models.CharField(max_length=255, blank=True, null=True)
-    batch_number = models.CharField(max_length=100, blank=True, null=True)
-    
-    stock_minimum = models.PositiveIntegerField(default=10)
-    is_limited = models.BooleanField(default=False)
-    max_quantity = models.PositiveIntegerField(default=5)
-    last_ordered = models.DateField(blank=True, null=True)
-    def __str__(self):
+    def str(self):
         return self.item_name
-    
+
 
 class PurchaseOrder(models.Model):
-    item = models.ForeignKey( Item, on_delete=models.CASCADE, blank=True,null=True)
+    STATUS_CHOICES = [
+        ('Pending', _('Pending')),
+        ('Completed', _('Completed')),
+        ('Cancelled', _('Cancelled')),
+    ]
 
-    supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, blank=True,null=True)
-    po_number = models.CharField(max_length=50, blank=True,null=True, unique= True)
-    order_date = models.DateField( blank=True,null=True)
-    status = models.CharField(max_length=20, choices=[('Pending', 'Pending'), ('Completed', 'Completed'), ('Cancelled', 'Cancelled')], blank=True,null=True)
-    notes = models.TextField(blank=True, null=True)
-    total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0, blank=True,null=True)
-    total_cost = models.PositiveIntegerField(blank=True, null= True)
-    created_date = models.DateTimeField(auto_now_add= True, blank=True, null= True)
-    def __str__(self):
+    item = models.ForeignKey(Item, on_delete=models.CASCADE, blank=True, null=True, verbose_name=_("Item"))
+
+    supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, blank=True, null=True, verbose_name=_("Supplier"))
+    po_number = models.CharField(max_length=50, blank=True, null=True, unique=True, verbose_name=_("PO Number"))
+    order_date = models.DateField(blank=True, null=True, verbose_name=_("Order Date"))
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, blank=True, null=True, verbose_name=_("Status"))
+    notes = models.TextField(blank=True, null=True, verbose_name=_("Notes"))
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0, blank=True, null=True, verbose_name=_("Total Amount"))
+    total_cost = models.PositiveIntegerField(blank=True, null=True, verbose_name=_("Total Cost"))
+    created_date = models.DateTimeField(auto_now_add=True, blank=True, null=True, verbose_name=_("Created Date"))
+
+    def str(self):
         return f"{self.supplier} - {self.po_number}"
 
+
 class PurchaseItem(models.Model):
-    order = models.ForeignKey(PurchaseOrder, on_delete=models.CASCADE, related_name='items', blank=True,null=True)
-    item = models.ForeignKey( Item, on_delete=models.CASCADE, blank=True,null=True)
-    batch_number = models.CharField(max_length=100, blank=True,null=True)
-    quantity = models.IntegerField( blank=True,null=True)
-    unit_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True,null=True)
+    order = models.ForeignKey(PurchaseOrder, on_delete=models.CASCADE, related_name='items', blank=True, null=True, verbose_name=_("Order"))
+    item = models.ForeignKey(Item, on_delete=models.CASCADE, blank=True, null=True, verbose_name=_("Item"))
+    batch_number = models.CharField(max_length=100, blank=True, null=True, verbose_name=_("Batch Number"))
+    quantity = models.IntegerField(blank=True, null=True, verbose_name=_("Quantity"))
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, verbose_name=_("Unit Price"))
 
     @property
     def total_price(self):
         return self.quantity * self.unit_price
 
-    def __str__(self):
+    def str(self):
         return f"{self.item} x {self.quantity}"
-    
-   
 
-
-    
 
 class Cart(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='carts')  # 🆕
-    customer_name = models.CharField(max_length=100, blank=True, null=True)
-    total_amount = models.PositiveIntegerField(default=0)
-    created_date = models.DateTimeField(default=timezone.now)
-    payment_method = models.CharField(max_length=20, blank=True, null=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='carts', verbose_name=_("User"))
+    customer_name = models.CharField(max_length=100, blank=True, null=True, verbose_name=_("Customer Name"))
+    total_amount = models.PositiveIntegerField(default=0, verbose_name=_("Total Amount"))
+    created_date = models.DateTimeField(default=timezone.now, verbose_name=_("Created Date"))
+    payment_method = models.CharField(max_length=20, blank=True, null=True, verbose_name=_("Payment Method"))
     source = models.CharField(
         max_length=10,
-        choices=[('pos', 'POS'), ('online', 'Online')],
-        default='online'
+        choices=[('pos', _('POS')), ('online', _('Online'))],
+        default='online',
+        verbose_name=_("Source")
     )
+
     def update_total_amount(self):
         total = sum([cp.qty * cp.item.item_price for cp in self.cartproduct_set.all()])
         self.total_amount = total
         self.save()
-    
+
+
 class CartProduct(models.Model):
-    cart = models.ForeignKey(Cart,on_delete=models.CASCADE)
-    item = models.ForeignKey(Item,on_delete=models.CASCADE)
-    qty = models.PositiveIntegerField(default=0)
-    price = models.PositiveIntegerField(default=0)
-    def __str__(self):
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, verbose_name=_("Cart"))
+    item = models.ForeignKey(Item, on_delete=models.CASCADE, verbose_name=_("Item"))
+    qty = models.PositiveIntegerField(default=0, verbose_name=_("Quantity"))
+    price = models.PositiveIntegerField(default=0, verbose_name=_("Price"))
+
+    def str(self):
         return f"CartProduct: {self.item} (Qty: {self.qty})"
-    
+
 
 class Sale(models.Model):
     STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('confirmed', 'Confirmed'),
-        ('cancelled', 'Cancelled'),
+        ('pending', _('Pending')),
+        ('confirmed', _('Confirmed')),
+        ('cancelled', _('Cancelled')),
     ]
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    invoice_no = models.CharField(max_length=100)
-    name = models.CharField(blank=True, null=True)
-    phone = models.CharField(blank=True, null=True)
-    address = models.CharField(blank=True, null=True)
 
-    total_amount = models.PositiveIntegerField()
-    created_date = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending',blank=True, null=True)
-    def __str__(self):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=_("User"))
+    invoice_no = models.CharField(max_length=100, verbose_name=_("Invoice No"))
+    name = models.CharField(max_length=255, blank=True, null=True, verbose_name=_("Customer Name"))
+    phone = models.CharField(max_length=50, blank=True, null=True, verbose_name=_("Phone"))
+    address = models.CharField(max_length=255, blank=True, null=True, verbose_name=_("Address"))
+    total_amount = models.PositiveIntegerField(verbose_name=_("Total Amount"))
+    created_date = models.DateTimeField(auto_now_add=True, verbose_name=_("Created Date"))
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', blank=True, null=True, verbose_name=_("Status"))
+
+    def str(self):
         return f"Invoice {self.invoice_no} - {self.total_amount}"
 
+
 class SaleItem(models.Model):
-    sale = models.ForeignKey(Sale, on_delete=models.CASCADE)
-    item = models.ForeignKey(Item, on_delete=models.CASCADE)
-    quantity = models.PositiveIntegerField()
-    price = models.PositiveIntegerField()
-    def __str__(self):
-        return f"{self.item.item_name if self.item else 'Unknown Item'} - {self.quantity} pcs"
+    sale = models.ForeignKey(Sale, on_delete=models.CASCADE, verbose_name=_("Sale"))
+    item = models.ForeignKey(Item, on_delete=models.CASCADE, verbose_name=_("Item"))
+    quantity = models.PositiveIntegerField(verbose_name=_("Quantity"))
+    price = models.PositiveIntegerField(verbose_name=_("Price"))
+
+    def str(self):
+        return f"{self.item.item_name if self.item else _('Unknown Item')} - {self.quantity} pcs"
+
 
 class StockHistory(models.Model):
-    item = models.ForeignKey(Item, on_delete=models.CASCADE)
-    supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, blank=True, null=True)
+    ACTION_CHOICES = [
+        ('in', _('In')),
+        ('out', _('Out')),
+    ]
 
-    action = models.CharField(choices=[('in', 'In'), ('out', 'Out')])
-    quantity = models.PositiveIntegerField()
-    note = models.TextField(blank=True, null=True)
-    date = models.DateTimeField(auto_now_add=True)
-    def __str__(self):
+    item = models.ForeignKey(Item, on_delete=models.CASCADE, verbose_name=_("Item"))
+    supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, blank=True, null=True, verbose_name=_("Supplier"))
+    action = models.CharField(max_length=10, choices=ACTION_CHOICES, verbose_name=_("Action"))
+    quantity = models.PositiveIntegerField(verbose_name=_("Quantity"))
+    note = models.TextField(blank=True, null=True, verbose_name=_("Note"))
+    date = models.DateTimeField(auto_now_add=True, verbose_name=_("Date"))
+
+    def str(self):
         return f"{self.item.item_name}  - {self.quantity}"
-    
+
 
 class Possalesreport(models.Model):
-    item = models.ForeignKey(Item, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    quantity = models.PositiveIntegerField()
-    price = models.PositiveIntegerField()
+    item = models.ForeignKey(Item, on_delete=models.CASCADE, verbose_name=_("Item"))
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=_("User"))
+    quantity = models.PositiveIntegerField(verbose_name=_("Quantity"))
+    price = models.PositiveIntegerField(verbose_name=_("Price"))
+    amount = models.PositiveIntegerField(verbose_name=_("Amount"))
+    created_date = models.DateTimeField(auto_now_add=True, verbose_name=_("Created Date"))
 
-    amount = models.PositiveIntegerField()
-    created_date = models.DateTimeField(auto_now_add=True)
-    def __str__(self):
-        return self.item
+    def str(self):
+        return str(self.item)
+
 
 class customerpos(models.Model):
-    name = models.CharField(max_length=100)
-    phone = models.CharField(max_length=20, blank=True, null=True)
-    address = models.CharField(max_length=255, blank=True, null= True)
-    def __str__(self):
-        return self.name
-    
-class Notification(models.Model):
-    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications',blank=True, null= True)
-    message = models.TextField(blank=True, null= True)
-    is_read = models.BooleanField(default=False,blank=True, null= True)
-    created_at = models.DateTimeField(auto_now_add=True,blank=True, null= True)
+    name = models.CharField(max_length=100, verbose_name=_("Customer Name"))
+    phone = models.CharField(max_length=20, blank=True, null=True, verbose_name=_("Phone"))
+    address = models.CharField(max_length=255, blank=True, null=True, verbose_name=_("Address"))
 
-    def __str__(self):
+    def str(self):
+        return self.name
+
+
+class Notification(models.Model):
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications', blank=True, null=True, verbose_name=_("Recipient"))
+    message = models.TextField(blank=True, null=True, verbose_name=_("Message"))
+    is_read = models.BooleanField(default=False, blank=True, null=True, verbose_name=_("Read"))
+    created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True, verbose_name=_("Created At"))
+
+    def str(self):
         return f"To: {self.recipient.username} | {self.message[:50]}"
-    
+
+
 class Chatbot(models.Model):
-    user = models.ForeignKey(User,  on_delete=models.CASCADE, blank=True, null= True )
-    questions = models.TextField(blank=True, null= True)
-    answers = models.TextField(blank=True, null= True)
-    timeline = models.DateTimeField(auto_now_add=True, blank=True, null= True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True, verbose_name=_("User"))
+    questions = models.TextField(blank=True, null=True, verbose_name=_("Questions"))
+    answers = models.TextField(blank=True, null=True, verbose_name=_("Answers"))
+    timeline = models.DateTimeField(auto_now_add=True, blank=True, null=True, verbose_name=_("Timestamp"))

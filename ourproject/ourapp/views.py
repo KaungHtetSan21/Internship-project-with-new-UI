@@ -200,49 +200,49 @@ def pharmacist_dashboard_view(request):
 
     # ✅ Dashboard Stats
     dashboard_stats = [
-        {
-            'label': 'Total Orders',
-            'icon': 'fa-prescription-bottle-alt',
-            'bg': 'bg-blue-100',
-            'text': 'text-blue-600',
-            'value': total_orders
-        },
-        {
-            'label': 'POS Orders',
-            'icon': 'fa-cash-register',
-            'bg': 'bg-green-100',
-            'text': 'text-green-600',
-            'value': pos_total
-        },
-        {
-            'label': 'Online Orders',
-            'icon': 'fa-globe',
-            'bg': 'bg-purple-100',
-            'text': 'text-purple-600',
-            'value': online_total
-        },
-        {
-            'label': 'POS Revenue',
-            'icon': 'fa-dollar-sign',
-            'bg': 'bg-green-100',
-            'text': 'text-green-600',
-            'value': f"{pos_revenue} Ks"
-        },
-        {
-            'label': 'Online Revenue',
-            'icon': 'fa-credit-card',
-            'bg': 'bg-yellow-100',
-            'text': 'text-yellow-600',
-            'value': f"{online_revenue} Ks"
-        },
-        {
-            'label': 'Low Stock Items',
-            'icon': 'fa-exclamation-triangle',
-            'bg': 'bg-red-100',
-            'text': 'text-red-600',
-            'value': low_stock_count
-        },
-    ]
+    {
+        'label': 'Total Orders',
+        'icon': '💊',  # was fa-prescription-bottle-alt
+        'bg': 'bg-blue-100',
+        'text': 'text-blue-600',
+        'value': total_orders
+    },
+    {
+        'label': 'POS Orders',
+        'icon': '🏷️',  # was fa-cash-register
+        'bg': 'bg-green-100',
+        'text': 'text-green-600',
+        'value': pos_total
+    },
+    {
+        'label': 'Online Orders',
+        'icon': '🌐',  # was fa-globe
+        'bg': 'bg-purple-100',
+        'text': 'text-purple-600',
+        'value': online_total
+    },
+    {
+        'label': 'POS Revenue',
+        'icon': '💰',  # was fa-dollar-sign
+        'bg': 'bg-green-100',
+        'text': 'text-green-600',
+        'value': f"{pos_revenue} Ks"
+    },
+    {
+        'label': 'Online Revenue',
+        'icon': '💳',  # was fa-credit-card
+        'bg': 'bg-yellow-100',
+        'text': 'text-yellow-600',
+        'value': f"{online_revenue} Ks"
+    },
+    {
+        'label': 'Low Stock Items',
+        'icon': '⚠️',  # was fa-exclamation-triangle
+        'bg': 'bg-red-100',
+        'text': 'text-red-600',
+        'value': low_stock_count
+    },
+]
 
     context = {
         'dashboard_stats': dashboard_stats,
@@ -334,19 +334,19 @@ def customer_dashboard_view(request):
         {
             'label': 'Total Orders',
             'icon': 'fa-box',
-            'color': 'primary',
+            'bg_class': 'from-blue-500 to-blue-600',
             'value': total_orders
         },
         {
             'label': 'Items Purchased',
             'icon': 'fa-shopping-basket',
-            'color': 'success',
+            'bg_class': 'from-green-500 to-green-600',
             'value': total_items
         },
         {
             'label': 'Total Spent',
             'icon': 'fa-dollar-sign',
-            'color': 'warning',
+            'bg_class': 'from-yellow-400 to-yellow-500',
             'value': f"{total_spent} Ks"
         },
     ]
@@ -949,7 +949,7 @@ def medicine_list(request):
 
     #✅ Only customers can access this page
     if not hasattr(user, 'userprofile') or user.userprofile.role != 'customer':
-        messages.error(request, "You do not have permission to access this page.")
+        messages.error(request, "Dear customer, you need register to encourage purchases.")
         return render(request,'medicine_list.html',context)
 
     # ✅ Get or create cart
@@ -974,8 +974,8 @@ def medicine_list(request):
             return redirect('medicine_list')
 
         # Calculate total with shipping and tax
-        shipping_fee = 5.99
-        tax = 1.00
+        shipping_fee = 1000
+        tax = 500
         total_amount = cart.total_amount + shipping_fee + tax  # Final total with shipping and tax
 
         # Create sale
@@ -1025,7 +1025,7 @@ def medicine_list(request):
         'categories':categories,
         'cart': cart,
         'cart_products': cart_products,
-        'total_amount': cart.total_amount + 5.99 + 1.00,  # Pass the total to template
+        'total_amount': cart.total_amount + 1000 + 500,  # Pass the total to template
     })
 
 @login_required

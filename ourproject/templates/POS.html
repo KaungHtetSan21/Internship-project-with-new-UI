@@ -1,17 +1,19 @@
+{% load i18n %}
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pharmacy POS | Pharmacy Pro</title>
+    <title>{% trans "Pharmacy POS | Pharmacy Pro" %}</title>
+    {% load i18n %}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <!-- Bootstrap 5 CSS -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<!-- Bootstrap 5 JS (for toast) -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap 5 JS (for toast) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -20,7 +22,15 @@
                         primary: '#1e40af',
                         secondary: '#3b82f6',
                         lightblue: '#dbeafe',
-                        darkblue: '#1e3a8a'
+                        darkblue: '#1e3a8a',
+                        success: '#10b981',
+                        warning: '#f59e0b',
+                        danger: '#ef4444',
+                        info: '#3b82f6'
+                    },
+                    boxShadow: {
+                        card: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                        'card-hover': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
                     }
                 }
             }
@@ -33,34 +43,28 @@
                 overflow-x: auto;
                 white-space: nowrap;
             }
-
             .mobile-card {
                 min-width: 300px;
             }
         }
-
         @media (max-width: 768px) {
             .grid-cols-1-md {
                 grid-template-columns: repeat(1, minmax(0, 1fr));
             }
         }
-
         .card {
             transition: all 0.3s ease;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
         }
-
         .card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow-hover);
         }
-
         .status-badge {
             transition: all 0.2s ease;
         }
-
-        .search-input:focus+.search-icon {
-            color: #3b82f6;
+        .smooth-transition {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
     </style>
     {% if messages %}
@@ -69,69 +73,116 @@
     {% endfor %}
     {% endif %}
 
-            <!-- ✅ Toast container -->
-            <div class="position-fixed top-0 end-0 p-3" style="z-index: 1100">
-            <div id="cart-toast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="d-flex">
+    <!-- ✅ Toast container -->
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 1100">
+        <div id="cart-toast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
                 <div class="toast-body">
-                    ✅ Item added successfully!
+                    ✅ {% trans "Item added successfully!" %}
                 </div>
                 <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
             </div>
-            </div>
-
+        </div>
+    </div>
 </head>
 
 <body class="bg-gray-50 flex flex-col min-h-screen">
     <!-- Navigation -->
-    <nav class="bg-primary text-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    {% if user.userprofile.role == 'pharmacist' %}
+    <nav class="bg-[#1e40af] text-white shadow-md">
+        <div class="mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
                 <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <i class="fas fa-clinic-medical text-2xl"></i>
+                    <div class="flex-shrink-0 flex items-center">
+                        <span class="text-2xl mr-2">🏥</span>
+                        <span class="font-semibold text-lg">{% trans "PharmaCare" %}</span>
                     </div>
                     <div class="hidden md:block">
                         <div class="ml-10 flex items-baseline space-x-4">
-                            <a href="#" class="px-3 py-2 rounded-md text-sm font-medium bg-white text-primary flex items-center">
-                                <i class="fas fa-tachometer-alt mr-2"></i> Dashboard
+                            <a href="#" class="px-3 py-2 rounded-md text-sm font-medium bg-white text-[#1e40af] flex items-center">
+                                <span class="mr-2">📊</span> {% trans "Dashboard" %}
                             </a>
-                            <a href="{% url 'order_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary hover:bg-opacity-20 flex items-center">
-                                <i class="fas fa-clipboard-list mr-2"></i> Orders
+                            <a href="{% url 'order_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-[#3b82f6] hover:bg-opacity-20 flex items-center">
+                                <span class="mr-2">📋</span> {% trans "Orders" %}
                             </a>
-                            <a href="{% url 'inventory_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary hover:bg-opacity-20 flex items-center">
-                                <i class="fas fa-pills mr-2"></i> Inventory
+                            <a href="{% url 'inventory_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-[#3b82f6] hover:bg-opacity-20 flex items-center">
+                                <span class="mr-2">💊</span> {% trans "Inventory" %}
                             </a>
-                            <a href="{% url 'report_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary hover:bg-opacity-20 flex items-center">
-                                <i class="fas fa-chart-bar mr-2"></i> Reports
+                            <a href="{% url 'report_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-[#3b82f6] hover:bg-opacity-20 flex items-center">
+                                <span class="mr-2">📈</span> {% trans "Reports" %}
                             </a>
-                            <a href="{% url 'purchaseorder_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary hover:bg-opacity-20 flex items-center">
-                                <i class="fas fa-shopping-cart mr-2"></i> Purchase Order
+                            <a href="{% url 'purchaseorder_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-[#3b82f6] hover:bg-opacity-20 flex items-center">
+                                <span class="mr-2">🛒</span> {% trans "Purchase Order" %}
                             </a>
+                            
                         </div>
+                        
                     </div>
                 </div>
                 <div class="flex items-center">
-                    <button class="p-1 rounded-full text-white focus:outline-none">
-                        <i class="fas fa-bell"></i>
-                    </button>
+                    <!-- Notification Bell -->
+                    <div class="ml-3 relative">
+                        <button id="notif-bell" class="p-1 rounded-full text-white focus:outline-none relative hover:bg-[#3b82f6] hover:bg-opacity-20">
+                            <span class="text-xl">🔔</span>
+                            {% if expiring_items %}
+                            <span class="absolute -top-1 -right-1 bg-[#ef4444] text-white text-xs rounded-full px-1.5 py-0.5">
+                                {{ expiring_items|length }}
+                            </span>
+                            {% endif %}
+                        </button>
+                        <!-- Dropdown -->
+                        <div id="notif-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-white shadow-lg rounded-md z-50 border border-gray-200">
+                            <div class="px-4 py-3 border-b bg-gray-50 text-sm font-semibold text-gray-700 flex justify-between items-center">
+                                <span>{% trans "Notifications" %}</span>
+                                <span class="text-xs text-[#1e40af] cursor-pointer">{% trans "Mark all as read" %}</span>
+                            </div>
+                            <ul class="max-h-60 overflow-y-auto divide-y divide-gray-100">
+                                {% for item in expiring_items %}
+                                <li class="px-4 py-3 hover:bg-gray-50">
+                                    <div class="flex items-start">
+                                        <div class="flex-shrink-0 pt-0.5">
+                                            <div class="h-8 w-8 rounded-full bg-red-100 flex items-center justify-center">
+                                                <span class="text-red-500">⚠️</span>
+                                            </div>
+                                        </div>
+                                        <div class="ml-3 flex-1">
+                                            <p class="text-sm font-medium text-gray-900">{{ item.item_name }}</p>
+                                            <p class="text-xs text-gray-500">{% trans "Expires on" %} {{ item.exp_date|date:"M d, Y" }}</p>
+                                        </div>
+                                        <span class="text-xs text-red-600">{{ item.exp_date|timeuntil }}</span>
+                                    </div>
+                                </li>
+                                {% empty %}
+                                <li class="px-4 py-4 text-center">
+                                    <span class="text-gray-300 text-2xl mb-2">🔕</span>
+                                    <p class="text-gray-500 text-sm">{% trans "No new notifications" %}</p>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            <div class="px-4 py-2 border-t bg-gray-50 text-center">
+                                <a href="#" class="text-xs text-[#1e40af] font-medium">{% trans "View all notifications" %}</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- User Profile -->
                     <div class="ml-3 relative">
                         <div class="flex items-center">
-                            <div class="text-sm mr-3 hidden md:block">Dr. Sarah Miller</div>
-                            <div class="relative group">
-                                <img class="h-8 w-8 rounded-full object-cover cursor-pointer"
-                                    src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24'%3E%3Cpath fill='%23ffffff' d='M12 12q-1.65 0-2.825-1.175T8 8q0-1.65 1.175-2.825T12 4q1.65 0 2.825 1.175T16 8q0 1.65-1.175 2.825T12 12Zm-8 8v-2.8q0-.85.438-1.563T5.6 14.55q1.55-.775 3.15-1.163T12 13q1.65 0 3.25.388t3.15 1.162q.725.375 1.163 1.088T20 17.2V20H4Z'/%3E%3C/svg%3E"
-                                    alt="User">
-                                <!-- Dropdown menu -->
-                                <div
-                                    class="hidden group-hover:block absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
-                                    <a href="#"
-                                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</a>
-                                    <a href="#"
-                                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Settings</a>
-                                    <a href="#" id="logout-button"
-                                        class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Logout</a>
+                            <div class="text-sm mr-3 hidden md:block">
+                                <div class="text-gray-300 text-xs">{% trans "Pharmacist" %}</div>
+                            </div>
+                            <div class="ml-3 relative">
+                                <button id="user-menu-button" class="flex items-center space-x-2 bg-[#1e3a8a] hover:bg-[#1e40af] text-white px-4 py-2 rounded-lg transition-all shadow-md hover:shadow-lg">
+                                    {% trans "Pharmacist Account" %}
+                                    <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                </button>
+                                <div id="user-menu" class="hidden absolute right-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                                    <div class="py-1">
+                                        <div class="border-t border-gray-200"></div>
+                                        <a href="{% url 'logout' %}" class="block px-4 py-2 text-[#ef4444] hover:bg-gray-100 hover:text-[#dc2626] transition">🚪 {% trans "Logout" %}</a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -140,50 +191,53 @@
             </div>
         </div>
     </nav>
+    {% else %}
+    {{ user.userprofile.role }}  
+    {% endif %}
+
     <!-- ✅ Add Patient Modal (POS) -->
-                            <div id="add-patient-modal"
-                                class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                                <div class="bg-white rounded-lg shadow-md w-full max-w-md p-6">
-                                    <div class="flex justify-between items-center mb-4">
-                                        <h2 class="text-lg font-semibold text-gray-800">Register New Customer</h2>
-                                        <button id="cancel-add-patient" class="text-gray-500 hover:text-gray-800">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    </div>
-                                        <form id="register-customer-form" class="space-y-4">
-                                            <div>
-                                                <label class="block text-sm font-medium text-gray-700">Customer Name</label>
-                                                <input type="text" name="username" required
-                                                    class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-primary focus:border-primary">
-                                            </div>
-                                            <div>
-                                                <label class="block text-sm font-medium text-gray-700">Phone Number</label>
-                                                <input type="text" name="phone" required
-                                                    class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-primary focus:border-primary">
-                                            </div>
-                                            <div>
-                                                <label class="block text-sm font-medium text-gray-700">Address</label>
-                                                <input type="text" name="address"
-                                                    class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-primary focus:border-primary">
-                                            </div>
-                                            <div class="flex justify-end pt-4">
-                                                <button type="submit"
-                                                    class="bg-primary hover:bg-darkblue text-white px-4 py-2 rounded-md text-sm font-medium">Register</button>
-                                            </div>
-                                        </form>
-                                </div>
-                            </div>
+    <div id="add-patient-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-md w-full max-w-md p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-semibold text-gray-800">{% trans "Register New Customer" %}</h2>
+                <button id="cancel-add-patient" class="text-gray-500 hover:text-gray-800">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="register-customer-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">{% trans "Customer Name" %}</label>
+                    <input type="text" name="username" required
+                        class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-primary focus:border-primary">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">{% trans "Phone Number" %}</label>
+                    <input type="text" name="phone" required
+                        class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-primary focus:border-primary">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">{% trans "Address" %}</label>
+                    <input type="text" name="address"
+                        class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-primary focus:border-primary">
+                </div>
+                <div class="flex justify-end pt-4">
+                    <button type="submit"
+                        class="bg-primary hover:bg-darkblue text-white px-4 py-2 rounded-md text-sm font-medium">{% trans "Register" %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow">
         <!-- POS Header -->
         <div class="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center">
             <div>
-                <h1 class="text-3xl font-bold text-gray-900">Pharmacy Point of Sale</h1>
-                <p class="mt-2 text-gray-600">Process prescriptions and over-the-counter sales</p>
+                <h1 class="text-3xl font-bold text-gray-900">{% trans "Pharmacy Point of Sale" %}</h1>
+                <p class="mt-2 text-gray-600">{% trans "Process prescriptions and over-the-counter sales" %}</p>
             </div>
             <div class="mt-4 md:mt-0 relative">
                 <div class="relative">
-                    <input type="text" placeholder="Search medications..."
+                    <input type="text" placeholder="{% trans 'Search medications...' %}"
                         class="search-input pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary w-full md:w-64">
                     <i class="fas fa-search search-icon absolute left-3 top-3 text-gray-400"></i>
                 </div>
@@ -196,51 +250,48 @@
             <div class="lg:col-span-2">
                 <!-- Product Categories -->
                 <div class="mb-6">
+                    <div class="flex overflow-x-auto pb-2 space-x-2">
+                        <a href="/order_view/" id="trigger-all"
+                            class="px-4 py-2 bg-primary text-white rounded-full text-sm font-medium whitespace-nowrap">
+                            {% trans "All" %}
+                        </a>
 
-<div class="flex overflow-x-auto pb-2 space-x-2">
-    <a href="/order_view/" id="trigger-all"
-        class="px-4 py-2 bg-primary text-white rounded-full text-sm font-medium whitespace-nowrap">
-        All
-    </a>
-
-    {% for i in categories %}
-    <a href="/order_view/?cid={{i.id}}"
-        class="data-category px-4 py-2 bg-gray-200 text-gray-700 rounded-full text-sm font-medium whitespace-nowrap hover:bg-gray-300">
-        {{ i.name }}
-    </a>
-    {% endfor %}
-</div>
+                        {% for i in categories %}
+                        <a href="/order_view/?cid={{i.id}}"
+                            class="data-category px-4 py-2 bg-gray-200 text-gray-700 rounded-full text-sm font-medium whitespace-nowrap hover:bg-gray-300">
+                            {{ i.name }}
+                        </a>
+                        {% endfor %}
+                    </div>
                 </div>
 
-<!-- Product Grid -->
-<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-    {% for item in items %}
-    <!-- Product Card -->
-    <div class="card bg-white rounded-lg overflow-hidden">
-        <div class="p-4">
-            <div class="h-32 bg-blue-50 rounded-md flex items-center justify-center mb-3">
-                {% if item.item_photo %}
-                    <img src="{{ item.item_photo.url }}" alt="{{ item.item_name }}" class="h-full object-contain rounded">
-                {% else %}
-                    <i class="fas fa-pills text-blue-500 text-4xl"></i>
-                {% endif %}
-            </div>
-            <h3 class="text-md font-medium text-gray-900 mb-1">{{ item.item_name }}</h3>
+                <!-- Product Grid -->
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {% for item in items %}
+                    <!-- Product Card -->
+                    <div class="card bg-white rounded-lg overflow-hidden">
+                        <div class="p-4">
+                            <div class="h-32 bg-blue-50 rounded-md flex items-center justify-center mb-3">
+                                {% if item.item_photo %}
+                                    <img src="{{ item.item_photo.url }}" alt="{{ item.item_name }}" class="h-full object-contain rounded">
+                                {% else %}
+                                    <i class="fas fa-pills text-blue-500 text-4xl"></i>
+                                {% endif %}
+                            </div>
+                            <h3 class="text-md font-medium text-gray-900 mb-1">{{ item.item_name }}</h3>
 
-            <div class="Product flex justify-between items-center" data-id="{{item.id}}"
-                data-name="{{item.item_name }}" data-price="{{item.item_price}}">
-                <span class="text-sm font-medium text-primary">{{ item.item_price }} ks</span>
-                <a href=""
-                    class="add-to-cart flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-full shadow transition">
-                    <i class="fas fa-shopping-cart"></i>
-                </a>
-            </div>
-        </div>
-    </div>
-    {% endfor %}
-</div>
-
-
+                            <div class="Product flex justify-between items-center" data-id="{{item.id}}"
+                                data-name="{{item.item_name }}" data-price="{{item.item_price}}">
+                                <span class="text-sm font-medium text-primary">{{ item.item_price }} {% trans "ks" %}</span>
+                                <a href=""
+                                    class="add-to-cart flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-full shadow transition">
+                                    <i class="fas fa-shopping-cart"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
 
             <!-- Right Column - Cart and Checkout -->
@@ -249,18 +300,18 @@
                 <div class="card bg-white rounded-lg sticky top-4">
                     <div class="p-6">
                         <div class="flex items-center justify-between mb-4">
-                            <h2 class="text-lg font-medium text-gray-900">Current Transaction</h2>
-                            <button id="clear-cart" class="text-sm text-red-600 hover:text-red-900">Clear All</button>
+                            <h2 class="text-lg font-medium text-gray-900">{% trans "Current Transaction" %}</h2>
+                            <button id="clear-cart" class="text-sm text-red-600 hover:text-red-900">{% trans "Clear All" %}</button>
                         </div>
 
                         <!-- Customer Info -->
                         <div class="mb-6">
                             <label for="customer-search" class="block text-sm font-medium text-gray-700 mb-1">
-                                Customer <span class="text-gray-400 text-xs">(optional)</span>
+                                {% trans "Customer" %} <span class="text-gray-400 text-xs">({% trans "optional" %})</span>
                             </label>
 
                             <div class="relative">
-                                <input type="text" id="customer-search" placeholder="Search customer by name or phone"
+                                <input type="text" id="customer-search" placeholder="{% trans 'Search customer by name or phone' %}"
                                     class="pl-10 pr-4 py-2 border border-gray-300 rounded-md w-full focus:ring-2 focus:ring-primary">
                                 <i class="fas fa-user absolute left-3 top-3 text-gray-400"></i>
 
@@ -273,123 +324,69 @@
                             <!-- Optional: Tag below input if selected -->
                             <div id="customer-info-tag"
                                 class="mt-2 hidden bg-blue-100 text-blue-700 px-3 py-1 rounded text-sm">
-                                Selected: <span id="selected-customer-name">-</span>
+                                {% trans "Selected" %}: <span id="selected-customer-name">-</span>
                                 <button id="clear-customer"
-                                    class="ml-2 text-xs text-red-600 hover:underline">Clear</button>
+                                    class="ml-2 text-xs text-red-600 hover:underline">{% trans "Clear" %}</button>
                             </div>
 
-
-                            <a href="#" id="add-patient-btn" class="text-primary hover:text-darkblue">Add Customer</a>
-
-                            
+                            <a href="#" id="add-patient-btn" class="text-primary hover:text-darkblue">{% trans "Add Customer" %}</a>
 
                             <!-- Cart Items -->
                             <div class="mb-4">
                                 <div class="flex justify-between text-sm text-gray-500 mb-2">
-                                    <span id="cart-count-label">Items (0)</span>
-                                    <span>Price</span>
+                                    <span id="cart-count-label">{% trans "Items" %} (0)</span>
+                                    <span>{% trans "Price" %}</span>
                                 </div>
                                 <div class="space-y-3" id="cartpos">
-
+                                    <!-- Cart items will be rendered here -->
                                 </div>
-
                             </div>
-
-                            <!-- Discount and Total -->
-                            <!-- <div class="border-t border-gray-200 pt-4 mb-4">
-                                <div class="flex justify-between mb-2">
-                                    <span class="text-sm text-gray-600">Subtotal</span>
-                                    <span class="text-sm font-medium" id="subtotal">$89.98</span>
-                                </div>
-                                <div class="flex justify-between mb-2">
-                                    <div class="flex items-center">
-                                        <span class="text-sm text-gray-600 mr-2">Discount</span>
-                                        <button class="text-xs text-primary hover:text-darkblue">Add</button>
-                                    </div>
-                                    <span class="text-sm font-medium" id="discount">$0.00</span>
-                                </div>
-                                <div class="flex justify-between mb-2">
-                                    <span class="text-sm text-gray-600">Tax (7%)</span>
-                                    <span class="text-sm font-medium" id="tax">$6.30</span>
-                                </div>
-                                <div
-                                    class="flex justify-between font-medium text-gray-900 text-lg pt-2 border-t border-gray-200">
-                                    <span>Total</span>
-                                    <span id="total">$96.28</span>
-                                </div>
-                            </div> -->
 
                             <!-- Payment Buttons -->
                             <div class="grid grid-cols-2 gap-3">
                                 <button id="print-btn"
                                     class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md text-sm font-medium transition">
-                                    <i class="fas fa-print mr-2"></i> Print
+                                    <i class="fas fa-print mr-2"></i> {% trans "Print" %}
                                 </button>
                                 <button id="cash-btn"
                                     class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm font-medium transition">
-                                    <i class="fas fa-money-bill-wave mr-2"></i> Cash
+                                    <i class="fas fa-money-bill-wave mr-2"></i> {% trans "Cash" %}
                                 </button>
-                                    <!-- Hidden QR Modal -->
-                                <!-- <button id="mobile-btn" class="bg-purple-600 text-white">📱 Mobile</button>
-
-                                
-                                <div id="qr-modal"
-                                    class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                                    <div class="bg-white p-4 rounded-lg text-center">
-                                        <h3 class="text-lg font-semibold mb-2">Scan to Pay (KBZPay)</h3>
-                                        <img src="" alt="KBZ QR" class="mx-auto w-48 h-48">
-                                        <p class="text-gray-600 mt-2">Please scan with KBZPay</p>
-                                        <button id="confirm-kpay"
-                                            class="mt-4 bg-blue-600 text-white px-4 py-2 rounded">I've Paid</button>
-                                    </div>
-                                </div> -->
-
-
                             </div>
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
-
-
 
         <!-- Footer -->
         <footer class="bg-gray-800 text-white py-8">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div>
-                        <h3 class="text-lg font-medium mb-4">Pharmacy Pro</h3>
-                        <p class="text-gray-400">Comprehensive pharmacy management solution for modern healthcare
-                            providers.</p>
+                        <h3 class="text-lg font-medium mb-4">{% trans "Pharmacy Pro" %}</h3>
+                        <p class="text-gray-400">{% trans "Comprehensive pharmacy management solution for modern healthcare providers." %}</p>
                     </div>
                     <div>
-                        <h3 class="text-lg font-medium mb-4">Quick Links</h3>
+                        <h3 class="text-lg font-medium mb-4">{% trans "Quick Links" %}</h3>
                         <ul class="space-y-2">
-                            <li><a href="pharmastic dashboard.html" class="text-gray-400 hover:text-white">Dashboard</a>
-                            </li>
-                            <li><a href="{% url 'order_view' %}" class="text-gray-400 hover:text-white">POS</a></li>
-                            <li><a href="{% url 'inventory_view' %}"
-                                    class="text-gray-400 hover:text-white">Inventory</a></li>
-                            <li><a href="{% url 'report_view' %}" class="text-gray-400 hover:text-white">Reports</a>
-                            </li>
+                            <li><a href="pharmastic dashboard.html" class="text-gray-400 hover:text-white">{% trans "Dashboard" %}</a></li>
+                            <li><a href="{% url 'order_view' %}" class="text-gray-400 hover:text-white">{% trans "POS" %}</a></li>
+                            <li><a href="{% url 'inventory_view' %}" class="text-gray-400 hover:text-white">{% trans "Inventory" %}</a></li>
+                            <li><a href="{% url 'report_view' %}" class="text-gray-400 hover:text-white">{% trans "Reports" %}</a></li>
                         </ul>
                     </div>
                     <div>
-                        <h3 class="text-lg font-medium mb-4">Contact Us</h3>
+                        <h3 class="text-lg font-medium mb-4">{% trans "Contact Us" %}</h3>
                         <ul class="space-y-2">
-                            <li class="flex items-center text-gray-400"><i class="fas fa-map-marker-alt mr-2"></i> 123
-                                Medical St, Health City</li>
-                            <li class="flex items-center text-gray-400"><i class="fas fa-phone-alt mr-2"></i> (555)
-                                123-4567</li>
-                            <li class="flex items-center text-gray-400"><i class="fas fa-envelope mr-2"></i>
-                                support@pharmacypro.com</li>
+                            <li class="flex items-center text-gray-400"><i class="fas fa-map-marker-alt mr-2"></i> {% trans "123 Medical St, Health City" %}</li>
+                            <li class="flex items-center text-gray-400"><i class="fas fa-phone-alt mr-2"></i> (555) 123-4567</li>
+                            <li class="flex items-center text-gray-400"><i class="fas fa-envelope mr-2"></i> support@pharmacypro.com</li>
                         </ul>
                     </div>
                 </div>
                 <div class="border-t border-gray-700 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
-                    <p class="text-gray-400 text-sm">© 2023 Pharmacy Pro. All rights reserved.</p>
+                    <p class="text-gray-400 text-sm">© {% now "Y" %} {% trans "Pharmacy Pro. All rights reserved." %}</p>
                     <div class="flex space-x-6 mt-4 md:mt-0">
                         <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-facebook-f"></i></a>
                         <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-twitter"></i></a>
@@ -405,123 +402,117 @@
             <div class="flex justify-around">
                 <a href="pharmastic dashboard.html" class="p-4 text-gray-500">
                     <i class="fas fa-home block text-center text-xl"></i>
-                    <span class="text-xs block text-center mt-1">Home</span>
+                    <span class="text-xs block text-center mt-1">{% trans "Home" %}</span>
                 </a>
                 <a href="#" class="p-4 text-primary">
                     <i class="fas fa-cash-register block text-center text-xl"></i>
-                    <span class="text-xs block text-center mt-1">POS</span>
+                    <span class="text-xs block text-center mt-1">{% trans "POS" %}</span>
                 </a>
                 <a href="#" class="p-4 text-gray-500">
                     <i class="fas fa-boxes block text-center text-xl"></i>
-                    <span class="text-xs block text-center mt-1">Stock</span>
+                    <span class="text-xs block text-center mt-1">{% trans "Stock" %}</span>
                 </a>
                 <a href="{% url 'report_view' %}" class="p-4 text-gray-500">
                     <i class="fas fa-user-injured block text-center text-xl"></i>
-                    <span class="text-xs block text-center mt-1">Reports</span>
+                    <span class="text-xs block text-center mt-1">{% trans "Reports" %}</span>
                 </a>
             </div>
         </div>
 
         <!-- Add Medication Modal -->
-        <div id="add-medication-modal"
-            class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+        <div id="add-medication-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
             <div class="bg-white rounded-lg p-6 max-w-md w-full">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-medium text-gray-900">Add New Medication</h3>
+                    <h3 class="text-lg font-medium text-gray-900">{% trans "Add New Medication" %}</h3>
                     <button id="close-add-med" class="text-gray-400 hover:text-gray-500">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
                 <form>
                     <div class="mb-4">
-                        <label for="med-name" class="block text-sm font-medium text-gray-700 mb-1">Medication
-                            Name</label>
+                        <label for="med-name" class="block text-sm font-medium text-gray-700 mb-1">{% trans "Medication Name" %}</label>
                         <input type="text" id="med-name"
                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
                     </div>
                     <div class="mb-4">
-                        <label for="med-generic" class="block text-sm font-medium text-gray-700 mb-1">Generic
-                            Name</label>
+                        <label for="med-generic" class="block text-sm font-medium text-gray-700 mb-1">{% trans "Generic Name" %}</label>
                         <input type="text" id="med-generic"
                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
                     </div>
                     <div class="grid grid-cols-2 gap-4 mb-4">
                         <div>
-                            <label for="med-dosage" class="block text-sm font-medium text-gray-700 mb-1">Dosage</label>
+                            <label for="med-dosage" class="block text-sm font-medium text-gray-700 mb-1">{% trans "Dosage" %}</label>
                             <input type="text" id="med-dosage"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
                         </div>
                         <div>
-                            <label for="med-form" class="block text-sm font-medium text-gray-700 mb-1">Form</label>
+                            <label for="med-form" class="block text-sm font-medium text-gray-700 mb-1">{% trans "Form" %}</label>
                             <select id="med-form"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
-                                <option>Tablet</option>
-                                <option>Capsule</option>
-                                <option>Liquid</option>
-                                <option>Injection</option>
-                                <option>Cream</option>
-                                <option>Inhaler</option>
+                                <option>{% trans "Tablet" %}</option>
+                                <option>{% trans "Capsule" %}</option>
+                                <option>{% trans "Liquid" %}</option>
+                                <option>{% trans "Injection" %}</option>
+                                <option>{% trans "Cream" %}</option>
+                                <option>{% trans "Inhaler" %}</option>
                             </select>
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-4 mb-4">
                         <div>
-                            <label for="med-price" class="block text-sm font-medium text-gray-700 mb-1">Price</label>
+                            <label for="med-price" class="block text-sm font-medium text-gray-700 mb-1">{% trans "Price" %}</label>
                             <input type="number" step="0.01" id="med-price"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
                         </div>
                         <div>
-                            <label for="med-quantity"
-                                class="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+                            <label for="med-quantity" class="block text-sm font-medium text-gray-700 mb-1">{% trans "Quantity" %}</label>
                             <input type="number" id="med-quantity"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
                         </div>
                     </div>
                     <div class="mb-4">
-                        <label for="med-category" class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                        <label for="med-category" class="block text-sm font-medium text-gray-700 mb-1">{% trans "Category" %}</label>
                         <select id="med-category"
                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
-                            <option>Prescription</option>
-                            <option>OTC</option>
-                            <option>Vitamins</option>
-                            <option>First Aid</option>
-                            <option>Personal Care</option>
+                            <option>{% trans "Prescription" %}</option>
+                            <option>{% trans "OTC" %}</option>
+                            <option>{% trans "Vitamins" %}</option>
+                            <option>{% trans "First Aid" %}</option>
+                            <option>{% trans "Personal Care" %}</option>
                         </select>
                     </div>
                     <div class="flex justify-end space-x-3">
                         <button type="button" id="cancel-add-med"
-                            class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">Cancel</button>
+                            class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">{% trans "Cancel" %}</button>
                         <button type="submit"
-                            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-white bg-primary hover:bg-darkblue">Add
-                            Medication</button>
+                            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-white bg-primary hover:bg-darkblue">{% trans "Add Medication" %}</button>
                     </div>
                 </form>
             </div>
         </div>
 
         <!-- Logout Confirmation Modal -->
-        <div id="logout-modal"
-            class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+        <div id="logout-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
             <div class="bg-white rounded-lg p-6 max-w-sm w-full">
-                <h3 class="text-lg font-medium text-gray-900 mb-4">Confirm Logout</h3>
-                <p class="text-gray-600 mb-6">Are you sure you want to log out of your account?</p>
+                <h3 class="text-lg font-medium text-gray-900 mb-4">{% trans "Confirm Logout" %}</h3>
+                <p class="text-gray-600 mb-6">{% trans "Are you sure you want to log out of your account?" %}</p>
                 <div class="flex justify-end space-x-3">
                     <button id="cancel-logout"
-                        class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">Cancel</button>
+                        class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">{% trans "Cancel" %}</button>
                     <button id="confirm-logout"
-                        class="px-4 py-2 border border-transparent rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700">Logout</button>
+                        class="px-4 py-2 border border-transparent rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700">{% trans "Logout" %}</button>
                 </div>
             </div>
         </div>
-        <script>
 
+        <script>
+            // ✅ Get CSRF Token
             function getCookie(name) {
                 let cookieValue = null;
                 if (document.cookie && document.cookie !== '') {
                     const cookies = document.cookie.split(';');
                     for (let i = 0; i < cookies.length; i++) {
                         const cookie = cookies[i].trim();
-                        // Check cookie name
                         if (cookie.substring(0, name.length + 1) === (name + '=')) {
                             cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
                             break;
@@ -532,18 +523,17 @@
             }
             const csrftoken = getCookie('csrftoken');
 
-
+            // ✅ Cart Initialization
             let cart = JSON.parse(localStorage.getItem('shoppingCart')) || [];
 
             function showCartToast(message) {
                 const toastEl = document.getElementById('cart-toast');
+                if (!toastEl) return;
                 toastEl.querySelector('.toast-body').textContent = message;
-
                 const bsToast = new bootstrap.Toast(toastEl);
                 bsToast.show();
             }
 
-            // Function to save cart to localStorage
             function saveCart() {
                 localStorage.setItem('shoppingCart', JSON.stringify(cart));
             }
@@ -552,10 +542,11 @@
                 $('#cartpos').empty();
                 let subtotal = 0;
 
-                $('#cart-count-label').text(`Items (${cart.length})`);
+                $('#cart-count-label').text(`{% trans "Items" %} (${cart.length})`);
 
                 if (cart.length === 0) {
-                    $('#cartpos').html('<p class="text-sm text-gray-500">No items in cart.</p>');
+                    $('#cartpos').html('<p class="text-sm text-gray-500">{% trans "No items in cart." %}</p>');
+                    $('#subtotal, #discount, #tax, #total').text("0 {% trans 'ks' %}");
                     return;
                 }
 
@@ -564,236 +555,209 @@
                     subtotal += itemTotal;
 
                     $('#cartpos').append(`
-                            <div class="flex justify-between items-center">
-                                <div>
-                                    <p class="text-sm font-medium text-gray-900">${item.name}</p>
-                                    <div class="flex items-center mt-1">
-                                        <button class="quantity-btn decrease" data-index="${index}">
-                                            <i class="fas fa-minus text-xs"></i>
-                                        </button>
-                                        <span class="mx-2 text-sm">${item.quantity}</span>
-                                        <button class="quantity-btn increase" data-index="${index}">
-                                            <i class="fas fa-plus text-xs"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="text-right">
-                                    <p class="text-sm font-medium text-gray-900">${itemTotal.toFixed(2)}ks</p>
-                                <button class="delete-btn text-xs text-red-500 hover:text-red-700 mt-1" data-index="${index}">
-                                <i class="fas fa-trash"></i> Remove
-                                </button>                                
+                        <div class="flex justify-between items-center border-b py-2">
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">${item.name}</p>
+                                <div class="flex items-center mt-1">
+                                    <button class="quantity-btn decrease" data-index="${index}">
+                                        <i class="fas fa-minus text-xs"></i>
+                                    </button>
+                                    <span class="mx-2 text-sm">${item.quantity}</span>
+                                    <button class="quantity-btn increase" data-index="${index}">
+                                        <i class="fas fa-plus text-xs"></i>
+                                    </button>
                                 </div>
                             </div>
-                        `);
+                            <div class="text-right">
+                                <p class="text-sm font-medium text-gray-900">${itemTotal.toFixed(2)} {% trans "ks" %}</p>
+                                <button class="delete-btn text-xs text-red-500 hover:text-red-700 mt-1" data-index="${index}">
+                                    <i class="fas fa-trash"></i> {% trans "Remove" %}
+                                </button>
+                            </div>
+                        </div>
+                    `);
                 });
 
-                // Discount (future editable)
                 const discount = 0;
-
-                // Tax (7% of subtotal)
                 const tax = subtotal * 0.07;
-
-                // Total
                 const total = subtotal + tax - discount;
 
-                // Update values in UI
-                $('#subtotal').text(`${subtotal.toFixed(2)} ks`);
-                $('#discount').text(`${discount.toFixed(2)} ks`);
-                $('#tax').text(`${tax.toFixed(2)} ks`);
-                $('#total').text(`${total.toFixed(2)} ks`);
+                $('#subtotal').text(`${subtotal.toFixed(2)} {% trans "ks" %}`);
+                $('#discount').text(`${discount.toFixed(2)} {% trans "ks" %}`);
+                $('#tax').text(`${tax.toFixed(2)} {% trans "ks" %}`);
+                $('#total').text(`${total.toFixed(2)} {% trans "ks" %}`);
             }
 
             renderCart();
 
-            $(document).on('click', '.add-to-cart', function (e) {
-
-                e.preventDefault();
-                console.log('Add to cart clicked');
-
-                const productDiv = $(this).closest('.Product');
-                const productId = productDiv.data('id');
-                const productName = productDiv.data('name');
-                const productPrice = parseFloat(productDiv.data('price'));
-
-                const existing = cart.find(item => item.id === productId);
-                if (existing) {
-                    existing.quantity += 1;
-                } else {
-                    cart.push({
-                        id: productId,
-                        name: productName,
-                        price: productPrice,
-                        quantity: 1
-                    });
-                }
-
-                saveCart();
-                renderCart();
-                showCartToast(`✅ Added ${productName} successfully!`);
-            });
-
-            $('#clear-cart').on('click', function () {
-            cart = [];
-            saveCart();
-            renderCart();
-            });
-
-
-            $('#cartpos').on('click', '.increase', function () {
-                const index = $(this).data('index');
-                cart[index].quantity += 1;
-                saveCart();
-                renderCart();
-            });
-
-            $('#cartpos').on('click', '.decrease', function () {
-                const index = $(this).data('index');
-                if (cart[index].quantity > 1) {
-                    cart[index].quantity -= 1;
-                } else {
-                    cart.splice(index, 1);
-                }
-                saveCart();
-                renderCart();
-            });
-
-            $('#cartpos').on('click', '.delete-btn', function () {
-                const index = $(this).data('index');
-                cart.splice(index, 1);
-                saveCart();
-                renderCart();
-            });
-
-            $('#print-btn').on('click', function () {
-                // Save order to DB first
-                sendCart('print', function () {
-                    window.open('/print-preview/', '_blank'); // browser print dialog
-                });
-            });
-
-            $('#clear-customer').on('click', function () {
-                $('#customer-search').val('');
-                $('#customer-info-tag').addClass('hidden');
-            });
-
-            // $('#customer-search').on('change', function () {
-            //     const name = $(this).val();
-            //     if (name.trim().length > 0) {
-            //         $('#selected-customer-name').text(name);
-            //         $('#customer-info-tag').removeClass('hidden');
-            //     }
-            // });
-
-            $('#trigger-all').on('click', function () {
-                $('button:contains("All")').trigger('click');
-            }); // replace with actual class or id
-
-            $('#cash-btn').on('click', function () {
-                sendCart('cash', function () {
-                    alert('Cash payment completed!');
-                    // Clear cart and reset UI
-                });
-            });
-
-            $('#mobile-btn').on('click', function () {
-                $('#qr-modal').removeClass('hidden');
-            });
-
-            $('#confirm-kpay').on('click', function () {
-                sendCart('mobile', function () {
-                    alert('Mobile Payment Confirmed!');
-                    $('#qr-modal').addClass('hidden');
-                });
-            });
-
-            $('#customer-search').on('input', function () {
-                const query = $(this).val().trim();
-
-                if (query.length < 2) {
-                    $('#search-results').addClass('hidden').html('');
-                    return;
-                }
-
-                $.ajax({
-                    url: '/search_customer/',
-                    data: { q: query },
-                    success: function (data) {
-                        let html = '';
-                        data.forEach(item => {
-                            html += `<div class="px-4 py-2 hover:bg-gray-100 cursor-pointer" data-name="${item.name}">
-                                    <strong>${item.name}</strong> - ${item.phone}
-                            </div>`;
-                        });
-                        $('#search-results').html(html).removeClass('hidden');
-                    }
-                });
-            });
-
-            // Click result
-            $('#search-results').on('click', 'div', function () {
-                const name = $(this).data('name');
-                $('#customer-search').val(name);
-                $('#search-results').addClass('hidden').html('');
-                $('#customer-info-tag').removeClass('hidden');
-                $('#selected-customer-name').text(name);
-            });
-
-
-
+            // ✅ Event Bindings After DOM is Ready
             $(document).ready(function () {
-                // ✅ Show Modal when Add Patient button is clicked
+                // Add to cart
+                $(document).on('click', '.add-to-cart', function (e) {
+                    e.preventDefault();
+                    const productDiv = $(this).closest('.Product');
+                    const productId = productDiv.data('id');
+                    const productName = productDiv.data('name');
+                    const productPrice = parseFloat(productDiv.data('price'));
+
+                    const existing = cart.find(item => item.id === productId);
+                    if (existing) {
+                        existing.quantity += 1;
+                    } else {
+                        cart.push({ id: productId, name: productName, price: productPrice, quantity: 1 });
+                    }
+
+                    saveCart();
+                    renderCart();
+                    showCartToast(`✅ {% trans "Added" %} ${productName} {% trans "successfully!" %}`);
+                });
+
+                $('#clear-cart').on('click', function () {
+                    cart = [];
+                    saveCart();
+                    renderCart();
+                });
+
+                $('#cartpos').on('click', '.increase', function () {
+                    const index = $(this).data('index');
+                    cart[index].quantity += 1;
+                    saveCart();
+                    renderCart();
+                });
+
+                $('#cartpos').on('click', '.decrease', function () {
+                    const index = $(this).data('index');
+                    if (cart[index].quantity > 1) {
+                        cart[index].quantity -= 1;
+                    } else {
+                        cart.splice(index, 1);
+                    }
+                    saveCart();
+                    renderCart();
+                });
+
+                $('#cartpos').on('click', '.delete-btn', function () {
+                    const index = $(this).data('index');
+                    cart.splice(index, 1);
+                    saveCart();
+                    renderCart();
+                });
+
+                // ✅ Payment Buttons
+                $('#cash-btn').on('click', function () {
+                    const btn = $(this);
+                    btn.prop('disabled', true).text('{% trans "Processing..." %}');
+                    sendCart('cash', function () {
+                        alert('{% trans "Cash payment completed!" %}');
+                        btn.prop('disabled', false).text('{% trans "Cash" %}');
+                    });
+                });
+
+                $('#print-btn').on('click', function () {
+                    const btn = $(this);
+                    btn.prop('disabled', true).text('{% trans "Printing..." %}');
+                    sendCart('cash', function () {
+                        setTimeout(function () {
+                            window.open("{% url 'print_preview' %}", "_blank");
+                            btn.prop('disabled', false).text('{% trans "Print" %}');
+                        }, 500);
+                    });
+                });
+
+                $('#mobile-btn').on('click', function () {
+                    $('#qr-modal').removeClass('hidden');
+                });
+
+                $('#confirm-kpay').on('click', function () {
+                    sendCart('mobile', function () {
+                        alert('{% trans "Mobile Payment Confirmed!" %}');
+                        $('#qr-modal').addClass('hidden');
+                    });
+                });
+
+                $('#clear-customer').on('click', function () {
+                    $('#customer-search').val('');
+                    $('#customer-info-tag').addClass('hidden');
+                });
+
+                // ✅ Customer Search
+                $('#customer-search').on('input', function () {
+                    const query = $(this).val().trim();
+                    if (query.length < 2) {
+                        $('#search-results').addClass('hidden').html('');
+                        return;
+                    }
+                    $.ajax({
+                        url: '/search_customer/',
+                        data: { q: query },
+                        success: function (data) {
+                            let html = '';
+                            data.forEach(item => {
+                                html += `<div class="px-4 py-2 hover:bg-gray-100 cursor-pointer" data-name="${item.name}">
+                                        <strong>${item.name}</strong> - ${item.phone}
+                                </div>`;
+                            });
+                            $('#search-results').html(html).removeClass('hidden');
+                        }
+                    });
+                });
+
+                $('#search-results').on('click', 'div', function () {
+                    const name = $(this).data('name');
+                    $('#customer-search').val(name);
+                    $('#search-results').addClass('hidden').html('');
+                    $('#customer-info-tag').removeClass('hidden');
+                    $('#selected-customer-name').text(name);
+                });
+
+                // ✅ Register Customer Modal
                 $('#add-patient-btn').on('click', function (e) {
                     e.preventDefault();
                     $('#add-patient-modal').removeClass('hidden');
                 });
 
-                
-                // ✅ On close button (X) clicked
                 $('#cancel-add-patient').on('click', function () {
                     $('#register-customer-form')[0].reset();
                     $('#add-patient-modal').addClass('hidden');
-                     // clear fields
                 });
 
-
-
-            $('#register-customer-form').on('submit', function (e) {
-                e.preventDefault();
-
-                const formData = {
-                    username: $('input[name="username"]').val(),
-                    phone: $('input[name="phone"]').val(),
-                    address: $('input[name="address"]').val(),
-                };
-
-                $.ajax({
-                    url: '/register_customer_ajax/',
-                    type: 'POST',
-                    data: JSON.stringify(formData),
-                    contentType: 'application/json',
-                    headers: { 'X-CSRFToken': csrftoken },
-                    success: function (response) {
-                        alert(response.message);
-                        $('#register-customer-form')[0].reset();
-                        $('#add-patient-modal').addClass('hidden');
-
-                        // Set in POS UI
-                        $('#customer-search').val(formData.username);
-                        $('#customer-info-tag').removeClass('hidden');
-                        $('#selected-customer-name').text(formData.username);
-                    },
-                    error: function (xhr) {
-                        alert(xhr.responseJSON?.error || 'Something went wrong');
-                    }
+                $('#register-customer-form').on('submit', function (e) {
+                    e.preventDefault();
+                    const formData = {
+                        username: $('input[name="username"]').val(),
+                        phone: $('input[name="phone"]').val(),
+                        address: $('input[name="address"]').val(),
+                    };
+                    $.ajax({
+                        url: '/register_customer_ajax/',
+                        type: 'POST',
+                        data: JSON.stringify(formData),
+                        contentType: 'application/json',
+                        headers: { 'X-CSRFToken': csrftoken },
+                        success: function (response) {
+                            alert(response.message);
+                            $('#register-customer-form')[0].reset();
+                            $('#add-patient-modal').addClass('hidden');
+                            $('#customer-search').val(formData.username);
+                            $('#customer-info-tag').removeClass('hidden');
+                            $('#selected-customer-name').text(formData.username);
+                        },
+                        error: function (xhr) {
+                            alert(xhr.responseJSON?.error || '{% trans "Something went wrong" %}');
+                        }
+                    });
                 });
             });
-            });
 
+            // ✅ Save Order to DB
             function sendCart(paymentMethod, callback = null) {
-                const customerName = $('#customer-search').val();  // ✅ Get value from input
-
+                const customerName = $('#customer-search').val();
+                if (cart.length === 0) {
+                    alert("{% trans "Cart is empty!" %}");
+                    return;
+                }
                 $.ajax({
-                    url: '/SaveOrderView/',
+                    url: "{% url 'save_order' %}",
                     type: 'POST',
                     data: JSON.stringify({
                         cart: cart,
@@ -801,24 +765,19 @@
                         customer_name: customerName
                     }),
                     contentType: 'application/json',
-                    headers: {
-                        'X-CSRFToken': csrftoken
-                    },
+                    headers: { 'X-CSRFToken': csrftoken },
                     success: function (response) {
                         cart = [];
                         saveCart();
                         renderCart();
                         if (callback) callback();
+                    },
+                    error: function (xhr) {
+                        alert(xhr.responseJSON?.error || '{% trans "Error saving order" %}');
                     }
                 });
-
             }
-
-
-
-
         </script>
-
+    </div>
 </body>
-
 </html>

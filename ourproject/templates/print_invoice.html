@@ -7,6 +7,7 @@
 </head>
 <body onload="window.print()">
     <h2>Pharmacy Invoice</h2>
+    <p><strong>Payment Method:</strong> {{ cart.payment_method|title }}</p>
     <p><strong>Customer:</strong> {{ cart.customer_name|default:"Walk-in" }}</p>
     <ul>
         {% for item in items %}

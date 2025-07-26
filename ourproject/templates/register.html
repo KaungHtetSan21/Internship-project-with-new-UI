@@ -1,9 +1,11 @@
+
+{% load i18n %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pharmacy Registration</title>
+    <title>{% trans "Pharmacy Registration" %}</title>
     <style>
         :root {
             --primary-color: #3498db;
@@ -12,7 +14,7 @@
             --light-gray: #ecf0f1;
             --error-color: #e74c3c;
         }
-        
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
@@ -20,7 +22,7 @@
             background-color: #f5f9fc;
             padding: 20px;
         }
-        
+
         .registration-container {
             max-width: 800px;
             margin: 0 auto;
@@ -29,7 +31,7 @@
             border-radius: 8px;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
         }
-        
+
         h2 {
             color: var(--text-color);
             text-align: center;
@@ -37,22 +39,22 @@
             padding-bottom: 10px;
             border-bottom: 2px solid var(--primary-color);
         }
-        
+
         .form-group {
             margin-bottom: 20px;
         }
-        
+
         label {
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
         }
-        
+
         .required label:after {
             content: " *";
             color: var(--error-color);
         }
-        
+
         input, select, textarea {
             width: 100%;
             padding: 12px;
@@ -61,22 +63,22 @@
             font-size: 16px;
             transition: border 0.3s;
         }
-        
+
         input:focus, select:focus, textarea:focus {
             border-color: var(--primary-color);
             outline: none;
             box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
         }
-        
+
         .form-row {
             display: flex;
             gap: 20px;
         }
-        
+
         .form-row .form-group {
             flex: 1;
         }
-        
+
         .btn-submit {
             background-color: var(--primary-color);
             color: white;
@@ -89,18 +91,18 @@
             font-weight: 600;
             transition: background-color 0.3s;
         }
-        
+
         .btn-submit:hover {
             background-color: var(--secondary-color);
         }
-        
+
         .errorlist {
             color: var(--error-color);
             margin-top: 5px;
             padding-left: 0;
             list-style: none;
         }
-        
+
         @media (max-width: 600px) {
             .form-row {
                 flex-direction: column;
@@ -109,103 +111,127 @@
         }
     </style>
 </head>
-<body>
+<body >
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="bg-green-100 text-green-700 p-2 rounded mb-4">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+    <div class="text-end p-3 bg-white border-bottom">
+  <form action="{% url 'set_language' %}" method="post" class="d-inline">
+      {% csrf_token %}
+      <input name="language" type="hidden" value="en">
+      <button type="submit" class="btn btn-outline-primary btn-sm">English</button>
+  </form>
+  <form action="{% url 'set_language' %}" method="post" class="d-inline">
+      {% csrf_token %}
+      <input name="language" type="hidden" value="my">
+      <button type="submit" class="btn btn-outline-success btn-sm">မြန်မာ</button>
+  </form>
+</div>
+    
     <div class="registration-container">
-        <h2>Pharmacy Wholesale & Retail Registration</h2>
-        <form method="post">
+        <h2>{% trans "Pharmacy Wholesale & Retail Registration" %}</h2>
+        <!-- 🌐 Language Switch -->
+
+           <form method="post">
             {% csrf_token %}
-            
+
             {% if form.non_field_errors %}
                 <div class="errorlist">{{ form.non_field_errors }}</div>
             {% endif %}
-            
+
             <div class="form-row">
                 <div class="form-group required">
-                    <label for="{{ form.username.id_for_label }}">Username</label>
+                    <label for="{{ form.username.id_for_label }}">{% trans "Username" %}<div class="text-end p-3 bg-white border-bottom">
+
+</div></label>
                     {{ form.username }}
                     {% if form.username.errors %}
-                        <div class="errorlist">{{ form.username.errors }}</div>
+
+kaung su hein, [7/22/2025 6:56 PM]
+<div class="errorlist">{{ form.username.errors }}</div>
                     {% endif %}
                 </div>
                 <div class="form-group required">
-                    <label for="{{ form.email.id_for_label }}">Email</label>
+                    <label for="{{ form.email.id_for_label }}">{% trans "Email" %}</label>
                     {{ form.email }}
                     {% if form.email.errors %}
                         <div class="errorlist">{{ form.email.errors }}</div>
                     {% endif %}
                 </div>
             </div>
-            
+
             <div class="form-row">
                 <div class="form-group required">
-                    <label for="{{ form.first_name.id_for_label }}">First Name</label>
+                    <label for="{{ form.first_name.id_for_label }}">{% trans "First Name" %}</label>
                     {{ form.first_name }}
                     {% if form.first_name.errors %}
                         <div class="errorlist">{{ form.first_name.errors }}</div>
                     {% endif %}
                 </div>
                 <div class="form-group required">
-                    <label for="{{ form.last_name.id_for_label }}">Last Name</label>
+                    <label for="{{ form.last_name.id_for_label }}">{% trans "Last Name" %}</label>
                     {{ form.last_name }}
                     {% if form.last_name.errors %}
                         <div class="errorlist">{{ form.last_name.errors }}</div>
                     {% endif %}
                 </div>
             </div>
-            
+
             <div class="form-row">
                 <div class="form-group required">
-                    <label for="{{ form.password.id_for_label }}">Password</label>
+                    <label for="{{ form.password.id_for_label }}">{% trans "Password" %}</label>
                     {{ form.password }}
                     {% if form.password.errors %}
                         <div class="errorlist">{{ form.password.errors }}</div>
                     {% endif %}
                 </div>
                 <div class="form-group required">
-                    <label for="{{ form.confirm_password.id_for_label }}">Confirm Password</label>
+                    <label for="{{ form.confirm_password.id_for_label }}">{% trans "Confirm Password" %}</label>
                     {{ form.confirm_password }}
                     {% if form.confirm_password.errors %}
                         <div class="errorlist">{{ form.confirm_password.errors }}</div>
                     {% endif %}
                 </div>
             </div>
-            
+
             <div class="form-row">
                 <div class="form-group required">
-                    <label for="{{ form.phone.id_for_label }}">Phone Number</label>
+                    <label for="{{ form.phone.id_for_label }}">{% trans "Phone Number" %}</label>
                     {{ form.phone }}
                     {% if form.phone.errors %}
                         <div class="errorlist">{{ form.phone.errors }}</div>
                     {% endif %}
                 </div>
                 <div class="form-group">
-                    <label for="{{ form.gender.id_for_label }}">Gender</label>
+                    <label for="{{ form.gender.id_for_label }}">{% trans "Gender" %}</label>
                     {{ form.gender }}
                     {% if form.gender.errors %}
                         <div class="errorlist">{{ form.gender.errors }}</div>
                     {% endif %}
                 </div>
             </div>
-            
+
             <div class="form-row">
                 <div class="form-group">
-                    <label for="{{ form.date_of_birth.id_for_label }}">Date of Birth</label>
+                    <label for="{{ form.date_of_birth.id_for_label }}">{% trans "Date of Birth" %}</label>
                     {{ form.date_of_birth }}
                     {% if form.date_of_birth.errors %}
                         <div class="errorlist">{{ form.date_of_birth.errors }}</div>
                     {% endif %}
                 </div>
                 <div class="form-group">
-                    <label for="{{ form.address.id_for_label }}">Address</label>
+                    <label for="{{ form.address.id_for_label }}">{% trans "Address" %}</label>
                     {{ form.address }}
                     {% if form.address.errors %}
                         <div class="errorlist">{{ form.address.errors }}</div>
                     {% endif %}
                 </div>
             </div>
-            
+
             <div class="form-group">
-                <button type="submit" class="btn-submit">Register</button>
+                <button type="submit" class="btn-submit">{% trans "Register" %}</button>
             </div>
         </form>
     </div>
