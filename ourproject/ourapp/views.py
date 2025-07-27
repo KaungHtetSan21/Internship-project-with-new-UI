@@ -173,25 +173,37 @@ def pharmacist_dashboard_view(request):
     pos_revenue = pos_orders.aggregate(total=Coalesce(Sum('total_amount'), 0))['total']
 
     # ✅ Online Orders
-    online_orders_list = (
+    online_orders_queryset = (
         Sale.objects
         .exclude(user__userprofile__role='pharmacist')
         .select_related('user')
         .order_by('-created_date')
     )
-    online_total = online_orders_list.count()
-    online_revenue = online_orders_list.aggregate(total=Coalesce(Sum('total_amount'), 0))['total']
+
+    paginator = Paginator(online_orders_queryset, 5)  # 5 orders per page
+    page_number = request.GET.get('page')
+    online_orders_list = paginator.get_page(page_number)
+
+    online_total = online_orders_queryset.count()
+    online_revenue = online_orders_queryset.aggregate(total=Coalesce(Sum('total_amount'), 0))['total']
 
     # ✅ FIXED Total Orders (POS + Online)
     total_orders = pos_total + online_total
 
-    # ✅ Low Stock
-    low_stock_count = Item.objects.filter(item_quantity__lt=10).count()
-    low_stock_items = Item.objects.filter(item_quantity__lt=10).order_by('item_quantity')
+# ✅ Low Stock Items (Pagination)
+    low_stock_queryset = Item.objects.filter(item_quantity__lt=10).order_by('item_quantity')
+    low_stock_paginator = Paginator(low_stock_queryset, 5)  # 5 items per page
+    low_stock_page_number = request.GET.get('low_stock_page')
+    low_stock_items = low_stock_paginator.get_page(low_stock_page_number)
+    low_stock_count = low_stock_queryset.count()
 
     # ✅ Expiring Items
     today = datetime.date.today()
-    expiring_items = Item.objects.filter(exp_date__lte=today + datetime.timedelta(days=90)).order_by('exp_date')
+    expiring_queryset = Item.objects.filter(exp_date__lte=today + datetime.timedelta(days=90)).order_by('exp_date')
+    expiring_paginator = Paginator(expiring_queryset, 5)  # 5 items per page
+    expiring_page_number = request.GET.get('expiring_page')
+    expiring_items = expiring_paginator.get_page(expiring_page_number)
+    expiring_count = expiring_queryset.count()
 
     # ✅ Display Username if Name is Missing
     for order in online_orders_list:
@@ -758,24 +770,24 @@ def create_supplier(request):
             
             if supplier_id:  # Update existing supplier
                 supplier = get_object_or_404(Supplier, pk=supplier_id)
-                supplier.name = request.POST.get('name')
+                supplier.supplier_name = request.POST.get('supplier_name')
                 supplier.company = request.POST.get('company')
                 supplier.contact_person = request.POST.get('contact_person')
                 supplier.email = request.POST.get('email')
                 supplier.phone = request.POST.get('phone')
                 supplier.address = request.POST.get('address')
-                supplier.is_active = request.POST.get('status') == 'active'
+                supplier.status = request.POST.get('status') == 'active'
                 supplier.save()
                 messages.success(request, "Supplier updated successfully.")
             else:  # Create new supplier
                 Supplier.objects.create(
-                    name=request.POST.get('name'),
+                    supplier_name=request.POST.get('supplier_name'),
                     company=request.POST.get('company'),
                     contact_person=request.POST.get('contact_person'),
                     email=request.POST.get('email'),
                     phone=request.POST.get('phone'),
                     address=request.POST.get('address'),
-                    is_active=request.POST.get('status') == 'active'
+                    status = request.POST.get('status') == 'active'
                 )
                 messages.success(request, "Supplier created successfully.")
             
@@ -793,13 +805,13 @@ def edit_supplier(request, pk):
     
     if request.method == 'POST':
         try:
-            supplier.name = request.POST.get('name')
+            supplier.supplier_name = request.POST.get('supplier_name')
             supplier.company = request.POST.get('company')
             supplier.contact_person = request.POST.get('contact_person')
             supplier.email = request.POST.get('email')
             supplier.phone = request.POST.get('phone')
             supplier.address = request.POST.get('address')
-            supplier.is_active = request.POST.get('status') == 'active'
+            supplier.status = request.POST.get('status') == 'active'
             supplier.save()
             
             messages.success(request, "Supplier updated successfully.")

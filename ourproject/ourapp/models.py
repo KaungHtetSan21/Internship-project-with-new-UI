@@ -24,7 +24,7 @@ class UserProfile(models.Model):
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES, blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
 
-    def str(self):
+    def __str__(self):
         return f"{self.user.username} ({self.role})"
 
 
@@ -32,7 +32,7 @@ class Category(models.Model):
     name = models.CharField(max_length=100, unique=True, verbose_name=_("Name"))
     description = models.TextField(blank=True, null=True, verbose_name=_("Description"))
 
-    def str(self):
+    def __str__(self):
         return self.name
 
 
@@ -45,7 +45,7 @@ class Supplier(models.Model):
     address = models.TextField(blank=True, null=True, verbose_name=_("Address"))
     status = models.BooleanField(blank=True, null=True, verbose_name=_("Active"))
 
-    def str(self):
+    def __str__(self):
         return self.supplier_name or _("Unnamed Supplier")
 
 
@@ -68,7 +68,7 @@ class Item(models.Model):
     max_quantity = models.PositiveIntegerField(default=5, verbose_name=_("Maximum Quantity"))
     last_ordered = models.DateField(blank=True, null=True, verbose_name=_("Last Ordered"))
 
-    def str(self):
+    def __str__(self):
         return self.item_name
 
 
@@ -90,7 +90,7 @@ class PurchaseOrder(models.Model):
     total_cost = models.PositiveIntegerField(blank=True, null=True, verbose_name=_("Total Cost"))
     created_date = models.DateTimeField(auto_now_add=True, blank=True, null=True, verbose_name=_("Created Date"))
 
-    def str(self):
+    def __str__(self):
         return f"{self.supplier} - {self.po_number}"
 
 
@@ -105,7 +105,7 @@ class PurchaseItem(models.Model):
     def total_price(self):
         return self.quantity * self.unit_price
 
-    def str(self):
+    def __str__(self):
         return f"{self.item} x {self.quantity}"
 
 
@@ -134,7 +134,7 @@ class CartProduct(models.Model):
     qty = models.PositiveIntegerField(default=0, verbose_name=_("Quantity"))
     price = models.PositiveIntegerField(default=0, verbose_name=_("Price"))
 
-    def str(self):
+    def __str__(self):
         return f"CartProduct: {self.item} (Qty: {self.qty})"
 
 
@@ -154,7 +154,7 @@ class Sale(models.Model):
     created_date = models.DateTimeField(auto_now_add=True, verbose_name=_("Created Date"))
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', blank=True, null=True, verbose_name=_("Status"))
 
-    def str(self):
+    def __str__(self):
         return f"Invoice {self.invoice_no} - {self.total_amount}"
 
 
@@ -164,7 +164,7 @@ class SaleItem(models.Model):
     quantity = models.PositiveIntegerField(verbose_name=_("Quantity"))
     price = models.PositiveIntegerField(verbose_name=_("Price"))
 
-    def str(self):
+    def __str__(self):
         return f"{self.item.item_name if self.item else _('Unknown Item')} - {self.quantity} pcs"
 
 
@@ -181,7 +181,7 @@ class StockHistory(models.Model):
     note = models.TextField(blank=True, null=True, verbose_name=_("Note"))
     date = models.DateTimeField(auto_now_add=True, verbose_name=_("Date"))
 
-    def str(self):
+    def __str__(self):
         return f"{self.item.item_name}  - {self.quantity}"
 
 
@@ -193,7 +193,7 @@ class Possalesreport(models.Model):
     amount = models.PositiveIntegerField(verbose_name=_("Amount"))
     created_date = models.DateTimeField(auto_now_add=True, verbose_name=_("Created Date"))
 
-    def str(self):
+    def __str__(self):
         return str(self.item)
 
 
@@ -202,7 +202,7 @@ class customerpos(models.Model):
     phone = models.CharField(max_length=20, blank=True, null=True, verbose_name=_("Phone"))
     address = models.CharField(max_length=255, blank=True, null=True, verbose_name=_("Address"))
 
-    def str(self):
+    def __str__(self):
         return self.name
 
 
@@ -212,7 +212,7 @@ class Notification(models.Model):
     is_read = models.BooleanField(default=False, blank=True, null=True, verbose_name=_("Read"))
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True, verbose_name=_("Created At"))
 
-    def str(self):
+    def __str__(self):
         return f"To: {self.recipient.username} | {self.message[:50]}"
 
 

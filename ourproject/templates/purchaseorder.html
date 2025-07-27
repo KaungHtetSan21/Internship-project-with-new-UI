@@ -1,10 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+{% load i18n %}
+<html lang="{{ request.LANGUAGE_CODE }}">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pharmacy Supplier Management</title>
+    <title>{% trans "Pharmacy Supplier Management" %}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -66,99 +67,115 @@
 
 <body class="bg-gray-50 flex flex-col min-h-screen">
     <!-- Navigation -->
-<!-- Navigation -->
-{% if user.userprofile.role == 'pharmacist' %}
-<nav class="bg-[#1e40af] text-white shadow-md">  <!-- Changed to explicit primary color -->
-    <div class="mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between h-16">
-            <div class="flex items-center">
-                <div class="flex-shrink-0 flex items-center">
-                    <span class="text-2xl mr-2">🏥</span>
-                    <span class="font-semibold text-lg">PharmaCare</span>
-                </div>
-                <div class="hidden md:block">
-                    <div class="ml-10 flex items-baseline space-x-4">
-                        <a href="#" class="px-3 py-2 rounded-md text-sm font-medium bg-white text-[#1e40af] flex items-center">
-                            <span class="mr-2">📊</span> Dashboard
-                        </a>
-                        <a href="{% url 'order_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-[#3b82f6] hover:bg-opacity-20 flex items-center">
-                            <span class="mr-2">📋</span> Orders
-                        </a>
-                        <a href="{% url 'inventory_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-[#3b82f6] hover:bg-opacity-20 flex items-center">
-                            <span class="mr-2">💊</span> Inventory
-                        </a>
-                        <a href="{% url 'report_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-[#3b82f6] hover:bg-opacity-20 flex items-center">
-                            <span class="mr-2">📈</span> Reports
-                        </a>
-                        <a href="{% url 'purchaseorder_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-[#3b82f6] hover:bg-opacity-20 flex items-center">
-                            <span class="mr-2">🛒</span> Purchase Order
-                        </a>
+    {% if user.userprofile.role == 'pharmacist' %}
+    <nav class="bg-[#1e40af] text-white shadow-md">
+        <div class="mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <span class="text-2xl mr-2">🏥</span>
+                        <span class="font-semibold text-lg">{% trans "PharmaCare" %}</span>
+                    </div>
+                    <div class="hidden md:block">
+                        <div class="ml-10 flex items-baseline space-x-4">
+                            <a href="#" class="px-3 py-2 rounded-md text-sm font-medium bg-white text-[#1e40af] flex items-center">
+                                <span class="mr-2">📊</span> {% trans "Dashboard" %}
+                            </a>
+                            <a href="{% url 'order_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-[#3b82f6] hover:bg-opacity-20 flex items-center">
+                                <span class="mr-2">📋</span> {% trans "Orders" %}
+                            </a>
+                            <a href="{% url 'inventory_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-[#3b82f6] hover:bg-opacity-20 flex items-center">
+                                <span class="mr-2">💊</span> {% trans "Inventory" %}
+                            </a>
+                            <a href="{% url 'report_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-[#3b82f6] hover:bg-opacity-20 flex items-center">
+                                <span class="mr-2">📈</span> {% trans "Reports" %}
+                            </a>
+                            <a href="{% url 'purchaseorder_view' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-[#3b82f6] hover:bg-opacity-20 flex items-center">
+                                <span class="mr-2">🛒</span> {% trans "Purchase Order" %}
+                            </a>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="flex items-center">
-                <!-- Notification Bell -->
-                <div class="ml-3 relative">
-                    <button id="notif-bell" class="p-1 rounded-full text-white focus:outline-none relative hover:bg-[#3b82f6] hover:bg-opacity-20">
-                        <span class="text-xl">🔔</span>
-                        {% if expiring_items %}
-                        <span class="absolute -top-1 -right-1 bg-[#ef4444] text-white text-xs rounded-full px-1.5 py-0.5">
-                            {{ expiring_items|length }}
-                        </span>
-                        {% endif %}
-                    </button>
-                    <!-- Dropdown -->
-                    <div id="notif-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-white shadow-lg rounded-md z-50 border border-gray-200">
-                        <div class="px-4 py-3 border-b bg-gray-50 text-sm font-semibold text-gray-700 flex justify-between items-center">
-                            <span>Notifications</span>
-                            <span class="text-xs text-[#1e40af] cursor-pointer">Mark all as read</span>
-                        </div>
-                        <ul class="max-h-60 overflow-y-auto divide-y divide-gray-100">
-                            {% for item in expiring_items %}
-                            <li class="px-4 py-3 hover:bg-gray-50">
-                                <div class="flex items-start">
-                                    <div class="flex-shrink-0 pt-0.5">
-                                        <div class="h-8 w-8 rounded-full bg-red-100 flex items-center justify-center">
-                                            <span class="text-red-500">⚠️</span>
-                                        </div>
-                                    </div>
-                                    <div class="ml-3 flex-1">
-                                        <p class="text-sm font-medium text-gray-900">{{ item.item_name }}</p>
-                                        <p class="text-xs text-gray-500">Expires on {{ item.exp_date|date:"M d, Y" }}</p>
-                                    </div>
-                                    <span class="text-xs text-red-600">{{ item.exp_date|timeuntil }}</span>
-                                </div>
-                            </li>
-                            {% empty %}
-                            <li class="px-4 py-4 text-center">
-                                <span class="text-gray-300 text-2xl mb-2">🔕</span>
-                                <p class="text-gray-500 text-sm">No new notifications</p>
-                            </li>
+                <div class="flex items-center">
+                    <!-- Language Selector -->
+                    <form action="{% url 'set_language' %}" method="post" class="mr-4">
+                        {% csrf_token %}
+                        <input name="next" type="hidden" value="{{ request.path }}">
+                        <select name="language" onchange="this.form.submit()" class="bg-[#1e3a8a] text-white border-none rounded px-2 py-1 text-sm">
+                            {% get_current_language as LANGUAGE_CODE %}
+                            {% get_available_languages as LANGUAGES %}
+                            {% get_language_info_list for LANGUAGES as languages %}
+                            {% for language in languages %}
+                                <option value="{{ language.code }}" {% if language.code == LANGUAGE_CODE %}selected{% endif %}>
+                                    {{ language.name_local }}
+                                </option>
                             {% endfor %}
-                        </ul>
-                        <div class="px-4 py-2 border-t bg-gray-50 text-center">
-                            <a href="#" class="text-xs text-[#1e40af] font-medium">View all notifications</a>
+                        </select>
+                    </form>
+                    
+                    <!-- Notification Bell -->
+                    <div class="ml-3 relative">
+                        <button id="notif-bell" class="p-1 rounded-full text-white focus:outline-none relative hover:bg-[#3b82f6] hover:bg-opacity-20">
+                            <span class="text-xl">🔔</span>
+                            {% if expiring_items %}
+                            <span class="absolute -top-1 -right-1 bg-[#ef4444] text-white text-xs rounded-full px-1.5 py-0.5">
+                                {{ expiring_items|length }}
+                            </span>
+                            {% endif %}
+                        </button>
+                        <!-- Dropdown -->
+                        <div id="notif-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-white shadow-lg rounded-md z-50 border border-gray-200">
+                            <div class="px-4 py-3 border-b bg-gray-50 text-sm font-semibold text-gray-700 flex justify-between items-center">
+                                <span>{% trans "Notifications" %}</span>
+                                <span class="text-xs text-[#1e40af] cursor-pointer">{% trans "Mark all as read" %}</span>
+                            </div>
+                            <ul class="max-h-60 overflow-y-auto divide-y divide-gray-100">
+                                {% for item in expiring_items %}
+                                <li class="px-4 py-3 hover:bg-gray-50">
+                                    <div class="flex items-start">
+                                        <div class="flex-shrink-0 pt-0.5">
+                                            <div class="h-8 w-8 rounded-full bg-red-100 flex items-center justify-center">
+                                                <span class="text-red-500">⚠️</span>
+                                            </div>
+                                        </div>
+                                        <div class="ml-3 flex-1">
+                                            <p class="text-sm font-medium text-gray-900">{{ item.item_name }}</p>
+                                            <p class="text-xs text-gray-500">{% trans "Expires on" %} {{ item.exp_date|date:"M d, Y" }}</p>
+                                        </div>
+                                        <span class="text-xs text-red-600">{{ item.exp_date|timeuntil }}</span>
+                                    </div>
+                                </li>
+                                {% empty %}
+                                <li class="px-4 py-4 text-center">
+                                    <span class="text-gray-300 text-2xl mb-2">🔕</span>
+                                    <p class="text-gray-500 text-sm">{% trans "No new notifications" %}</p>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            <div class="px-4 py-2 border-t bg-gray-50 text-center">
+                                <a href="#" class="text-xs text-[#1e40af] font-medium">{% trans "View all notifications" %}</a>
+                            </div>
                         </div>
                     </div>
-                </div>
-                
-                <!-- User Profile -->
-                <div class="ml-3 relative">
-                    <div class="flex items-center">
-                        <div class="text-sm mr-3 hidden md:block">
-                            <div class="text-gray-300 text-xs">Pharmacist</div>
-                        </div>
-                        <div class="ml-3 relative">
-                            <button id="user-menu-button" class="flex items-center space-x-2 bg-[#1e3a8a] hover:bg-[#1e40af] text-white px-4 py-2 rounded-lg transition-all shadow-md hover:shadow-lg">
-                                Pharmacist Account
-                                <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" />
-                                </svg>
-                            </button>
-                            <div id="user-menu" class="hidden absolute right-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
-                                <div class="py-1">
-                                    <div class="border-t border-gray-200"></div>
-                                    <a href="{% url 'logout' %}" class="block px-4 py-2 text-[#ef4444] hover:bg-gray-100 hover:text-[#dc2626] transition">🚪 Logout</a>
+                    
+                    <!-- User Profile -->
+                    <div class="ml-3 relative">
+                        <div class="flex items-center">
+                            <div class="text-sm mr-3 hidden md:block">
+                                <div class="text-gray-300 text-xs">{% trans "Pharmacist" %}</div>
+                            </div>
+                            <div class="ml-3 relative">
+                                <button id="user-menu-button" class="flex items-center space-x-2 bg-[#1e3a8a] hover:bg-[#1e40af] text-white px-4 py-2 rounded-lg transition-all shadow-md hover:shadow-lg">
+                                    {% trans "Pharmacist Account" %}
+                                    <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                </button>
+                                <div id="user-menu" class="hidden absolute right-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                                    <div class="py-1">
+                                        <div class="border-t border-gray-200"></div>
+                                        <a href="{% url 'logout' %}" class="block px-4 py-2 text-[#ef4444] hover:bg-gray-100 hover:text-[#dc2626] transition">🚪 {% trans "Logout" %}</a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -166,49 +183,48 @@
                 </div>
             </div>
         </div>
-    </div>
-</nav>
+    </nav>
 
-<script>
-    // Notification dropdown toggle
-    document.addEventListener('DOMContentLoaded', function() {
-        const notifBell = document.getElementById('notif-bell');
-        const notifDropdown = document.getElementById('notif-dropdown');
-        
-        notifBell.addEventListener('click', function(e) {
-            e.stopPropagation();
-            notifDropdown.classList.toggle('hidden');
-        });
+    <script>
+        // Notification dropdown toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const notifBell = document.getElementById('notif-bell');
+            const notifDropdown = document.getElementById('notif-dropdown');
+            
+            notifBell.addEventListener('click', function(e) {
+                e.stopPropagation();
+                notifDropdown.classList.toggle('hidden');
+            });
 
-        // User menu dropdown toggle
-        const userMenuButton = document.getElementById('user-menu-button');
-        const userMenu = document.getElementById('user-menu');
-        
-        userMenuButton.addEventListener('click', function(e) {
-            e.stopPropagation();
-            userMenu.classList.toggle('hidden');
-        });
+            // User menu dropdown toggle
+            const userMenuButton = document.getElementById('user-menu-button');
+            const userMenu = document.getElementById('user-menu');
+            
+            userMenuButton.addEventListener('click', function(e) {
+                e.stopPropagation();
+                userMenu.classList.toggle('hidden');
+            });
 
-        // Close dropdowns when clicking outside
-        document.addEventListener('click', function() {
-            notifDropdown.classList.add('hidden');
-            userMenu.classList.add('hidden');
+            // Close dropdowns when clicking outside
+            document.addEventListener('click', function() {
+                notifDropdown.classList.add('hidden');
+                userMenu.classList.add('hidden');
+            });
         });
-    });
-</script>
-{% else %}
-{{ user.userprofile.role }}  
-{% endif %}
+    </script>
+    {% else %}
+    {{ user.userprofile.role }}  
+    {% endif %}
     <div class="w-full px-4 py-8">
         <!-- Supplier Header -->
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
             <div>
-                <h1 class="text-3xl font-bold text-gray-900">Supplier Management</h1>
+                <h1 class="text-3xl font-bold text-gray-900">{% trans "Supplier Management" %}</h1>
             </div>
             <div class="mt-4 md:mt-0">
                 <button id="add-supplier-btn"
                     class="flex items-center text-white bg-primary hover:bg-darkblue focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
-                    <i class="fas fa-plus mr-2"></i> Add Supplier
+                    <i class="fas fa-plus mr-2"></i> {% trans "Add Supplier" %}
                 </button>
             </div>
         </div>
@@ -238,15 +254,15 @@
                     </div>
                     <input type="text" id="search-input"
                         class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-                        placeholder="Search suppliers...">
+                        placeholder="{% trans 'Search suppliers...' %}">
                 </div>
             </div>
             <div>
                 <select id="status-filter"
                     class="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md">
-                    <option value="all">All Status</option>
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
+                    <option value="all">{% trans "All Status" %}</option>
+                    <option value="active">{% trans "Active" %}</option>
+                    <option value="inactive">{% trans "Inactive" %}</option>
                 </select>
             </div>
         </div>
@@ -257,11 +273,11 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Supplier</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Products</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% trans "Supplier" %}</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% trans "Contact" %}</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% trans "Products" %}</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% trans "Status" %}</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{% trans "Actions" %}</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200" id="supplier-items">
@@ -274,7 +290,7 @@
                                     </div>
                                     <div class="ml-4">
                                         <div class="text-sm font-medium text-gray-900">{{ supplier.supplier_name }}</div>
-                                        <div class="text-sm text-gray-500">ID: {{ supplier.id }}</div>
+                                        <div class="text-sm text-gray-500">{% trans "ID" %}: {{ supplier.id }}</div>
                                     </div>
                                 </div>
                             </td>
@@ -284,24 +300,24 @@
                                 <div class="text-sm text-gray-500">{{ supplier.email }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900">{{ supplier.products.count }} items</div>
-                                <div class="text-xs text-gray-500">Last delivery: {{ supplier.last_delivery|date:"Y-m-d"|default:"Never" }}</div>
+                                <div class="text-sm text-gray-900">{{ supplier.products.count }} {% trans "items" %}</div>
+                                <div class="text-xs text-gray-500">{% trans "Last delivery" %}: {{ supplier.last_delivery|date:"Y-m-d"|default:_("Never") }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {% if supplier.is_active %}badge-active{% else %}badge-inactive{% endif %}">
-                                    {% if supplier.is_active %}Active{% else %}Inactive{% endif %}
+                                    {% if supplier.is_active %}{% trans "Active" %}{% else %}{% trans "Inactive" %}{% endif %}
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <button class="text-blue-600 hover:text-blue-900 mr-3 edit-supplier-btn"
                                     data-id="{{ supplier.id }}"
-                                    data-name="{{ supplier.name }}"
+                                    data-name="{{ supplier.supplier_name }}"
                                     data-company="{{ supplier.company }}"
                                     data-contact="{{ supplier.contact_person }}"
                                     data-phone="{{ supplier.phone }}"
                                     data-email="{{ supplier.email }}"
                                     data-address="{{ supplier.address }}"
-                                    data-active="{{ supplier.is_active }}">
+                                    data-active="{{ supplier.status }}">
                                     <i class="fas fa-edit"></i>
                                 </button>
                                 <button class="text-red-600 hover:text-red-900 delete-supplier-btn"
@@ -313,7 +329,7 @@
                         {% empty %}
                         <tr>
                             <td colspan="5" class="px-6 py-4 text-center text-gray-500">
-                                No suppliers found
+                                {% trans "No suppliers found" %}
                             </td>
                         </tr>
                         {% endfor %}
@@ -325,13 +341,15 @@
         <!-- Pagination -->
         <div class="flex items-center justify-between">
             <div class="text-sm text-gray-500">
-                Showing <span class="font-medium">{{ suppliers.start_index }}</span> to <span class="font-medium">{{ suppliers.end_index }}</span> of <span class="font-medium">{{ suppliers.paginator.count }}</span> results
+                {% blocktrans with start=suppliers.start_index end=suppliers.end_index total=suppliers.paginator.count %}
+                Showing {{ start }} to {{ end }} of {{ total }} results
+                {% endblocktrans %}
             </div>
             <nav class="flex space-x-2">
                 {% if suppliers.has_previous %}
-                <a href="?page={{ suppliers.previous_page_number }}" class="px-3 py-1 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Previous</a>
+                <a href="?page={{ suppliers.previous_page_number }}" class="px-3 py-1 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">{% trans "Previous" %}</a>
                 {% else %}
-                <span class="px-3 py-1 rounded-md border border-gray-300 bg-gray-100 text-sm font-medium text-gray-400 cursor-not-allowed">Previous</span>
+                <span class="px-3 py-1 rounded-md border border-gray-300 bg-gray-100 text-sm font-medium text-gray-400 cursor-not-allowed">{% trans "Previous" %}</span>
                 {% endif %}
 
                 {% for i in suppliers.paginator.page_range %}
@@ -343,9 +361,9 @@
                 {% endfor %}
 
                 {% if suppliers.has_next %}
-                <a href="?page={{ suppliers.next_page_number }}" class="px-3 py-1 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Next</a>
+                <a href="?page={{ suppliers.next_page_number }}" class="px-3 py-1 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">{% trans "Next" %}</a>
                 {% else %}
-                <span class="px-3 py-1 rounded-md border border-gray-300 bg-gray-100 text-sm font-medium text-gray-400 cursor-not-allowed">Next</span>
+                <span class="px-3 py-1 rounded-md border border-gray-300 bg-gray-100 text-sm font-medium text-gray-400 cursor-not-allowed">{% trans "Next" %}</span>
                 {% endif %}
             </nav>
         </div>
@@ -356,7 +374,7 @@
         <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto">
             <div class="p-6">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-medium text-gray-900" id="supplier-modal-title">Add New Supplier</h3>
+                    <h3 class="text-lg font-medium text-gray-900" id="supplier-modal-title">{% trans "Add New Supplier" %}</h3>
                     <button id="close-supplier-modal" class="text-gray-400 hover:text-gray-500">
                         <i class="fas fa-times"></i>
                     </button>
@@ -366,52 +384,52 @@
                     <input type="hidden" name="supplier_id" id="supplier-id">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1 required-field">Supplier Name</label>
-                            <input type="text" name="name" id="supplier-name" placeholder="Supplier Name" required
+                            <label class="block text-sm font-medium text-gray-700 mb-1 required-field">{% trans "Supplier Name" %}</label>
+                            <input type="text" name="supplier_name" id="supplier-name" placeholder="{% trans 'Supplier Name' %}" required
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Company</label>
-                            <input type="text" name="company" id="company" placeholder="Company"
+                            <label class="block text-sm font-medium text-gray-700 mb-1">{% trans "Company" %}</label>
+                            <input type="text" name="company" id="company" placeholder="{% trans 'Company' %}"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Contact Person</label>
-                            <input type="text" name="contact_person" id="contact-person" placeholder="Contact Person"
+                            <label class="block text-sm font-medium text-gray-700 mb-1">{% trans "Contact Person" %}</label>
+                            <input type="text" name="contact_person" id="contact-person" placeholder="{% trans 'Contact Person' %}"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                            <input type="email" name="email" id="email" placeholder="Email"
+                            <label class="block text-sm font-medium text-gray-700 mb-1">{% trans "Email" %}</label>
+                            <input type="email" name="email" id="email" placeholder="{% trans 'Email' %}"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                            <input type="text" name="phone" id="phone" placeholder="Phone"
+                            <label class="block text-sm font-medium text-gray-700 mb-1">{% trans "Phone" %}</label>
+                            <input type="text" name="phone" id="phone" placeholder="{% trans 'Phone' %}"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">{% trans "Status" %}</label>
                             <select name="status" id="status"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
+                                <option value="active">{% trans "Active" %}</option>
+                                <option value="inactive">{% trans "Inactive" %}</option>
                             </select>
                         </div>
                     </div>
                     <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
-                        <textarea name="address" id="address" placeholder="Address" rows="3"
+                        <label class="block text-sm font-medium text-gray-700 mb-1">{% trans "Address" %}</label>
+                        <textarea name="address" id="address" placeholder="{% trans 'Address' %}" rows="3"
                             class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"></textarea>
                     </div>
                     <div class="flex justify-end space-x-3">
                         <button type="button" id="cancel-supplier-btn"
                             class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
-                            Cancel
+                            {% trans "Cancel" %}
                         </button>
                         <button type="submit" id="submit-supplier-btn"
                             class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-darkblue">
-                            Save Supplier
+                            {% trans "Save Supplier" %}
                         </button>
                     </div>
                 </form>
@@ -422,19 +440,19 @@
     <!-- Delete Confirmation Modal -->
     <div id="delete-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
         <div class="bg-white rounded-lg p-6 max-w-sm w-full">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Confirm Deletion</h3>
-            <p class="text-gray-600 mb-6">Are you sure you want to delete this supplier? This action cannot be undone.</p>
+            <h3 class="text-lg font-medium text-gray-900 mb-4">{% trans "Confirm Deletion" %}</h3>
+            <p class="text-gray-600 mb-6">{% trans "Are you sure you want to delete this supplier? This action cannot be undone." %}</p>
             <form method="POST" id="delete-form" action="{% url 'delete_supplier' 0 %}">
                 {% csrf_token %}
                 <input type="hidden" name="delete_supplier" id="delete-supplier-id">
                 <div class="flex justify-end space-x-3">
                     <button type="button" id="cancel-delete"
                         class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
-                        Cancel
+                        {% trans "Cancel" %}
                     </button>
                     <button type="submit" id="confirm-delete-btn"
                         class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700">
-                        Delete
+                        {% trans "Delete" %}
                     </button>
                 </div>
             </form>
@@ -446,29 +464,29 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div>
-                    <h3 class="text-lg font-medium mb-4">Pharmacy Pro</h3>
-                    <p class="text-gray-400">Comprehensive pharmacy management solution for modern healthcare providers.</p>
+                    <h3 class="text-lg font-medium mb-4">{% trans "Pharmacy Pro" %}</h3>
+                    <p class="text-gray-400">{% trans "Comprehensive pharmacy management solution for modern healthcare providers." %}</p>
                 </div>
                 <div>
-                    <h3 class="text-lg font-medium mb-4">Quick Links</h3>
+                    <h3 class="text-lg font-medium mb-4">{% trans "Quick Links" %}</h3>
                     <ul class="space-y-2">
-                        <li><a href="#" class="text-gray-400 hover:text-white">Dashboard</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white">Orders</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white">Inventory</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white">Suppliers</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">{% trans "Dashboard" %}</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">{% trans "Orders" %}</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">{% trans "Inventory" %}</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">{% trans "Suppliers" %}</a></li>
                     </ul>
                 </div>
                 <div>
-                    <h3 class="text-lg font-medium mb-4">Contact Us</h3>
+                    <h3 class="text-lg font-medium mb-4">{% trans "Contact Us" %}</h3>
                     <ul class="space-y-2">
-                        <li class="flex items-center text-gray-400"><i class="fas fa-map-marker-alt mr-2"></i> 123 Medical St, Health City</li>
-                        <li class="flex items-center text-gray-400"><i class="fas fa-phone-alt mr-2"></i> (555) 123-4567</li>
-                        <li class="flex items-center text-gray-400"><i class="fas fa-envelope mr-2"></i> support@pharmacypro.com</li>
+                        <li class="flex items-center text-gray-400"><i class="fas fa-map-marker-alt mr-2"></i> {% trans "123 Medical St, Health City" %}</li>
+                        <li class="flex items-center text-gray-400"><i class="fas fa-phone-alt mr-2"></i> {% trans "(555) 123-4567" %}</li>
+                        <li class="flex items-center text-gray-400"><i class="fas fa-envelope mr-2"></i> {% trans "support@pharmacypro.com" %}</li>
                     </ul>
                 </div>
             </div>
             <div class="border-t border-gray-700 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
-                <p class="text-gray-400 text-sm">© 2023 Pharmacy Pro. All rights reserved.</p>
+                <p class="text-gray-400 text-sm">© {% now "Y" %} {% trans "Pharmacy Pro. All rights reserved." %}</p>
                 <div class="flex space-x-6 mt-4 md:mt-0">
                     <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-facebook-f"></i></a>
                     <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-twitter"></i></a>
@@ -484,19 +502,19 @@
         <div class="flex justify-around">
             <a href="#" class="p-4 text-gray-500">
                 <i class="fas fa-home block text-center text-xl"></i>
-                <span class="text-xs block text-center mt-1">Home</span>
+                <span class="text-xs block text-center mt-1">{% trans "Home" %}</span>
             </a>
             <a href="#" class="p-4 text-gray-500">
                 <i class="fas fa-clipboard-list block text-center text-xl"></i>
-                <span class="text-xs block text-center mt-1">Orders</span>
+                <span class="text-xs block text-center mt-1">{% trans "Orders" %}</span>
             </a>
             <a href="#" class="p-4 text-gray-500">
                 <i class="fas fa-boxes block text-center text-xl"></i>
-                <span class="text-xs block text-center mt-1">Inventory</span>
+                <span class="text-xs block text-center mt-1">{% trans "Inventory" %}</span>
             </a>
             <a href="#" class="p-4 text-primary">
                 <i class="fas fa-truck block text-center text-xl"></i>
-                <span class="text-xs block text-center mt-1">Suppliers</span>
+                <span class="text-xs block text-center mt-1">{% trans "Suppliers" %}</span>
             </a>
         </div>
     </div>
@@ -512,7 +530,7 @@
 
         // Add new supplier button click
         addSupplierBtn.addEventListener('click', () => {
-            document.getElementById('supplier-modal-title').textContent = 'Add New Supplier';
+            document.getElementById('supplier-modal-title').textContent = '{% trans "Add New Supplier" %}';
             document.getElementById('supplier-form').reset();
             document.getElementById('supplier-id').value = '';
             supplierModal.classList.remove('hidden');
@@ -521,7 +539,7 @@
         // Edit supplier buttons
         document.querySelectorAll('.edit-supplier-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                document.getElementById('supplier-modal-title').textContent = 'Edit Supplier';
+                document.getElementById('supplier-modal-title').textContent = '{% trans "Edit Supplier" %}';
                 document.getElementById('supplier-id').value = btn.dataset.id;
                 document.getElementById('supplier-name').value = btn.dataset.name;
                 document.getElementById('company').value = btn.dataset.company || '';
@@ -571,21 +589,26 @@
         }
 
         // Logout functionality
-        document.getElementById('logout-button').addEventListener('click', function (e) {
-            e.preventDefault();
-            Swal.fire({
-                title: 'Logout',
-                text: 'Are you sure you want to logout?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#1e40af',
-                cancelButtonColor: '#6b7280',
-                confirmButtonText: 'Yes, logout'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href = '/logout/';
-                }
-            });
+        document.addEventListener('DOMContentLoaded', function () {
+            const logoutButton = document.getElementById('logout-button');
+            if (logoutButton) {
+                logoutButton.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    Swal.fire({
+                        title: '{% trans "Logout" %}',
+                        text: '{% trans "Are you sure you want to logout?" %}',
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#1e40af',
+                        cancelButtonColor: '#6b7280',
+                        confirmButtonText: '{% trans "Yes, logout" %}'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.href = '/logout/';
+                        }
+                    });
+                });
+            }
         });
     </script>
 </body>

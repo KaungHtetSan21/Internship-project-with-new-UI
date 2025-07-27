@@ -90,21 +90,22 @@
                             </a>
                         </div>
                     </div>
-                                    <div class="flex items-center space-x-4">
-                    <!-- Language Switch -->
-                    <div class="flex space-x-2">
-                        <form action="{% url 'set_language' %}" method="post">
-                            {% csrf_token %}
-                            <input name="language" type="hidden" value="en">
-                            <button type="submit" class="px-3 py-1 text-sm border border-blue-500 rounded hover:bg-blue-50 transition">English</button>
-                        </form>
-                        <form action="{% url 'set_language' %}" method="post">
-                            {% csrf_token %}
-                            <input name="language" type="hidden" value="my">
-                            <button type="submit" class="px-3 py-1 text-sm border border-green-500 rounded hover:bg-green-50 transition">မြန်မာ</button>
-                        </form>
-                    </div>
                 </div>
+                                <!-- Language Selector -->
+                <form action="{% url 'set_language' %}" method="post" class="mr-4">
+                    {% csrf_token %}
+                    <input name="next" type="hidden" value="{{ request.path }}">
+                    <select name="language" onchange="this.form.submit()" class="bg-[#1e3a8a] text-white border-none rounded px-2 py-1 text-sm">
+                        {% get_current_language as LANGUAGE_CODE %}
+                        {% get_available_languages as LANGUAGES %}
+                        {% get_language_info_list for LANGUAGES as languages %}
+                        {% for language in languages %}
+                            <option value="{{ language.code }}" {% if language.code == LANGUAGE_CODE %}selected{% endif %}>
+                                {{ language.name_local }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </form>
                 <div class="flex items-center">
                     <!-- Notification Bell -->
                     <div class="ml-3 relative">
@@ -181,7 +182,33 @@
     {% else %}
     {{ user.userprofile.role }}  
     {% endif %}
+<script>
+    // Notification dropdown toggle
+    document.addEventListener('DOMContentLoaded', function() {
+        const notifBell = document.getElementById('notif-bell');
+        const notifDropdown = document.getElementById('notif-dropdown');
+        
+        notifBell.addEventListener('click', function(e) {
+            e.stopPropagation();
+            notifDropdown.classList.toggle('hidden');
+        });
 
+        // User menu dropdown toggle
+        const userMenuButton = document.getElementById('user-menu-button');
+        const userMenu = document.getElementById('user-menu');
+        
+        userMenuButton.addEventListener('click', function(e) {
+            e.stopPropagation();
+            userMenu.classList.toggle('hidden');
+        });
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function() {
+            notifDropdown.classList.add('hidden');
+            userMenu.classList.add('hidden');
+        });
+    });
+</script>
     <!-- Main Content -->
     <div class="w-full px-4 py-8">
         <!-- Dashboard Header -->
@@ -224,49 +251,67 @@
                 <div class="card bg-white rounded-lg p-6 shadow mb-8">
                     <h2 class="text-lg font-semibold text-gray-800 mb-4">{% trans "Online Orders" %}</h2>
 
-                    {% if online_orders_list %}
-                        <div class="space-y-4">
-                            {% for order in online_orders_list %}
-                                <div class="border border-gray-200 rounded p-4 hover:bg-gray-50 transition">
-                                    <div class="flex justify-between items-start flex-wrap">
-                                        <div class="text-sm text-gray-700 space-y-1">
-                                            <p><strong>{% trans "Customer:" %}</strong> {{ order.name|default:order.user.username }}</p>
-                                            <p><strong>{% trans "Phone:" %}</strong> {{ order.phone|default:"-" }}</p>
-                                            <p><strong>{% trans "Address:" %}</strong> {{ order.address|default:"-" }}</p>
-                                        </div>
-                                        <div class="text-sm text-gray-600 text-right space-y-1 mt-3 md:mt-0">
-                                            <p><strong>{% trans "Invoice:" %}</strong> {{ order.invoice_no }}</p>
-                                            <p><strong>{% trans "Date:" %}</strong> {{ order.created_date|date:"M d, Y H:i" }}</p>
-                                            <p><strong>{% trans "Total:" %}</strong> {{ order.total_amount }} {% trans "Ks" %}</p>
-                                            <p><strong>{% trans "Status:" %}</strong>
-                                                {% if order.status == "pending" %}
-                                                    <span class="text-yellow-600 font-medium">{% trans "Pending" %}</span>
-                                                {% elif order.status == "confirmed" %}
-                                                    <span class="text-green-600 font-medium">{% trans "Confirmed" %}</span>
-                                                {% elif order.status == "cancelled" %}
-                                                    <span class="text-red-600 font-medium">{% trans "Cancelled" %}</span>
-                                                {% endif %}
-                                            </p>
-                                        </div>
-                                    </div>
+{% if online_orders_list %}
+    <div class="space-y-4">
+        {% for order in online_orders_list %}
+            <div class="border border-gray-200 rounded p-4 hover:bg-gray-50 transition">
+                <div class="flex justify-between items-start flex-wrap">
+                    <div class="text-sm text-gray-700 space-y-1">
+                        <p><strong>{% trans "Customer:" %}</strong> {{ order.name|default:order.user.username }}</p>
+                        <p><strong>{% trans "Phone:" %}</strong> {{ order.phone|default:"-" }}</p>
+                        <p><strong>{% trans "Address:" %}</strong> {{ order.address|default:"-" }}</p>
+                    </div>
+                    <div class="text-sm text-gray-600 text-right space-y-1 mt-3 md:mt-0">
+                        <p><strong>{% trans "Invoice:" %}</strong> {{ order.invoice_no }}</p>
+                        <p><strong>{% trans "Date:" %}</strong> {{ order.created_date|date:"M d, Y H:i" }}</p>
+                        <p><strong>{% trans "Total:" %}</strong> {{ order.total_amount }} {% trans "Ks" %}</p>
+                        <p><strong>{% trans "Status:" %}</strong>
+                            {% if order.status == "pending" %}
+                                <span class="text-yellow-600 font-medium">{% trans "Pending" %}</span>
+                            {% elif order.status == "confirmed" %}
+                                <span class="text-green-600 font-medium">{% trans "Confirmed" %}</span>
+                            {% elif order.status == "cancelled" %}
+                                <span class="text-red-600 font-medium">{% trans "Cancelled" %}</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
 
-                                    {% if order.status == "pending" %}
-                                        <div class="mt-3 flex space-x-3">
-                                            <a href="{% url 'confirm_order' order.id %}" class="bg-green-600 text-white px-4 py-1 rounded text-sm hover:bg-green-700">{% trans "Confirm" %}</a>
-                                            <a href="{% url 'cancel_order' order.id %}" class="bg-red-600 text-white px-4 py-1 rounded text-sm hover:bg-red-700">{% trans "Cancel" %}</a>
-                                        </div>
-                                    {% endif %}
-                                    
-                                    <button onclick="viewOrderDetail({{ order.id }})"
-                                            class="mt-3 bg-blue-600 text-white px-4 py-1 rounded text-sm hover:bg-blue-700">
-                                        {% trans "View Detail" %}
-                                    </button>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <p class="text-gray-500">{% trans "No online orders yet." %}</p>
-                    {% endif %}
+                {% if order.status == "pending" %}
+                    <div class="mt-3 flex space-x-3">
+                        <a href="{% url 'confirm_order' order.id %}" class="bg-green-600 text-white px-4 py-1 rounded text-sm hover:bg-green-700">{% trans "Confirm" %}</a>
+                        <a href="{% url 'cancel_order' order.id %}" class="bg-red-600 text-white px-4 py-1 rounded text-sm hover:bg-red-700">{% trans "Cancel" %}</a>
+                    </div>
+                {% endif %}
+
+                <button onclick="viewOrderDetail({{ order.id }})"
+                        class="mt-3 bg-blue-600 text-white px-4 py-1 rounded text-sm hover:bg-blue-700">
+                    {% trans "View Detail" %}
+                </button>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- ✅ Pagination Controls -->
+    <div class="mt-4 flex justify-center space-x-2">
+        {% if online_orders_list.has_previous %}
+            <a href="?page=1" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">« First</a>
+            <a href="?page={{ online_orders_list.previous_page_number }}" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">‹ Prev</a>
+        {% endif %}
+
+        <span class="px-3 py-1 bg-blue-600 text-white rounded">
+            Page {{ online_orders_list.number }} of {{ online_orders_list.paginator.num_pages }}
+        </span>
+
+        {% if online_orders_list.has_next %}
+            <a href="?page={{ online_orders_list.next_page_number }}" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Next ›</a>
+            <a href="?page={{ online_orders_list.paginator.num_pages }}" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Last »</a>
+        {% endif %}
+    </div>
+
+{% else %}
+    <p class="text-gray-500">{% trans "No online orders yet." %}</p>
+{% endif %}
                 </div>
             </div>
 
@@ -279,64 +324,98 @@
                     </div>
                     <div class="divide-y divide-gray-200">
                         <!-- Low Stock Section -->
-                        <div class="p-4">
-                            <div class="flex justify-between items-center mb-3">
-                                <h3 class="text-sm font-medium text-gray-900 flex items-center">
-                                    <span class="text-danger mr-2">📦</span> {% trans "Low Stock Items" %}
-                                </h3>
-                                <span class="bg-danger text-white text-xs font-medium px-2 py-0.5 rounded-full">
-                                    {{ low_stock_items|length }}
-                                </span>
-                            </div>
-                            <ul class="space-y-3">
-                                {% for item in low_stock_items %}
-                                <li class="flex justify-between items-center">
-                                    <div>
-                                        <p class="text-sm font-medium text-gray-900">{{ item.item_name }}</p>
-                                        <p class="text-xs text-gray-500">{{ item.category }}</p>
-                                    </div>
-                                    <span class="text-xs font-semibold px-2 py-1 rounded-full 
-                                        {% if item.item_quantity < 5 %}bg-red-100 text-red-800
-                                        {% else %}bg-yellow-100 text-yellow-800{% endif %}">
-                                        {{ item.item_quantity }} {% trans "left" %}
-                                    </span>
-                                </li>
-                                {% empty %}
-                                <li class="text-center text-sm text-gray-500 py-2">
-                                    {% trans "No low stock items" %}
-                                </li>
-                                {% endfor %}
-                            </ul>
-                        </div>
+<div class="p-4">
+    <div class="flex justify-between items-center mb-3">
+        <h3 class="text-sm font-medium text-gray-900 flex items-center">
+            <span class="text-danger mr-2">📦</span> {% trans "Low Stock Items" %}
+        </h3>
+        <span class="bg-danger text-white text-xs font-medium px-2 py-0.5 rounded-full">
+            {{ low_stock_items.paginator.count }}
+        </span>
+    </div>
+    <ul class="space-y-3">
+        {% for item in low_stock_items %}
+        <li class="flex justify-between items-center">
+            <div>
+                <p class="text-sm font-medium text-gray-900">{{ item.item_name }}</p>
+                <p class="text-xs text-gray-500">{{ item.category }}</p>
+            </div>
+            <span class="text-xs font-semibold px-2 py-1 rounded-full 
+                {% if item.item_quantity < 5 %}bg-red-100 text-red-800
+                {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                {{ item.item_quantity }} {% trans "left" %}
+            </span>
+        </li>
+        {% empty %}
+        <li class="text-center text-sm text-gray-500 py-2">
+            {% trans "No low stock items" %}
+        </li>
+        {% endfor %}
+    </ul>
+
+    <!-- ✅ Pagination Controls -->
+    <div class="mt-3 flex justify-center space-x-2">
+        {% if low_stock_items.has_previous %}
+            <a href="?low_stock_page=1" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">« First</a>
+            <a href="?low_stock_page={{ low_stock_items.previous_page_number }}" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">‹ Prev</a>
+        {% endif %}
+
+        <span class="px-3 py-1 bg-blue-600 text-white rounded">
+            Page {{ low_stock_items.number }} of {{ low_stock_items.paginator.num_pages }}
+        </span>
+
+        {% if low_stock_items.has_next %}
+            <a href="?low_stock_page={{ low_stock_items.next_page_number }}" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Next ›</a>
+            <a href="?low_stock_page={{ low_stock_items.paginator.num_pages }}" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Last »</a>
+        {% endif %}
+    </div>
+</div>
                         
                         <!-- Expiring Soon Section -->
-                        <div class="p-4">
-                            <div class="flex justify-between items-center mb-3">
-                                <h3 class="text-sm font-medium text-gray-900 flex items-center">
-                                    <span class="text-warning mr-2">⏳</span> {% trans "Expiring Soon" %}
-                                </h3>
-                                <span class="bg-warning text-white text-xs font-medium px-2 py-0.5 rounded-full">
-                                    {{ expiring_items|length }}
-                                </span>
-                            </div>
-                            <ul class="space-y-3">
-                                {% for item in expiring_items %}
-                                <li class="flex justify-between items-center">
-                                    <div>
-                                        <p class="text-sm font-medium text-gray-900">{{ item.item_name }}</p>
-                                        <p class="text-xs text-gray-500">{% trans "Batch:" %} {{ item.batch_number|default:"N/A" }}</p>
-                                    </div>
-                                    <span class="text-xs font-semibold px-2 py-1 rounded-full bg-orange-100 text-orange-800">
-                                        {{ item.exp_date|date:"M d" }}
-                                    </span>
-                                </li>
-                                {% empty %}
-                                <li class="text-center text-sm text-gray-500 py-2">
-                                    {% trans "No items expiring soon" %}
-                                </li>
-                                {% endfor %}
-                            </ul>
-                        </div>
+<div class="p-4 mt-6">
+    <div class="flex justify-between items-center mb-3">
+        <h3 class="text-sm font-medium text-gray-900 flex items-center">
+            <span class="text-warning mr-2">⏳</span> {% trans "Expiring Items (Next 90 Days)" %}
+        </h3>
+        <span class="bg-warning text-white text-xs font-medium px-2 py-0.5 rounded-full">
+            {{ expiring_items.paginator.count }}
+        </span>
+    </div>
+    <ul class="space-y-3">
+        {% for item in expiring_items %}
+        <li class="flex justify-between items-center">
+            <div>
+                <p class="text-sm font-medium text-gray-900">{{ item.item_name }}</p>
+                <p class="text-xs text-gray-500">{{ item.category }}</p>
+            </div>
+            <span class="text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-800">
+                {{ item.exp_date|date:"M d, Y" }}
+            </span>
+        </li>
+        {% empty %}
+        <li class="text-center text-sm text-gray-500 py-2">
+            {% trans "No expiring items" %}
+        </li>
+        {% endfor %}
+    </ul>
+
+    <!-- ✅ Pagination Controls -->
+    <div class="mt-3 flex justify-center space-x-2">
+        {% if expiring_items.has_previous %}
+            <a href="?expiring_page=1" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">« First</a>
+            <a href="?expiring_page={{ expiring_items.previous_page_number }}" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">‹ Prev</a>
+        {% endif %}
+
+        <span class="px-3 py-1 bg-blue-600 text-white rounded">
+            Page {{ expiring_items.number }} of {{ expiring_items.paginator.num_pages }}
+        </span>
+
+        {% if expiring_items.has_next %}
+            <a href="?expiring_page={{ expiring_items.next_page_number }}" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Next ›</a>
+            <a href="?expiring_page={{ expiring_items.paginator.num_pages }}" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Last »</a>
+        {% endif %}
+    </div>
+</div>
                     </div>
                 </div>
             </div>

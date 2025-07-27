@@ -119,6 +119,21 @@
                         
                     </div>
                 </div>
+                                <!-- Language Selector -->
+                <form action="{% url 'set_language' %}" method="post" class="mr-4">
+                    {% csrf_token %}
+                    <input name="next" type="hidden" value="{{ request.path }}">
+                    <select name="language" onchange="this.form.submit()" class="bg-[#1e3a8a] text-white border-none rounded px-2 py-1 text-sm">
+                        {% get_current_language as LANGUAGE_CODE %}
+                        {% get_available_languages as LANGUAGES %}
+                        {% get_language_info_list for LANGUAGES as languages %}
+                        {% for language in languages %}
+                            <option value="{{ language.code }}" {% if language.code == LANGUAGE_CODE %}selected{% endif %}>
+                                {{ language.name_local }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </form>
                 <div class="flex items-center">
                     <!-- Notification Bell -->
                     <div class="ml-3 relative">
@@ -194,6 +209,34 @@
     {% else %}
     {{ user.userprofile.role }}  
     {% endif %}
+
+    <script>
+    // Notification dropdown toggle
+    document.addEventListener('DOMContentLoaded', function() {
+        const notifBell = document.getElementById('notif-bell');
+        const notifDropdown = document.getElementById('notif-dropdown');
+        
+        notifBell.addEventListener('click', function(e) {
+            e.stopPropagation();
+            notifDropdown.classList.toggle('hidden');
+        });
+
+        // User menu dropdown toggle
+        const userMenuButton = document.getElementById('user-menu-button');
+        const userMenu = document.getElementById('user-menu');
+        
+        userMenuButton.addEventListener('click', function(e) {
+            e.stopPropagation();
+            userMenu.classList.toggle('hidden');
+        });
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function() {
+            notifDropdown.classList.add('hidden');
+            userMenu.classList.add('hidden');
+        });
+    });
+</script>
 
     <!-- ✅ Add Patient Modal (POS) -->
     <div id="add-patient-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -504,6 +547,20 @@
                 </div>
             </div>
         </div>
+        <!-- ✅ Payment Completed Modal -->
+    <div id="paymentModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full text-center">
+            <h2 class="text-lg font-semibold text-green-600 mb-3" id="paymentModalTitle">
+                ✅ Payment Completed
+            </h2>
+            <p class="text-gray-700 mb-4" id="paymentModalMessage">
+                Cash payment completed successfully!
+            </p>
+            <button id="closePaymentModal" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                OK
+            </button>
+        </div>
+    </div>
 
         <script>
             // ✅ Get CSRF Token
@@ -643,21 +700,35 @@
                     renderCart();
                 });
 
-                // ✅ Payment Buttons
+                // ✅ Show Modal Function
+                function showPaymentModal(title, message) {
+                    $('#paymentModalTitle').text(title);
+                    $('#paymentModalMessage').text(message);
+                    $('#paymentModal').removeClass('hidden');
+                }
+
+                // ✅ Close Modal Event
+                $('#closePaymentModal').on('click', function () {
+                    $('#paymentModal').addClass('hidden');
+                });
+
+                // ✅ Cash Payment
                 $('#cash-btn').on('click', function () {
                     const btn = $(this);
                     btn.prop('disabled', true).text('{% trans "Processing..." %}');
                     sendCart('cash', function () {
-                        alert('{% trans "Cash payment completed!" %}');
+                        showPaymentModal('✅ Cash Payment', 'Cash payment completed successfully!');
                         btn.prop('disabled', false).text('{% trans "Cash" %}');
                     });
                 });
 
+                // ✅ Print Payment
                 $('#print-btn').on('click', function () {
                     const btn = $(this);
                     btn.prop('disabled', true).text('{% trans "Printing..." %}');
                     sendCart('cash', function () {
                         setTimeout(function () {
+                            showPaymentModal('🖨️ Print Payment', 'Payment completed! Opening print preview...');
                             window.open("{% url 'print_preview' %}", "_blank");
                             btn.prop('disabled', false).text('{% trans "Print" %}');
                         }, 500);
@@ -753,7 +824,7 @@
             function sendCart(paymentMethod, callback = null) {
                 const customerName = $('#customer-search').val();
                 if (cart.length === 0) {
-                    alert("{% trans "Cart is empty!" %}");
+                    alert("Cart is empty!");
                     return;
                 }
                 $.ajax({
