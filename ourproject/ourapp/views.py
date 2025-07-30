@@ -669,14 +669,25 @@ class SaveOrderView(View):
             payload = json.loads(request.body)
             items = payload.get('cart', [])
             customer_name = payload.get('customer_name', '')
-            payment_method = payload.get('payment_method', '')  # ✅ GET payment type
+            payment_method = payload.get('payment_method', '')
 
-            # ✅ Create cart with payment_method
+            # ✅ Check stock before creating cart
+            for item in items:
+                product = Item.objects.get(id=int(item['id']))
+                quantity = int(item['quantity'])
+
+                if product.item_quantity < quantity:
+                    return JsonResponse(
+                        {'error': f"'{product.item_name}' is out of stock or not enough quantity!"},
+                        status=400
+                    )
+
+            # ✅ Create cart only if stock is valid
             cart = Cart.objects.create(
                 user=request.user,
                 total_amount=0,
                 customer_name=customer_name,
-                payment_method=payment_method  # ✅ Save to model
+                payment_method=payment_method
             )
 
             total = 0
@@ -699,7 +710,7 @@ class SaveOrderView(View):
                 product.item_quantity -= quantity
                 product.save()
 
-                # ✅ StockHistory log
+                # ✅ Stock History Log
                 StockHistory.objects.create(
                     item=product,
                     action='out',
@@ -724,7 +735,8 @@ class SaveOrderView(View):
             return JsonResponse({'message': 'Order saved successfully!'})
 
         except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500) 
+            return JsonResponse({'error': str(e)}, status=500)
+        
                   
 @login_required
 def print_preview(request):
