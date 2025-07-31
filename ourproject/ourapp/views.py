@@ -377,11 +377,40 @@ def customer_dashboard_view(request):
     return render(request, 'customer/dashboard.html', context)
 
 
+from django.utils.timezone import now, timedelta
 @login_required
 def report_view(request):
     if request.user.userprofile.role != 'pharmacist':
         return HttpResponseForbidden("Pharmacists only.")
+    filter_type = request.GET.get('filter', 'daily')
+    today = now().date()
+    # Filter POS Orders
+    # if filter_type == 'daily':
+    #     pos_orders = Cart.objects.filter(source='pos', created_date__date=today)
+    # elif filter_type == 'weekly':
+    #     start_week = today - timedelta(days=today.weekday())
+    #     end_week = start_week + timedelta(days=6)
+    #     pos_orders = Cart.objects.filter(source='pos', created_date__date__range=(start_week, end_week))
+    # elif filter_type == 'monthly':
+    #     pos_orders = Cart.objects.filter(source='pos', created_date__month=today.month, created_date__year=today.year)
+    # elif filter_type == 'yearly':
+    #     pos_orders = Cart.objects.filter(source='pos', created_date__year=today.year)
+    # else:
+    #     pos_orders = Cart.objects.filter(source='pos')
 
+    # Filter Online Orders
+    if filter_type == 'daily':
+        online_orders = Sale.objects.exclude(user__userprofile__role='pharmacist').filter(created_date__date=today)
+    elif filter_type == 'weekly':
+        start_week = today - timedelta(days=today.weekday())
+        end_week = start_week + timedelta(days=6)
+        online_orders = Sale.objects.exclude(user__userprofile__role='pharmacist').filter(created_date__date__range=(start_week, end_week))
+    elif filter_type == 'monthly':
+        online_orders = Sale.objects.exclude(user__userprofile__role='pharmacist').filter(created_date__month=today.month, created_date__year=today.year)
+    elif filter_type == 'yearly':
+        online_orders = Sale.objects.exclude(user__userprofile__role='pharmacist').filter(created_date__year=today.year)
+    else:
+        online_orders = Sale.objects.exclude(user__userprofile__role='pharmacist')
     # ✅ All Sales (POS + Online)
     total_transactions = Cart.objects.count() + Sale.objects.exclude(user__userprofile__role='pharmacist').count()
     total_revenue = (
@@ -389,8 +418,8 @@ def report_view(request):
         (Sale.objects.exclude(user__userprofile__role='pharmacist').aggregate(total=Coalesce(Sum('total_amount'), 0))['total'])
     )
 
-    # ✅ Items Sold (POS only for now)
     items_sold = CartProduct.objects.aggregate(total_qty=Coalesce(Sum('qty'), 0))['total_qty']
+
 
     # ✅ Avg Margin (POS only)
     cart_products = CartProduct.objects.annotate(
@@ -410,7 +439,7 @@ def report_view(request):
             order.customer_name = "Walking Customer"
 
     # ✅ Online Summary + Full Order List
-    online_orders = Sale.objects.exclude(user__userprofile__role='pharmacist').order_by('-created_date')
+    # online_orders = Sale.objects.exclude(user__userprofile__role='pharmacist').order_by('-created_date')
     online_transactions = online_orders.count()
     online_revenue = online_orders.aggregate(total=Coalesce(Sum('total_amount'), 0))['total']
     for order in online_orders:
@@ -492,6 +521,7 @@ def report_view(request):
     ]
 
     return render(request, 'report.html', {
+            'filter_type': filter_type,
             # ✅ Sales Report Tab Data
             'summary_list': summary_list,
             'top_products': top_products,
@@ -512,7 +542,6 @@ def report_view(request):
             'items_sold': items_sold,
             'avg_margin': avg_margin,
         })
-
 
 @csrf_exempt
 def edit_item_view(request, item_id):

@@ -320,9 +320,23 @@
         </div>
     </div>
 
+
     <!-- ✅ Online Report Tab -->
     <div id="online-report" class="tab-content hidden">
         <h2 class="text-xl font-semibold mb-4">{% trans "Online Orders (All)" %}</h2>
+            <!-- Report Filter -->
+    <form method="get" class="mb-6 flex flex-wrap items-center space-x-4">
+        <label for="filter" class="text-gray-700 font-medium">{% trans "Filter by" %}</label>
+        <select name="filter" id="filter"
+            class="px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm text-gray-700 bg-white">
+            <option value="daily" {% if request.GET.filter == 'daily' %}selected{% endif %}>{% trans "Daily" %}</option>
+            <option value="weekly" {% if request.GET.filter == 'weekly' %}selected{% endif %}>{% trans "Weekly" %}</option>
+            <option value="monthly" {% if request.GET.filter == 'monthly' %}selected{% endif %}>{% trans "Monthly" %}</option>
+            <option value="yearly" {% if request.GET.filter == 'yearly' %}selected{% endif %}>{% trans "Yearly" %}</option>
+        </select>
+        <button type="submit"
+            class="bg-blue-600 text-white px-4 py-2 rounded-md shadow hover:bg-blue-700 transition">{% trans "Apply Filter" %}</button>
+    </form>
         <div class="space-y-4">
             {% if online_orders_list %}
                 {% for order in online_orders_list %}
