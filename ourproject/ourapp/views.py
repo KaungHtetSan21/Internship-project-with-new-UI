@@ -384,19 +384,7 @@ def report_view(request):
         return HttpResponseForbidden("Pharmacists only.")
     filter_type = request.GET.get('filter', 'daily')
     today = now().date()
-    # Filter POS Orders
-    # if filter_type == 'daily':
-    #     pos_orders = Cart.objects.filter(source='pos', created_date__date=today)
-    # elif filter_type == 'weekly':
-    #     start_week = today - timedelta(days=today.weekday())
-    #     end_week = start_week + timedelta(days=6)
-    #     pos_orders = Cart.objects.filter(source='pos', created_date__date__range=(start_week, end_week))
-    # elif filter_type == 'monthly':
-    #     pos_orders = Cart.objects.filter(source='pos', created_date__month=today.month, created_date__year=today.year)
-    # elif filter_type == 'yearly':
-    #     pos_orders = Cart.objects.filter(source='pos', created_date__year=today.year)
-    # else:
-    #     pos_orders = Cart.objects.filter(source='pos')
+
 
     # Filter Online Orders
     if filter_type == 'daily':
