@@ -242,39 +242,7 @@
             {% endfor %}
         </div>
 
-        <h2 class="text-xl font-semibold mb-4">{% trans "Top Selling Products" %}</h2>
-        <div class="overflow-x-auto">
-            <table class="min-w-full bg-white rounded shadow">
-                <thead class="bg-gray-100">
-                    <tr>
-                        <th class="px-4 py-2 text-left">{% trans "Product" %}</th>
-                        <th class="px-4 py-2 text-left">{% trans "Category" %}</th>
-                        <th class="px-4 py-2 text-left">{% trans "Qty Sold" %}</th>
-                        <th class="px-4 py-2 text-left">{% trans "Revenue" %}</th>
-                        <th class="px-4 py-2 text-left">{% trans "Margin" %}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for product in top_products %}
-                        <tr class="border-b">
-                            <td class="px-4 py-2">{{ product.item__item_name }}</td>
-                            <td class="px-4 py-2">{{ product.category_name|default:"-" }}</td>
-                            <td class="px-4 py-2">{{ product.total_qty }}</td>
-                            <td class="px-4 py-2">{{ product.total_revenue }} {% trans "Ks" %}</td>
-                            <td class="px-4 py-2">
-                                {% if product.margin != "-" %}
-                                    {{ product.margin }}%
-                                {% else %}
-                                    -
-                                {% endif %}
-                            </td>
-                        </tr>
-                    {% empty %}
-                        <tr><td colspan="5" class="text-center py-4 text-gray-500">{% trans "No products found." %}</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <div class="card bg-white rounded-lg p-6">
                     <h2 class="text-lg font-medium text-gray-900 mb-4">{% trans "POS Transactions" %}</h2>
@@ -296,6 +264,44 @@
 
     <!-- ✅ POS Report Tab -->
     <div id="pos-report" class="tab-content hidden">
+
+        <h2 class="text-xl font-semibold mb-4">{% trans "Top-Selling POS Products" %}</h2>
+<div class="overflow-x-auto mb-8">
+    <table class="min-w-full bg-white rounded shadow">
+        <thead class="bg-gray-100">
+            <tr>
+                <th class="px-4 py-2 text-left">{% trans "Product" %}</th>
+                <th class="px-4 py-2 text-left">{% trans "Category" %}</th>
+                <th class="px-4 py-2 text-left">{% trans "Qty Sold" %}</th>
+                <th class="px-4 py-2 text-left">{% trans "Revenue" %}</th>
+                <th class="px-4 py-2 text-left">{% trans "Margin" %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in top_pos_products %}
+                <tr class="border-b">
+                    <td class="px-4 py-2">{{ product.item__item_name }}</td>
+                    <td class="px-4 py-2">{{ product.category_name|default:"-" }}</td>
+                    <td class="px-4 py-2">{{ product.total_qty }}</td>
+                    <td class="px-4 py-2">{{ product.total_revenue }} {% trans "Ks" %}</td>
+                    <td class="px-4 py-2">
+                        {% if product.margin != "-" %}
+                            {{ product.margin }}%
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center py-4 text-gray-500">
+                        {% trans "No products found." %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
         <h2 class="text-xl font-semibold mb-4">{% trans "POS Orders (All)" %}</h2>
 
         <div class="space-y-4">
@@ -318,11 +324,53 @@
                 <p class="text-gray-500">{% trans "No POS orders yet." %}</p>
             {% endif %}
         </div>
+
+
+
     </div>
 
 
     <!-- ✅ Online Report Tab -->
     <div id="online-report" class="tab-content hidden">
+
+
+    <h2 class="text-xl font-semibold mb-4">{% trans "Top-Selling Online Products" %}</h2>
+<div class="overflow-x-auto">
+    <table class="min-w-full bg-white rounded shadow">
+        <thead class="bg-gray-100">
+            <tr>
+                <th class="px-4 py-2 text-left">{% trans "Product" %}</th>
+                <th class="px-4 py-2 text-left">{% trans "Category" %}</th>
+                <th class="px-4 py-2 text-left">{% trans "Qty Sold" %}</th>
+                <th class="px-4 py-2 text-left">{% trans "Revenue" %}</th>
+                <th class="px-4 py-2 text-left">{% trans "Margin" %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in top_online_products %}
+                <tr class="border-b">
+                    <td class="px-4 py-2">{{ product.item__item_name }}</td>
+                    <td class="px-4 py-2">{{ product.category_name|default:"-" }}</td>
+                    <td class="px-4 py-2">{{ product.total_qty }}</td>
+                    <td class="px-4 py-2">{{ product.total_revenue }} {% trans "Ks" %}</td>
+                    <td class="px-4 py-2">
+                        {% if product.margin != "-" %}
+                            {{ product.margin }}%
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center py-4 text-gray-500">
+                        {% trans "No products found." %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
         <h2 class="text-xl font-semibold mb-4">{% trans "Online Orders (All)" %}</h2>
             <!-- Report Filter -->
     <form method="get" class="mb-6 flex flex-wrap items-center space-x-4">

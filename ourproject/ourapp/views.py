@@ -410,21 +410,53 @@ def report_view(request):
 
 
     # ✅ Avg Margin (POS only)
+    # cart_products = CartProduct.objects.annotate(
+    #     margin=ExpressionWrapper(
+    #         (F('price') - F('item__purcharse_price')) / F('item__purcharse_price') * 100,
+    #         output_field=FloatField()
+    #     )
+    # )
+    # avg_margin = round(cart_products.aggregate(avg=Coalesce(Sum('margin') / Count('id'), 0.0))['avg'], 2)
+
     cart_products = CartProduct.objects.annotate(
         margin=ExpressionWrapper(
             (F('price') - F('item__purcharse_price')) / F('item__purcharse_price') * 100,
             output_field=FloatField()
         )
     )
-    avg_margin = round(cart_products.aggregate(avg=Coalesce(Sum('margin') / Count('id'), 0.0))['avg'], 2)
 
+    # ✅ Compute in Python, safe from SQLite errors
+    margin_data = cart_products.aggregate(
+        total_margin=Coalesce(Sum('margin'), 0.0),
+        count=Coalesce(Count('id'), 1)
+    )
+    avg_margin = round(margin_data['total_margin'] / margin_data['count'], 2)
     # ✅ POS Summary + Full Order List
     pos_orders = Cart.objects.filter(payment_method__in=['cash', 'mobile', 'print']).order_by('-created_date')
     pos_transactions = pos_orders.count()
     pos_revenue = pos_orders.aggregate(total=Coalesce(Sum('total_amount'), 0))['total']
     for order in pos_orders:
         if not order.customer_name:
-            order.customer_name = "Walking Customer"
+            order.customer_name = " Customer"
+    # ✅ Top Selling Products (POS only)
+    top_pos_products = (
+        CartProduct.objects
+        .values('item_id', 'item__item_name', category_name=F('item__category__name'))
+        .annotate(total_qty=Sum('qty'), total_revenue=Sum('price'))
+        .order_by('-total_qty')[:5]
+    )
+    for product in top_pos_products:
+        try:
+            item = Item.objects.get(id=product['item_id'])
+            cost = item.purcharse_price or 1
+            sell = product['total_revenue']
+            qty = product['total_qty']
+            avg_sell = sell / qty if qty else 0
+            margin = ((avg_sell - cost) / cost) * 100
+            product['margin'] = round(margin, 2)
+        except:
+            product['margin'] = "-"
+
 
     # ✅ Online Summary + Full Order List
     # online_orders = Sale.objects.exclude(user__userprofile__role='pharmacist').order_by('-created_date')
@@ -434,17 +466,14 @@ def report_view(request):
         if not order.name:
             order.name = order.user.username
 
-    # ✅ Top Selling Products (POS)
-    top_products = (
-        CartProduct.objects
-        .values('item_id',
-        'item__item_name',
-        category_name= F('item__category__name')
-        )
-        .annotate(total_qty=Sum('qty'), total_revenue=Sum('price'))
+    # ✅ Top Selling Products (Online only)
+    top_online_products = (
+        SaleItem.objects
+        .values('item_id', 'item__item_name', category_name=F('item__category__name'))
+        .annotate(total_qty=Sum('quantity'), total_revenue=Sum('price'))
         .order_by('-total_qty')[:5]
     )
-    for product in top_products:
+    for product in top_online_products:
         try:
             item = Item.objects.get(id=product['item_id'])
             cost = item.purcharse_price or 1
@@ -512,7 +541,8 @@ def report_view(request):
             'filter_type': filter_type,
             # ✅ Sales Report Tab Data
             'summary_list': summary_list,
-            'top_products': top_products,
+            'top_pos_products': top_pos_products,
+            'top_online_products': top_online_products,
 
             # ✅ POS Report Tab Data
             'pos_orders_list': pos_orders,
