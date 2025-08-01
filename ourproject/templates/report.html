@@ -306,7 +306,7 @@
 
         <div class="space-y-4">
             {% if pos_orders_list %}
-                {% for order in pos_orders_list %}
+                {% for order in pos_orders_page %}
                     <div class="bg-white border rounded p-4 shadow">
                         <div class="flex justify-between">
                             <div>
@@ -323,6 +323,17 @@
             {% else %}
                 <p class="text-gray-500">{% trans "No POS orders yet." %}</p>
             {% endif %}
+            <div class="pagination">
+            {% if pos_orders_page.has_previous %}
+                <a href="?pos_page={{ pos_orders_page.previous_page_number }}&filter={{ filter_type }}">Previous</a>
+            {% endif %}
+
+            <span>Page {{ pos_orders_page.number }} of {{ pos_orders_page.paginator.num_pages }}</span>
+
+            {% if pos_orders_page.has_next %}
+                <a href="?pos_page={{ pos_orders_page.next_page_number }}&filter={{ filter_type }}">Next</a>
+            {% endif %}
+            </div>
         </div>
 
 
@@ -387,7 +398,7 @@
     </form>
         <div class="space-y-4">
             {% if online_orders_list %}
-                {% for order in online_orders_list %}
+                {% for order in online_orders_page %}
                     <div class="bg-white border rounded p-4 shadow">
                         <div class="flex justify-between">
                             <div>
@@ -418,6 +429,17 @@
             {% else %}
                 <p class="text-gray-500">{% trans "No online orders yet." %}</p>
             {% endif %}
+            <div class="pagination">
+            {% if online_orders_page.has_previous %}
+                <a href="?online_page={{ online_orders_page.previous_page_number }}&filter={{ filter_type }}">Previous</a>
+            {% endif %}
+
+            <span>Page {{ online_orders_page.number }} of {{ online_orders_page.paginator.num_pages }}</span>
+
+            {% if online_orders_page.has_next %}
+                <a href="?online_page={{ online_orders_page.next_page_number }}&filter={{ filter_type }}">Next</a>
+            {% endif %}
+            </div>
         </div>
     </div>
 </div>

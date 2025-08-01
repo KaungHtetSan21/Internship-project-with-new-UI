@@ -409,14 +409,6 @@ def report_view(request):
     items_sold = CartProduct.objects.aggregate(total_qty=Coalesce(Sum('qty'), 0))['total_qty']
 
 
-    # ✅ Avg Margin (POS only)
-    # cart_products = CartProduct.objects.annotate(
-    #     margin=ExpressionWrapper(
-    #         (F('price') - F('item__purcharse_price')) / F('item__purcharse_price') * 100,
-    #         output_field=FloatField()
-    #     )
-    # )
-    # avg_margin = round(cart_products.aggregate(avg=Coalesce(Sum('margin') / Count('id'), 0.0))['avg'], 2)
 
     cart_products = CartProduct.objects.annotate(
         margin=ExpressionWrapper(
@@ -438,6 +430,10 @@ def report_view(request):
     for order in pos_orders:
         if not order.customer_name:
             order.customer_name = " Customer"
+    # ✅ POS Pagination
+    pos_page_number = request.GET.get('pos_page')
+    pos_paginator = Paginator(pos_orders, 10)  # 10 orders per page
+    pos_orders_page = pos_paginator.get_page(pos_page_number)
     # ✅ Top Selling Products (POS only)
     top_pos_products = (
         CartProduct.objects
@@ -465,7 +461,10 @@ def report_view(request):
     for order in online_orders:
         if not order.name:
             order.name = order.user.username
-
+    # ✅ Online Pagination
+    online_page_number = request.GET.get('online_page')
+    online_paginator = Paginator(online_orders, 10)  # 10 orders per page
+    online_orders_page = online_paginator.get_page(online_page_number)
     # ✅ Top Selling Products (Online only)
     top_online_products = (
         SaleItem.objects
@@ -548,11 +547,13 @@ def report_view(request):
             'pos_orders_list': pos_orders,
             'pos_transactions': pos_transactions,
             'pos_revenue': pos_revenue,
+            'pos_orders_page': pos_orders_page,
 
             # ✅ Online Report Tab Data
             'online_orders_list': online_orders,
             'online_transactions': online_transactions,
             'online_revenue': online_revenue,
+            'online_orders_page': online_orders_page,
 
             # ✅ Global Totals (if you need at top header)
             'total_transactions': total_transactions,
