@@ -185,7 +185,7 @@ def pharmacist_dashboard_view(request):
     online_orders_list = paginator.get_page(page_number)
 
     online_total = online_orders_queryset.count()
-    online_revenue = online_orders_queryset.aggregate(total=Coalesce(Sum('total_amount'), 0))['total']
+    online_revenue = online_orders_queryset.aggregate(total=Coalesce(Sum('final_amount'), 0))['total']
 
     # ✅ FIXED Total Orders (POS + Online)
     total_orders = pos_total + online_total
@@ -261,6 +261,7 @@ def pharmacist_dashboard_view(request):
         'low_stock_items': low_stock_items,
         'expiring_items': expiring_items,
         'online_orders_list': online_orders_list,
+        'expiring_count' : expiring_count,
     }
 
     return render(request, 'pharmacist/dashboard.html', context)
@@ -288,18 +289,47 @@ def get_order_details(request, order_id):
     except Sale.DoesNotExist:
         return JsonResponse({"error": "Order not found"}, status=404)
     
+from django.db import transaction
+
+from django.db import transaction
+
 @login_required
 def confirm_order_view(request, order_id):
     if request.user.userprofile.role != 'pharmacist':
         return HttpResponseForbidden()
+
     try:
         order = Sale.objects.get(id=order_id)
-        order.status = 'confirmed'
-        order.save()
+
+        # ✅ Only process if order is still pending
+        if order.status != 'pending':
+            messages.warning(request, "Order already processed.")
+            return redirect('pharmacist_dashboard')
+
+        # ✅ Atomic transaction block
+        with transaction.atomic():
+            for item in order.saleitem_set.all():
+                # ✅ Reduce stock
+                item.item.item_quantity -= item.quantity
+                item.item.save()
+
+                # ✅ Log stock history
+                StockHistory.objects.create(
+                    item=item.item,
+                    action='out',
+                    quantity=item.quantity,
+                    note=f"Confirmed by pharmacist - Order {order.invoice_no}"
+                )
+
+            # ✅ Update order status
+            order.status = 'confirmed'
+            order.save()
+
+        # ✅ Notify user
         Notification.objects.create(
-        recipient=order.user,
-        message=f"Your order {order.invoice_no} has been confirmed by the pharmacist."
-    )
+            recipient=order.user,
+            message=f"Your order {order.invoice_no} has been confirmed by the pharmacist."
+        )
 
         messages.success(request, "Order confirmed successfully.")
     except Sale.DoesNotExist:
@@ -310,38 +340,52 @@ def confirm_order_view(request, order_id):
 def cancel_order_view(request, order_id):
     if request.user.userprofile.role != 'pharmacist':
         return HttpResponseForbidden()
+
     try:
         order = Sale.objects.get(id=order_id)
+
+        # ✅ Only allow if pending
+        if order.status != 'pending':
+            messages.warning(request, "Order already processed.")
+            return redirect('pharmacist_dashboard')
+
+        # ✅ Update order status
         order.status = 'cancelled'
         order.save()
+
+        # ✅ Notify user
         Notification.objects.create(
-        recipient=order.user,
-        message=f"Your order {order.invoice_no} has been cancelled by the pharmacist."
-    )
+            recipient=order.user,
+            message=f"Your order {order.invoice_no} has been cancelled by the pharmacist."
+        )
+
         messages.warning(request, "Order cancelled.")
     except Sale.DoesNotExist:
         messages.error(request, "Order not found.")
     return redirect('pharmacist_dashboard')
 
-@login_required
-def mark_notification_read(request, noti_id):
-    notification = get_object_or_404(Notification, id=noti_id, recipient=request.user)
-    notification.is_read = True
-    notification.save()
-    return redirect('customer_dashboard')  # or your desired page
+
 
 
 @login_required
 def customer_dashboard_view(request):
     user = request.user
+    filter_type = request.GET.get('notifications', 'unread')  # ✅ Step 1: Get the filter type
     items = Item.objects.all().order_by('-id')[:2]
     cart = Cart.objects.filter(user=user).last()
     cart_products = CartProduct.objects.filter(cart=cart) if cart else []
 
     total_orders = Sale.objects.filter(user=user).count()
     total_items = SaleItem.objects.filter(sale__user=user).aggregate(total=Coalesce(Sum('quantity'), 0))['total']
-    total_spent = Sale.objects.filter(user=user).aggregate(spent=Coalesce(Sum('total_amount'), 0))['spent']
+    total_spent = Sale.objects.filter(user=user).aggregate(spent=Coalesce(Sum('final_amount'), 0))['spent']
     categories = Category.objects.all()
+
+    # ✅ Step 2: Filter notifications based on tab
+    if filter_type == 'all':
+        notifications = Notification.objects.filter(recipient=user).order_by('-created_at')
+    else:  # default to unread
+        notifications = Notification.objects.filter(recipient=user, is_read=False).order_by('-created_at')
+
     dashboard_stats = [
         {
             'label': 'Total Orders',
@@ -362,9 +406,7 @@ def customer_dashboard_view(request):
             'value': f"{total_spent} Ks"
         },
     ]
-    notifications = Notification.objects.filter(
-        recipient=user
-    ).order_by('-created_at')  # newest first
+
     context = {
         'dashboard_stats': dashboard_stats,
         'items': items,
@@ -372,9 +414,25 @@ def customer_dashboard_view(request):
         'cart_products': cart_products,
         'notifications': notifications,
         'categories':categories,
+        'filter_type': filter_type,
         # any other context data needed
     }
     return render(request, 'customer/dashboard.html', context)
+
+
+@login_required
+def mark_notification_read(request, noti_id):
+    notification = get_object_or_404(Notification, id=noti_id, recipient=request.user)
+    if not notification.is_read:
+        notification.is_read = True
+        notification.save()
+    return redirect('customer_dashboard')
+@login_required
+def mark_all_notifications_read(request):
+    Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
+    messages.success(request, "All notifications marked as read.")
+    return redirect('customer_dashboard')
+
 
 
 from django.utils.timezone import now, timedelta
@@ -403,7 +461,7 @@ def report_view(request):
     total_transactions = Cart.objects.count() + Sale.objects.exclude(user__userprofile__role='pharmacist').count()
     total_revenue = (
         (Cart.objects.aggregate(total=Coalesce(Sum('total_amount'), 0))['total']) +
-        (Sale.objects.exclude(user__userprofile__role='pharmacist').aggregate(total=Coalesce(Sum('total_amount'), 0))['total'])
+        (Sale.objects.exclude(user__userprofile__role='pharmacist').aggregate(total=Coalesce(Sum('final_amount'), 0))['total'])
     )
 
     items_sold = CartProduct.objects.aggregate(total_qty=Coalesce(Sum('qty'), 0))['total_qty']
@@ -457,7 +515,7 @@ def report_view(request):
     # ✅ Online Summary + Full Order List
     # online_orders = Sale.objects.exclude(user__userprofile__role='pharmacist').order_by('-created_date')
     online_transactions = online_orders.count()
-    online_revenue = online_orders.aggregate(total=Coalesce(Sum('total_amount'), 0))['total']
+    online_revenue = online_orders.aggregate(total=Coalesce(Sum('final_amount'), 0))['total']
     for order in online_orders:
         if not order.name:
             order.name = order.user.username
@@ -1016,23 +1074,29 @@ def update_quantity(request, item_id):
 def medicine_list(request):
     user = request.user
     categories = Category.objects.all()
-    items = Item.objects.all().order_by('-id')
-    context = {'categories':categories,'items':items}
-
-    #✅ Only customers can access this page
-    if not hasattr(user, 'userprofile') or user.userprofile.role != 'customer':
-        messages.error(request, "Dear customer, you need register to encourage purchases.")
-        return render(request,'medicine_list.html',context)
-
-    # ✅ Get or create cart
-    cart, created = Cart.objects.get_or_create(user=user, defaults={'created_date': timezone.now()})
-    cart_products = CartProduct.objects.filter(cart=cart)
-
+    # items = Item.objects.all().order_by('-id')
+    # context = {'categories':categories,'items':items}
     cid = request.GET.get('cid')
     if cid:
         items = Item.objects.filter(category_id=cid).order_by('-id')
     else:
         items = Item.objects.all().order_by('-id')
+
+    # ✅ Only customers can access this page
+    if not hasattr(user, 'userprofile') or user.userprofile.role != 'customer':
+        messages.error(request, "Dear customer, you need register to encourage purchases.")
+        return render(request,'medicine_list.html', {
+            'categories': categories,
+            'items': items
+        })
+
+
+
+    # ✅ Get or create cart
+    cart, created = Cart.objects.get_or_create(user=user, defaults={'created_date': timezone.now()})
+    cart_products = CartProduct.objects.filter(cart=cart)
+
+
 
     
     # ✅ Refresh cart total
@@ -1054,7 +1118,8 @@ def medicine_list(request):
         sale = Sale.objects.create(
             invoice_no=f"INV-{timezone.now().strftime('%Y%m%d%H%M%S')}",
             user=user,
-            total_amount=total_amount  # Use the final total here
+            total_amount=cart.total_amount,  # Use the final total here
+            final_amount=total_amount
         )
 
         # Process cart items and update stock
@@ -1067,15 +1132,7 @@ def medicine_list(request):
                 quantity=cp.qty,
                 price=cp.price
             )
-            cp.item.item_quantity -= cp.qty
-            cp.item.save()
 
-            StockHistory.objects.create(
-                item=cp.item,
-                action='out',
-                quantity=cp.qty,
-                note=f"Checked out by {user.username}"
-            )
 
         # Clear the cart after checkout
         cart_products.delete()
@@ -1085,6 +1142,7 @@ def medicine_list(request):
         messages.success(request, "✅ Checkout completed successfully.")
         return render(request, 'medicine_list.html', {
             'items': items,
+            'categories': categories,
             'cart': cart,
             'cart_products': [],
             'checkout_success': True,
@@ -1106,12 +1164,7 @@ def place_order_view(request):
     name = request.GET['name']
     phone = request.GET['phone']
     address = request.GET['address']
-    print(name)
-    print(phone)
-    print(address)
 
-
-    # ✅ Role check
     if not hasattr(user, 'userprofile') or user.userprofile.role != 'customer':
         messages.error(request, "Only customers can place an order.")
         return redirect('base')
@@ -1124,14 +1177,20 @@ def place_order_view(request):
             messages.warning(request, "Your cart is empty.")
             return redirect('base')
 
+        # ✅ Add shipping & tax
+        shipping_fee = 1000
+        tax = 500
+        total_amount = cart.total_amount + shipping_fee + tax
+
         # ✅ Create sale
         sale = Sale.objects.create(
             invoice_no=f"INV-{timezone.now().strftime('%Y%m%d%H%M%S')}",
             user=user,
-            name =name,
-            phone =phone,
-            address =address,
-            total_amount=cart.total_amount
+            name=name,
+            phone=phone,
+            address=address,
+            total_amount=cart.total_amount,
+            final_amount=total_amount
         )
 
         for cp in cart_items:
@@ -1141,30 +1200,17 @@ def place_order_view(request):
                 quantity=cp.qty,
                 price=cp.price
             )
-            # ✅ Reduce stock
-            cp.item.item_quantity -= cp.qty
-            cp.item.save()
 
-            # ✅ Log stock history
-            StockHistory.objects.create(
-                item=cp.item,
-                action='out',
-                quantity=cp.qty,
-                note=f"Purchased by {user.username}"
-            )
-
-        # ✅ Clear cart
         cart_items.delete()
         cart.total_amount = 0
         cart.save()
 
         messages.success(request, "Order placed successfully!")
-        return redirect('medicine_list')  # Redirect to same page with tab switched to success
+        return redirect('medicine_list')
 
     except Cart.DoesNotExist:
         messages.error(request, "No active cart found.")
-        return redirect('medicine_list')
-    
+        return redirect('medicine_list')    
 
 @login_required
 def customer_profile_view(request):
@@ -1175,11 +1221,17 @@ def customer_profile_view(request):
         messages.error(request, "Only customers can access this page.")
         return redirect('homeview')
 
-    # ✅ Get purchase history
+    # ✅ Get purchase history with final amount
     sales = Sale.objects.filter(user=user).order_by('-created_date')
 
+    # စုစုပေါင်းအသုံးစရိတ် (ခေါင်းစဉ်ပြချင်လို့)
+    total_spent = sales.aggregate(
+        spent=Coalesce(Sum('final_amount'), 0)
+    )['spent']
+
     return render(request, 'customer_profile.html', {
-        'sales': sales
+        'sales': sales,
+        'total_spent': total_spent
     })
 
 

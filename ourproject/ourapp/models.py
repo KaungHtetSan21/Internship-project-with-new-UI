@@ -153,7 +153,7 @@ class Sale(models.Model):
     total_amount = models.PositiveIntegerField(verbose_name=_("Total Amount"))
     created_date = models.DateTimeField(auto_now_add=True, verbose_name=_("Created Date"))
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', blank=True, null=True, verbose_name=_("Status"))
-
+    final_amount = models.PositiveIntegerField(default=0, verbose_name=_("Final Amount (with tax + shipping)"),blank=True,null=True)
     def __str__(self):
         return f"Invoice {self.invoice_no} - {self.total_amount}"
 

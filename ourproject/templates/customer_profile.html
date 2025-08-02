@@ -37,10 +37,10 @@
                 <a href="{% url 'medicine_list' %}" class="sidebar-link block px-4 py-2 rounded transition">
                     <i class="fas fa-pills mr-2"></i> {% trans "Medicine" %}
                 </a>
-                <a href="{% url 'customer_profile' %}" class="sidebar-link block px-4 py-2 rounded transition">
+                <!-- <a href="{% url 'customer_profile' %}" class="sidebar-link block px-4 py-2 rounded transition">
                     <i class="fas fa-user mr-2"></i> {% trans "My Profile" %}
-                </a>
-                <a href="#" class="sidebar-link active block px-4 py-2 rounded transition">
+                </a> -->
+                <a href="{% url 'customer_profile' %}" class="sidebar-link active block px-4 py-2 rounded transition">
                     <i class="fas fa-history mr-2"></i> {% trans "Purchase History" %}
                 </a>
                 <a href="{% url 'logout' %}" class="block px-4 py-2 bg-red-500 hover:bg-red-600 rounded transition mt-4">
@@ -129,7 +129,7 @@
                                         <i class="fas fa-file-invoice mr-2 text-blue-500"></i>
                                         {{ sale.invoice_no }}
                                     </td>
-                                    <td class="px-6 py-4">{{ sale.total_amount }} {% trans "Ks" %}</td>
+                                    <td class="px-6 py-4">{{ sale.final_amount }} {% trans "Ks" %}</td>
                                     <td class="px-6 py-4">{{ sale.created_date }}</td>
                                     <td class="px-6 py-4">
                                         <ul class="list-disc pl-5">

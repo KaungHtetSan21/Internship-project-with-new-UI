@@ -63,7 +63,7 @@
                     💊 {% trans "Medicine" %}
                 </a>
                 <a href="{% url 'customer_profile' %}" class="sidebar-link block px-4 py-2 rounded transition">
-                    👤 {% trans "My Profile" %}
+                    👤 {% trans " Purchase History" %}
                 </a>
                 <a href="{% url 'logout' %}" class="block px-4 py-2 bg-red-500 hover:bg-red-600 rounded transition mt-4">
                     {% trans "Logout" %}
@@ -102,7 +102,6 @@
                             </svg>
                         </button>
                         <div id="dropdownMenu" class="absolute right-0 mt-1 w-48 hidden bg-white border rounded-lg shadow-lg z-10 overflow-hidden">
-                            <a href="{% url 'customer_register' %}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">👤 {% trans "Register" %}</a>
                             <a href="{% url 'logout' %}" class="block px-4 py-2 text-red-600 hover:bg-gray-100 transition">🚪 {% trans "Logout" %}</a>
                         </div>
                     </div>
@@ -175,7 +174,7 @@
                             <div class="p-4 pt-0">
                                 <h3 class="text-lg font-semibold text-gray-900">{{ item.item_name }}</h3>
                                 <div class="flex justify-between items-center mt-3">
-                                    <span class="text-xl font-bold text-blue-600">{{ item.item_price }}</span>
+                                    <span class="text-xl font-bold text-blue-600">{{ item.item_price }} ks</span>
                                     <a href="{% url 'add_to_cart' item.id %}" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 transition">
                                         {% trans "Add to Cart" %}
                                     </a>
