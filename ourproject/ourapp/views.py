@@ -73,6 +73,7 @@ def customer_register(request):
                     user=user,
                     role='customer',
                     phone=form.cleaned_data['phone'],
+                    email=form.cleaned_data.get('address'),
                     address=form.cleaned_data.get('address'),
                     gender=form.cleaned_data.get('gender'),
                     date_of_birth=form.cleaned_data.get('date_of_birth')
@@ -167,12 +168,12 @@ def pharmacist_dashboard_view(request):
     if request.user.userprofile.role != 'pharmacist':
         return HttpResponseForbidden("Unauthorized")
 
-    # ✅ POS Orders (must be first)
+    # ✅ POS Orders
     pos_orders = Cart.objects.filter(payment_method__in=['cash', 'mobile', 'print'])
     pos_total = pos_orders.count()
     pos_revenue = pos_orders.aggregate(total=Coalesce(Sum('total_amount'), 0))['total']
 
-    # ✅ Online Orders
+    # ✅ Online Orders (all, for pharmacist to confirm/cancel)
     online_orders_queryset = (
         Sale.objects
         .exclude(user__userprofile__role='pharmacist')
@@ -180,19 +181,22 @@ def pharmacist_dashboard_view(request):
         .order_by('-created_date')
     )
 
-    paginator = Paginator(online_orders_queryset, 5)  # 5 orders per page
+    paginator = Paginator(online_orders_queryset, 5)
     page_number = request.GET.get('page')
     online_orders_list = paginator.get_page(page_number)
 
-    online_total = online_orders_queryset.count()
-    online_revenue = online_orders_queryset.aggregate(total=Coalesce(Sum('final_amount'), 0))['total']
+    # ✅ Only confirmed orders counted for totals
+    confirmed_online_orders = online_orders_queryset.filter(status='confirmed')
+    online_total = confirmed_online_orders.count()
+    online_revenue = confirmed_online_orders.aggregate(
+        total=Coalesce(Sum('final_amount'), 0)
+    )['total']
 
-    # ✅ FIXED Total Orders (POS + Online)
     total_orders = pos_total + online_total
 
-# ✅ Low Stock Items (Pagination)
+    # ✅ Low Stock
     low_stock_queryset = Item.objects.filter(item_quantity__lt=10).order_by('item_quantity')
-    low_stock_paginator = Paginator(low_stock_queryset, 5)  # 5 items per page
+    low_stock_paginator = Paginator(low_stock_queryset, 5)
     low_stock_page_number = request.GET.get('low_stock_page')
     low_stock_items = low_stock_paginator.get_page(low_stock_page_number)
     low_stock_count = low_stock_queryset.count()
@@ -200,68 +204,66 @@ def pharmacist_dashboard_view(request):
     # ✅ Expiring Items
     today = datetime.date.today()
     expiring_queryset = Item.objects.filter(exp_date__lte=today + datetime.timedelta(days=90)).order_by('exp_date')
-    expiring_paginator = Paginator(expiring_queryset, 5)  # 5 items per page
+    expiring_paginator = Paginator(expiring_queryset, 5)
     expiring_page_number = request.GET.get('expiring_page')
     expiring_items = expiring_paginator.get_page(expiring_page_number)
     expiring_count = expiring_queryset.count()
 
-    # ✅ Display Username if Name is Missing
     for order in online_orders_list:
         if not order.name:
             order.name = order.user.username
 
-    # ✅ Dashboard Stats
     dashboard_stats = [
-    {
-        'label': 'Total Orders',
-        'icon': '💊',  # was fa-prescription-bottle-alt
-        'bg': 'bg-blue-100',
-        'text': 'text-blue-600',
-        'value': total_orders
-    },
-    {
-        'label': 'POS Orders',
-        'icon': '🏷️',  # was fa-cash-register
-        'bg': 'bg-green-100',
-        'text': 'text-green-600',
-        'value': pos_total
-    },
-    {
-        'label': 'Online Orders',
-        'icon': '🌐',  # was fa-globe
-        'bg': 'bg-purple-100',
-        'text': 'text-purple-600',
-        'value': online_total
-    },
-    {
-        'label': 'POS Revenue',
-        'icon': '💰',  # was fa-dollar-sign
-        'bg': 'bg-green-100',
-        'text': 'text-green-600',
-        'value': f"{pos_revenue} Ks"
-    },
-    {
-        'label': 'Online Revenue',
-        'icon': '💳',  # was fa-credit-card
-        'bg': 'bg-yellow-100',
-        'text': 'text-yellow-600',
-        'value': f"{online_revenue} Ks"
-    },
-    {
-        'label': 'Low Stock Items',
-        'icon': '⚠️',  # was fa-exclamation-triangle
-        'bg': 'bg-red-100',
-        'text': 'text-red-600',
-        'value': low_stock_count
-    },
-]
+        {
+            'label': 'Total Orders',
+            'icon': '💊',
+            'bg': 'bg-blue-100',
+            'text': 'text-blue-600',
+            'value': total_orders
+        },
+        {
+            'label': 'POS Orders',
+            'icon': '🏷️',
+            'bg': 'bg-green-100',
+            'text': 'text-green-600',
+            'value': pos_total
+        },
+        {
+            'label': 'Online Orders',
+            'icon': '🌐',
+            'bg': 'bg-purple-100',
+            'text': 'text-purple-600',
+            'value': online_total
+        },
+        {
+            'label': 'POS Revenue',
+            'icon': '💰',
+            'bg': 'bg-green-100',
+            'text': 'text-green-600',
+            'value': f"{pos_revenue} Ks"
+        },
+        {
+            'label': 'Online Revenue',
+            'icon': '💳',
+            'bg': 'bg-yellow-100',
+            'text': 'text-yellow-600',
+            'value': f"{online_revenue} Ks"
+        },
+        {
+            'label': 'Low Stock Items',
+            'icon': '⚠️',
+            'bg': 'bg-red-100',
+            'text': 'text-red-600',
+            'value': low_stock_count
+        },
+    ]
 
     context = {
         'dashboard_stats': dashboard_stats,
         'low_stock_items': low_stock_items,
         'expiring_items': expiring_items,
         'online_orders_list': online_orders_list,
-        'expiring_count' : expiring_count,
+        'expiring_count': expiring_count,
     }
 
     return render(request, 'pharmacist/dashboard.html', context)
@@ -370,14 +372,15 @@ def cancel_order_view(request, order_id):
 @login_required
 def customer_dashboard_view(request):
     user = request.user
+    
     filter_type = request.GET.get('notifications', 'unread')  # ✅ Step 1: Get the filter type
     items = Item.objects.all().order_by('-id')[:2]
     cart = Cart.objects.filter(user=user).last()
     cart_products = CartProduct.objects.filter(cart=cart) if cart else []
 
-    total_orders = Sale.objects.filter(user=user).count()
-    total_items = SaleItem.objects.filter(sale__user=user).aggregate(total=Coalesce(Sum('quantity'), 0))['total']
-    total_spent = Sale.objects.filter(user=user).aggregate(spent=Coalesce(Sum('final_amount'), 0))['spent']
+    total_orders = Sale.objects.filter(user=user, status='confirmed').count()
+    total_items = SaleItem.objects.filter(sale__user=user, sale__status= 'confirmed').aggregate(total=Coalesce(Sum('quantity'), 0))['total']
+    total_spent = Sale.objects.filter(user=user, status='confirmed').aggregate(spent=Coalesce(Sum('final_amount'), 0))['spent']
     categories = Category.objects.all()
 
     # ✅ Step 2: Filter notifications based on tab
@@ -415,6 +418,7 @@ def customer_dashboard_view(request):
         'notifications': notifications,
         'categories':categories,
         'filter_type': filter_type,
+        
         # any other context data needed
     }
     return render(request, 'customer/dashboard.html', context)
@@ -435,114 +439,110 @@ def mark_all_notifications_read(request):
 
 
 
-from django.utils.timezone import now, timedelta
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseForbidden
+from django.utils.timezone import now
+from datetime import timedelta
+from django.db.models import Sum, Count, F, FloatField, ExpressionWrapper
+from django.db.models.functions import Coalesce
+from django.core.paginator import Paginator
+import json
+
+from .models import Cart, CartProduct, Sale, SaleItem, Item
+
 @login_required
 def report_view(request):
     if request.user.userprofile.role != 'pharmacist':
         return HttpResponseForbidden("Pharmacists only.")
+
     filter_type = request.GET.get('filter', 'daily')
     today = now().date()
 
+    # ✅ Confirmed Online Orders Filter
+    confirmed_online_orders = Sale.objects.exclude(user__userprofile__role='pharmacist')\
+                                          .filter(status='confirmed')
 
-    # Filter Online Orders
     if filter_type == 'daily':
-        online_orders = Sale.objects.exclude(user__userprofile__role='pharmacist').filter(created_date__date=today)
+        confirmed_online_orders = confirmed_online_orders.filter(created_date__date=today)
     elif filter_type == 'weekly':
         start_week = today - timedelta(days=today.weekday())
         end_week = start_week + timedelta(days=6)
-        online_orders = Sale.objects.exclude(user__userprofile__role='pharmacist').filter(created_date__date__range=(start_week, end_week))
+        confirmed_online_orders = confirmed_online_orders.filter(created_date__date__range=(start_week, end_week))
     elif filter_type == 'monthly':
-        online_orders = Sale.objects.exclude(user__userprofile__role='pharmacist').filter(created_date__month=today.month, created_date__year=today.year)
+        confirmed_online_orders = confirmed_online_orders.filter(created_date__month=today.month, created_date__year=today.year)
     elif filter_type == 'yearly':
-        online_orders = Sale.objects.exclude(user__userprofile__role='pharmacist').filter(created_date__year=today.year)
-    else:
-        online_orders = Sale.objects.exclude(user__userprofile__role='pharmacist')
-    # ✅ All Sales (POS + Online)
-    total_transactions = Cart.objects.count() + Sale.objects.exclude(user__userprofile__role='pharmacist').count()
-    total_revenue = (
-        (Cart.objects.aggregate(total=Coalesce(Sum('total_amount'), 0))['total']) +
-        (Sale.objects.exclude(user__userprofile__role='pharmacist').aggregate(total=Coalesce(Sum('final_amount'), 0))['total'])
-    )
+        confirmed_online_orders = confirmed_online_orders.filter(created_date__year=today.year)
 
-    items_sold = CartProduct.objects.aggregate(total_qty=Coalesce(Sum('qty'), 0))['total_qty']
+    confirmed_online_orders = confirmed_online_orders.order_by('-created_date')
 
-
-
-    cart_products = CartProduct.objects.annotate(
-        margin=ExpressionWrapper(
-            (F('price') - F('item__purcharse_price')) / F('item__purcharse_price') * 100,
-            output_field=FloatField()
-        )
-    )
-
-    # ✅ Compute in Python, safe from SQLite errors
-    margin_data = cart_products.aggregate(
-        total_margin=Coalesce(Sum('margin'), 0.0),
-        count=Coalesce(Count('id'), 1)
-    )
-    avg_margin = round(margin_data['total_margin'] / margin_data['count'], 2)
-    # ✅ POS Summary + Full Order List
+    # ✅ POS Orders
     pos_orders = Cart.objects.filter(payment_method__in=['cash', 'mobile', 'print']).order_by('-created_date')
     pos_transactions = pos_orders.count()
     pos_revenue = pos_orders.aggregate(total=Coalesce(Sum('total_amount'), 0))['total']
+
     for order in pos_orders:
         if not order.customer_name:
-            order.customer_name = " Customer"
-    # ✅ POS Pagination
+            order.customer_name = "Customer"
+
+    # ✅ Pagination
     pos_page_number = request.GET.get('pos_page')
-    pos_paginator = Paginator(pos_orders, 10)  # 10 orders per page
+    pos_paginator = Paginator(pos_orders, 10)
     pos_orders_page = pos_paginator.get_page(pos_page_number)
-    # ✅ Top Selling Products (POS only)
+
+    online_page_number = request.GET.get('online_page')
+    online_paginator = Paginator(confirmed_online_orders, 10)
+    online_orders_page = online_paginator.get_page(online_page_number)
+
+    # ✅ Top Selling POS Products
     top_pos_products = (
         CartProduct.objects
         .values('item_id', 'item__item_name', category_name=F('item__category__name'))
         .annotate(total_qty=Sum('qty'), total_revenue=Sum('price'))
         .order_by('-total_qty')[:5]
     )
-    for product in top_pos_products:
-        try:
-            item = Item.objects.get(id=product['item_id'])
-            cost = item.purcharse_price or 1
-            sell = product['total_revenue']
-            qty = product['total_qty']
-            avg_sell = sell / qty if qty else 0
-            margin = ((avg_sell - cost) / cost) * 100
-            product['margin'] = round(margin, 2)
-        except:
-            product['margin'] = "-"
 
-
-    # ✅ Online Summary + Full Order List
-    # online_orders = Sale.objects.exclude(user__userprofile__role='pharmacist').order_by('-created_date')
-    online_transactions = online_orders.count()
-    online_revenue = online_orders.aggregate(total=Coalesce(Sum('final_amount'), 0))['total']
-    for order in online_orders:
-        if not order.name:
-            order.name = order.user.username
-    # ✅ Online Pagination
-    online_page_number = request.GET.get('online_page')
-    online_paginator = Paginator(online_orders, 10)  # 10 orders per page
-    online_orders_page = online_paginator.get_page(online_page_number)
-    # ✅ Top Selling Products (Online only)
+    # ✅ Top Selling Online Products (confirmed only)
     top_online_products = (
         SaleItem.objects
+        .filter(sale__status='confirmed')
         .values('item_id', 'item__item_name', category_name=F('item__category__name'))
         .annotate(total_qty=Sum('quantity'), total_revenue=Sum('price'))
         .order_by('-total_qty')[:5]
     )
-    for product in top_online_products:
-        try:
-            item = Item.objects.get(id=product['item_id'])
-            cost = item.purcharse_price or 1
-            sell = product['total_revenue']
-            qty = product['total_qty']
-            avg_sell = sell / qty if qty else 0
-            margin = ((avg_sell - cost) / cost) * 100
-            product['margin'] = round(margin, 2)
-        except:
-            product['margin'] = "-"
 
-    # ✅ Summary Card for Sales Report Tab
+    # ✅ Chart Data
+    pos_chart_labels = json.dumps([p['item__item_name'] for p in top_pos_products])
+    pos_chart_data = json.dumps([p['total_qty'] for p in top_pos_products])
+    online_chart_labels = json.dumps([p['item__item_name'] for p in top_online_products])
+    online_chart_data = json.dumps([p['total_qty'] for p in top_online_products])
+
+    # ✅ Item Sold
+    pos_items_sold = CartProduct.objects.aggregate(total_qty=Coalesce(Sum('qty'), 0))['total_qty']
+    online_items_sold = SaleItem.objects.filter(sale__status='confirmed')\
+                                        .aggregate(total=Coalesce(Sum('quantity'), 0))['total']
+    items_sold = pos_items_sold + online_items_sold
+
+    # ✅ Avg. Margin (POS only)
+    cart_products = CartProduct.objects.annotate(
+        margin=ExpressionWrapper(
+            (F('price') - F('item__purcharse_price')) / F('item__purcharse_price') * 100.0,
+            output_field=FloatField()
+        )
+    )
+    margin_data = cart_products.aggregate(
+        total_margin=Coalesce(Sum('margin'), 0.0),
+        count=Coalesce(Count('id'), 1)
+    )
+    avg_margin = round(margin_data['total_margin'] / margin_data['count'], 2)
+
+    # ✅ Revenue and Transactions
+    online_transactions = confirmed_online_orders.count()
+    online_revenue = confirmed_online_orders.aggregate(total=Coalesce(Sum('final_amount'), 0))['total']
+    total_transactions = pos_transactions + online_transactions
+    total_revenue = pos_revenue + online_revenue
+
+    # ✅ Summary Cards
     summary_list = [
         {
             'label': 'POS Transactions',
@@ -550,7 +550,6 @@ def report_view(request):
             'bg': 'bg-blue-100',
             'text': 'text-blue-600',
             'value': pos_transactions,
-            'unit': '',
         },
         {
             'label': 'Online Transactions',
@@ -558,7 +557,6 @@ def report_view(request):
             'bg': 'bg-blue-100',
             'text': 'text-blue-600',
             'value': online_transactions,
-            'unit': '',
         },
         {
             'label': 'POS Revenue',
@@ -582,7 +580,6 @@ def report_view(request):
             'bg': 'bg-purple-100',
             'text': 'text-purple-600',
             'value': items_sold,
-            'unit': '',
         },
         {
             'label': 'Avg. Margin',
@@ -595,30 +592,27 @@ def report_view(request):
     ]
 
     return render(request, 'report.html', {
-            'filter_type': filter_type,
-            # ✅ Sales Report Tab Data
-            'summary_list': summary_list,
-            'top_pos_products': top_pos_products,
-            'top_online_products': top_online_products,
-
-            # ✅ POS Report Tab Data
-            'pos_orders_list': pos_orders,
-            'pos_transactions': pos_transactions,
-            'pos_revenue': pos_revenue,
-            'pos_orders_page': pos_orders_page,
-
-            # ✅ Online Report Tab Data
-            'online_orders_list': online_orders,
-            'online_transactions': online_transactions,
-            'online_revenue': online_revenue,
-            'online_orders_page': online_orders_page,
-
-            # ✅ Global Totals (if you need at top header)
-            'total_transactions': total_transactions,
-            'total_revenue': total_revenue,
-            'items_sold': items_sold,
-            'avg_margin': avg_margin,
-        })
+        'filter_type': filter_type,
+        'summary_list': summary_list,
+        'top_pos_products': top_pos_products,
+        'top_online_products': top_online_products,
+        'pos_chart_labels': pos_chart_labels,
+        'pos_chart_data': pos_chart_data,
+        'online_chart_labels': online_chart_labels,
+        'online_chart_data': online_chart_data,
+        'pos_orders_list': pos_orders,
+        'pos_transactions': pos_transactions,
+        'pos_revenue': pos_revenue,
+        'pos_orders_page': pos_orders_page,
+        'online_orders_list': confirmed_online_orders,
+        'online_transactions': online_transactions,
+        'online_revenue': online_revenue,
+        'online_orders_page': online_orders_page,
+        'total_transactions': total_transactions,
+        'total_revenue': total_revenue,
+        'items_sold': items_sold,
+        'avg_margin': avg_margin,
+    })
 
 @csrf_exempt
 def edit_item_view(request, item_id):
@@ -1211,6 +1205,20 @@ def place_order_view(request):
     except Cart.DoesNotExist:
         messages.error(request, "No active cart found.")
         return redirect('medicine_list')    
+    
+
+@login_required
+def customer_profile(request):
+    try:
+        profile = request.user.userprofile
+    except UserProfile.DoesNotExist:
+        messages.error(request, "Profile not found.")
+        return redirect('customer_dashboard')
+
+    return render(request, 'customer/profile.html', {
+        'profile': profile
+    })
+
 
 @login_required
 def customer_profile_view(request):

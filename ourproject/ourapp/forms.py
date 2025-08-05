@@ -6,7 +6,7 @@ from .models import *
 class CustomerRegisterForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput)
     confirm_password = forms.CharField(widget=forms.PasswordInput)
-    
+    email = forms.EmailField(blank=True,null=True,required=True)
     phone = forms.CharField(max_length=20, required=True)
     address = forms.CharField(max_length=255, required=False)
     gender = forms.ChoiceField(choices=[('male', 'Male'), ('female', 'Female')], required=False)

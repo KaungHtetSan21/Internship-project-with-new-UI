@@ -47,7 +47,8 @@ urlpatterns += i18n_patterns(  # ✅ this enables language-prefixed URLs
     path('order/update/<int:item_id>/', update_quantity, name='update_quantity'),
     path('order/remove_from_cart/<int:item_id>/', remove_from_cart, name='remove_from_cart'),
     path('place-order/', place_order_view, name='place_order'),
-    path('customer/profile/', customer_profile_view, name='customer_profile'),
+    path('customer/profileview/', customer_profile_view, name='customer_profile'),
+    path('customer/profile/', customer_profile, name='customer_profilereal'),
     path('medicine/delete/<int:item_id>/', delete_item, name='delete_item'),
     path('chatbot_view/', chatbot_view, name='chatbot_view'),
 )

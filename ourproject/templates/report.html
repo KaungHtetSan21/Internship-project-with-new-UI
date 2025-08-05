@@ -223,6 +223,9 @@
         </ul>
     </div>
 
+
+
+
     <!-- ✅ Sales Report Tab -->
     <div id="sales-report" class="tab-content block">
         <h2 class="text-xl font-semibold mb-4">{% trans "Sales Summary" %}</h2>
@@ -242,7 +245,28 @@
             {% endfor %}
         </div>
 
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+<!-- Tailwind Layout for POS & Online Pie Charts -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+    
+    <!-- POS Pie Chart -->
+    <div class="bg-white rounded-xl shadow p-4">
+        <h3 class="text-lg font-semibold text-blue-700 mb-4 flex items-center">
+            <i class="fas fa-store mr-2 text-blue-500"></i> POS Top 5 Products
+        </h3>
+        <canvas id="posPieChart" class="w-full max-w-xs mx-auto h-64"></canvas>
+    </div>
+
+    <!-- Online Pie Chart -->
+    <div class="bg-white rounded-xl shadow p-4">
+        <h3 class="text-lg font-semibold text-green-700 mb-4 flex items-center">
+            <i class="fas fa-globe mr-2 text-green-500"></i> Online Top 5 Products
+        </h3>
+        <canvas id="onlinePieChart" class="w-full max-w-xs mx-auto h-64"></canvas>
+    </div>
+</div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <div class="card bg-white rounded-lg p-6">
                     <h2 class="text-lg font-medium text-gray-900 mb-4">{% trans "POS Transactions" %}</h2>
@@ -259,49 +283,34 @@
                     </ul>
                 </div>
             </div>
+            
+
     </div>
     
 
     <!-- ✅ POS Report Tab -->
     <div id="pos-report" class="tab-content hidden">
 
-        <h2 class="text-xl font-semibold mb-4">{% trans "Top-Selling POS Products" %}</h2>
-<div class="overflow-x-auto mb-8">
-    <table class="min-w-full bg-white rounded shadow">
-        <thead class="bg-gray-100">
-            <tr>
-                <th class="px-4 py-2 text-left">{% trans "Product" %}</th>
-                <th class="px-4 py-2 text-left">{% trans "Category" %}</th>
-                <th class="px-4 py-2 text-left">{% trans "Qty Sold" %}</th>
-                <th class="px-4 py-2 text-left">{% trans "Revenue" %}</th>
-                <th class="px-4 py-2 text-left">{% trans "Margin" %}</th>
-            </tr>
-        </thead>
-        <tbody>
+    <div class="bg-white p-6 rounded-lg shadow">
+        <h3 class="text-lg font-semibold mb-4 text-blue-600 flex items-center">
+            <i class="fas fa-chart-bar mr-2"></i> POS Top-Selling Products
+        </h3>
+        <ul class="space-y-3">
             {% for product in top_pos_products %}
-                <tr class="border-b">
-                    <td class="px-4 py-2">{{ product.item__item_name }}</td>
-                    <td class="px-4 py-2">{{ product.category_name|default:"-" }}</td>
-                    <td class="px-4 py-2">{{ product.total_qty }}</td>
-                    <td class="px-4 py-2">{{ product.total_revenue }} {% trans "Ks" %}</td>
-                    <td class="px-4 py-2">
-                        {% if product.margin != "-" %}
-                            {{ product.margin }}%
-                        {% else %}
-                            -
-                        {% endif %}
-                    </td>
-                </tr>
-            {% empty %}
-                <tr>
-                    <td colspan="5" class="text-center py-4 text-gray-500">
-                        {% trans "No products found." %}
-                    </td>
-                </tr>
+            <li class="flex justify-between items-center border-b pb-2">
+                <div>
+                    <div class="font-semibold">{{ product.item__item_name }}</div>
+                    <div class="text-sm text-gray-500">{{ product.category_name }}</div>
+                </div>
+                <div class="text-right">
+                    <div class="text-blue-600 font-bold">{{ product.total_qty }} pcs</div>
+                    <div class="text-sm text-green-600">{{ product.total_revenue }} Ks</div>
+                    <div class="text-sm text-yellow-600">Margin: {{ product.margin }}%</div>
+                </div>
+            </li>
             {% endfor %}
-        </tbody>
-    </table>
-</div>
+        </ul>
+    </div>
         <h2 class="text-xl font-semibold mb-4">{% trans "POS Orders (All)" %}</h2>
 
         <div class="space-y-4">
@@ -345,43 +354,27 @@
     <div id="online-report" class="tab-content hidden">
 
 
-    <h2 class="text-xl font-semibold mb-4">{% trans "Top-Selling Online Products" %}</h2>
-<div class="overflow-x-auto">
-    <table class="min-w-full bg-white rounded shadow">
-        <thead class="bg-gray-100">
-            <tr>
-                <th class="px-4 py-2 text-left">{% trans "Product" %}</th>
-                <th class="px-4 py-2 text-left">{% trans "Category" %}</th>
-                <th class="px-4 py-2 text-left">{% trans "Qty Sold" %}</th>
-                <th class="px-4 py-2 text-left">{% trans "Revenue" %}</th>
-                <th class="px-4 py-2 text-left">{% trans "Margin" %}</th>
-            </tr>
-        </thead>
-        <tbody>
+    <!-- Online Top Selling Chart -->
+    <div class="bg-white p-6 rounded-lg shadow">
+        <h3 class="text-lg font-semibold mb-4 text-green-600 flex items-center">
+            <i class="fas fa-chart-line mr-2"></i> Online Top-Selling Products
+        </h3>
+        <ul class="space-y-3">
             {% for product in top_online_products %}
-                <tr class="border-b">
-                    <td class="px-4 py-2">{{ product.item__item_name }}</td>
-                    <td class="px-4 py-2">{{ product.category_name|default:"-" }}</td>
-                    <td class="px-4 py-2">{{ product.total_qty }}</td>
-                    <td class="px-4 py-2">{{ product.total_revenue }} {% trans "Ks" %}</td>
-                    <td class="px-4 py-2">
-                        {% if product.margin != "-" %}
-                            {{ product.margin }}%
-                        {% else %}
-                            -
-                        {% endif %}
-                    </td>
-                </tr>
-            {% empty %}
-                <tr>
-                    <td colspan="5" class="text-center py-4 text-gray-500">
-                        {% trans "No products found." %}
-                    </td>
-                </tr>
+            <li class="flex justify-between items-center border-b pb-2">
+                <div>
+                    <div class="font-semibold">{{ product.item__item_name }}</div>
+                    <div class="text-sm text-gray-500">{{ product.category_name }}</div>
+                </div>
+                <div class="text-right">
+                    <div class="text-green-600 font-bold">{{ product.total_qty }} pcs</div>
+                    <div class="text-sm text-blue-600">{{ product.total_revenue }} Ks</div>
+                    <div class="text-sm text-yellow-600">Margin: {{ product.margin }}%</div>
+                </div>
+            </li>
             {% endfor %}
-        </tbody>
-    </table>
-</div>
+        </ul>
+    </div>
         <h2 class="text-xl font-semibold mb-4">{% trans "Online Orders (All)" %}</h2>
             <!-- Report Filter -->
     <form method="get" class="mb-6 flex flex-wrap items-center space-x-4">
@@ -462,5 +455,65 @@
         });
     });
 </script>
+<script>
+    const posLabels = {{ pos_chart_labels|safe }};
+    const posData = {{ pos_chart_data|safe }};
+    const onlineLabels = {{ online_chart_labels|safe }};
+    const onlineData = {{ online_chart_data|safe }};
+
+    const posColors = ['#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe', '#1e3a8a'];
+    const onlineColors = ['#22c55e', '#4ade80', '#86efac', '#bbf7d0', '#166534'];
+
+    // POS Chart
+    new Chart(document.getElementById('posPieChart'), {
+        type: 'pie',
+        data: {
+            labels: posLabels,
+            datasets: [{
+                label: 'POS Top Products',
+                data: posData,
+                backgroundColor: posColors,
+                borderColor: '#fff',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom' },
+                title: { display: true, text: 'POS Sales Quantity (Top 5)' }
+            }
+        }
+    });
+
+    // Online Chart
+    new Chart(document.getElementById('onlinePieChart'), {
+        type: 'pie',
+        data: {
+            labels: onlineLabels,
+            datasets: [{
+                label: 'Online Top Products',
+                data: onlineData,
+                backgroundColor: onlineColors,
+                borderColor: '#fff',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom' },
+                title: { display: true, text: 'Online Sales Quantity (Top 5)' }
+            }
+        }
+    });
+</script>
 </body>
 </html>
+
+
+
+
+
+
+

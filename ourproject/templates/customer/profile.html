@@ -37,9 +37,9 @@
                 <a href="{% url 'medicine_list' %}" class="sidebar-link block px-4 py-2 rounded transition">
                     <i class="fas fa-pills mr-2"></i> {% trans "Medicine" %}
                 </a>
-        <a href="{% url 'customer_profilereal' %}" class="sidebar-link block px-4 py-2 rounded transition">
-            <i class="fas fa-user mr-2"></i> {% trans "My Profile" %}
-        </a>
+                <a href="{% url 'customer_profilereal' %}" class="sidebar-link block px-4 py-2 rounded transition">
+                    <i class="fas fa-user mr-2"></i> {% trans "My Profile" %}
+                </a>
                 <a href="{% url 'customer_profile' %}" class="sidebar-link active block px-4 py-2 rounded transition">
                     <i class="fas fa-history mr-2"></i> {% trans "Purchase History" %}
                 </a>
@@ -53,7 +53,7 @@
         <main class="flex-1 lg:ml-64 p-4 lg:p-8">
             <!-- Header -->
             <div class="flex justify-between items-center mb-6">
-                <h1 class="text-2xl font-bold text-gray-800">{% trans "Purchase History" %}</h1>
+                <h1 class="text-2xl font-bold text-gray-800">Your Profile</h1>
                 <div class="flex items-center space-x-4">
                     <!-- Language Switch -->
                     <div class="flex space-x-2">
@@ -102,62 +102,28 @@
                 </div>
             {% endif %}
 
-            <!-- Purchase History Content -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <h2 class="text-xl font-bold mb-6 flex items-center">
-                    <i class="fas fa-history text-blue-500 mr-3"></i>
-                    {% trans "My Purchase History" %}
-                </h2>
 
-                {% if sales %}
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm text-left text-gray-500">
-                            <thead class="text-xs text-gray-700 uppercase bg-gray-50">
-                                <tr>
-                                    <th scope="col" class="px-6 py-3">{% trans "Invoice No" %}</th>
-                                    <th scope="col" class="px-6 py-3">{% trans "Total" %}</th>
-                                    <th scope="col" class="px-6 py-3">{% trans "Date" %}</th>
-                                    <th scope="col" class="px-6 py-3">{% trans "Items" %}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for sale in sales %}
-                                <tr class="bg-white border-b hover:bg-gray-50">
-                                    <td class="px-6 py-4 font-medium text-gray-900">
-                                        <i class="fas fa-file-invoice mr-2 text-blue-500"></i>
-                                        {{ sale.invoice_no }}
-                                    </td>
-                                    <td class="px-6 py-4">{{ sale.final_amount }} {% trans "Ks" %}</td>
-                                    <td class="px-6 py-4">{{ sale.created_date }}</td>
-                                    <td class="px-6 py-4">
-                                        <ul class="list-disc pl-5">
-                                            {% for item in sale.saleitem_set.all %}
-                                            <li class="mb-1">
-                                                {{ item.item.item_name }} – 
-                                                {{ item.quantity }} {% trans "pcs" %} – 
-                                                {{ item.price }} {% trans "Ks" %}
-                                            </li>
-                                            {% endfor %}
-                                        </ul>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
-                    <div class="text-center py-12">
-                        <div class="text-gray-400 text-5xl mb-4">
-                            <i class="fas fa-box-open"></i>
-                        </div>
-                        <h4 class="text-lg font-medium text-gray-500 mb-2">{% trans "No purchases yet." %}</h4>
-                        <p class="text-gray-400 mb-4">{% trans "Your purchase history will appear here once you make orders." %}</p>
-                        <a href="{% url 'medicine_list' %}" class="text-blue-600 hover:underline font-medium">
-                            <i class="fas fa-shopping-cart mr-2"></i>{% trans "Shop Now" %}
-                        </a>
-                    </div>
-                {% endif %}
-            </div>
+
+<div class="max-w-xl mx-auto mt-10 bg-white p-6 rounded shadow">
+    <h2 class="text-2xl font-bold mb-4">👤 Customer Profile</h2>
+    <div class="space-y-2 text-gray-800">
+        <p><strong>Username:</strong> {{ profile.user.username }}</p>
+        <p><strong>Email:</strong> {{ profile.user.email }}</p>
+        <p><strong>Phone:</strong> {{ profile.phone }}</p>
+        <p><strong>Address:</strong> {{ profile.address }}</p>
+        <p><strong>Gender:</strong> {{ profile.gender|title }}</p>
+        <p><strong>Date of Birth:</strong> {{ profile.date_of_birth }}</p>
+    </div>
+    <div class="mt-6">
+        <a href="{% url 'customer_dashboard' %}" class="text-blue-500 hover:underline">
+            ← Back to Dashboard
+        </a>
+    </div>
+</div>
+
+
+
+
         </main>
     </div>
 
