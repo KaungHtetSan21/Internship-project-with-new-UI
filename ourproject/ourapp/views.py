@@ -73,7 +73,7 @@ def customer_register(request):
                     user=user,
                     role='customer',
                     phone=form.cleaned_data['phone'],
-                    email=form.cleaned_data.get('address'),
+                    # email=form.cleaned_data.get('email'),
                     address=form.cleaned_data.get('address'),
                     gender=form.cleaned_data.get('gender'),
                     date_of_birth=form.cleaned_data.get('date_of_birth')
@@ -91,6 +91,8 @@ def customer_register(request):
         form = CustomerRegisterForm()
 
     return render(request, 'register.html', {'form': form})
+
+
 
 @csrf_exempt
 def register_customer_ajax(request):
@@ -952,10 +954,16 @@ def delete_supplier(request, pk):
     # If not POST, show the confirmation
     return redirect('purchaseorder_view')
 
+# ✅ Update this function to block low stock item for online cart
 @login_required
 def add_to_cart(request, item_id):
     item = get_object_or_404(Item, id=item_id)
     cart, created = Cart.objects.get_or_create(user=request.user)
+
+    # ✅ Block if item_quantity is zero or below
+    if item.item_quantity <= 0:
+        messages.error(request, f"{item.item_name} is out of stock.")
+        return redirect('medicine_list')
 
     cart_product, created = CartProduct.objects.get_or_create(
         cart=cart,
@@ -963,6 +971,7 @@ def add_to_cart(request, item_id):
         defaults={'qty': 0, 'price': 0}
     )
 
+    # ✅ If limited stock, don't allow more than max_quantity
     if item.is_limited and (cart_product.qty + 1 > item.max_quantity):
         messages.warning(request, f"{item.item_name} သည် {item.max_quantity} ခုထက် များ၍မရပါ။")
         return redirect('medicine_list')
@@ -975,12 +984,15 @@ def add_to_cart(request, item_id):
     cart.refresh_from_db()
     return redirect('medicine_list')
 
-
-@login_required
+# ✅ Same logic added in increase_quantity view
 def increase_quantity(request, item_id):
     cart = get_object_or_404(Cart, user=request.user)
     item = get_object_or_404(Item, id=item_id)
     cart_product = get_object_or_404(CartProduct, cart=cart, item=item)
+
+    if item.item_quantity <= 0:
+        messages.error(request, f"{item.item_name} is out of stock.")
+        return redirect('medicine_list')
 
     if item.is_limited and cart_product.qty + 1 > item.max_quantity:
         messages.warning(request, f"{item.item_name} သည် {item.max_quantity} ထက် များလွန်းပါသည်။")
@@ -1219,6 +1231,24 @@ def customer_profile(request):
         'profile': profile
     })
 
+@login_required
+def edit_profile(request):
+    user = request.user
+    profile = user.userprofile
+
+    if request.method == 'POST':
+        user.first_name = request.POST.get('first_name')
+        user.last_name = request.POST.get('last_name')
+        user.email = request.POST.get('email')
+        profile.phone = request.POST.get('phone')
+        profile.address = request.POST.get('address')
+        profile.gender = request.POST.get('gender')
+        profile.date_of_birth = request.POST.get('date_of_birth')
+
+        user.save()
+        profile.save()
+        messages.success(request, "Profile updated successfully.")
+        return redirect('customer_profilereal')
 
 @login_required
 def customer_profile_view(request):

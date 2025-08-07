@@ -20,7 +20,7 @@ class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     role = models.CharField(max_length=50, choices=ROLE_CHOICES)
     phone = models.CharField(max_length=20, blank=True, null=True)
-    email = models.EmailField( blank=True, null=True)
+    # email = models.EmailField( blank=True, null=True)
     address = models.CharField(max_length=255, blank=True, null=True)
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES, blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
@@ -222,3 +222,16 @@ class Chatbot(models.Model):
     questions = models.TextField(blank=True, null=True, verbose_name=_("Questions"))
     answers = models.TextField(blank=True, null=True, verbose_name=_("Answers"))
     timeline = models.DateTimeField(auto_now_add=True, blank=True, null=True, verbose_name=_("Timestamp"))
+
+######## Create OTP Model
+import random
+from django.utils import timezone
+from datetime import timedelta
+
+class EmailOTP(models.Model):
+    email = models.EmailField()
+    otp = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def is_expired(self):
+        return timezone.now() > self.created_at + timedelta(minutes=5)

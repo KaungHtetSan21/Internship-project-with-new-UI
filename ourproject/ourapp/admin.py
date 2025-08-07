@@ -37,9 +37,13 @@ admin.site.register(User, CustomUserAdmin)
 # Optional: view UserProfile as standalone
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'role', 'phone', 'address', 'gender', 'date_of_birth')
+    list_display = ('user', 'get_email','role', 'phone', 'address', 'gender', 'date_of_birth')
     list_filter = ('role',)
-    search_fields = ('user__username', 'role')
+    search_fields = ('user__username', 'user__email','role')
+    def get_email(self, obj):
+        return obj.user.email
+    get_email.short_description = 'Email'
+    
 
 
 
