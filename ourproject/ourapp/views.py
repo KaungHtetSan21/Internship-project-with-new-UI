@@ -46,6 +46,11 @@ def base(request):
                }
     return render(request,'base.html',context)
 
+import random
+from django.utils import timezone
+from django.core.mail import send_mail
+from .models import EmailOTP
+
 def customer_register(request):
     # ✅ Already logged in user များကို register ခွင့်မပေးဘူး
     if request.user.is_authenticated:
@@ -57,34 +62,49 @@ def customer_register(request):
                 messages.error(request, "သင်သည် customer မဟုတ်ပါ။")
                 return redirect('login')
         except UserProfile.DoesNotExist:
-            pass  # Profile မရှိသေးဆိုလည်း form တင်ပေးမယ်
+            pass
 
     if request.method == 'POST':
         form = CustomerRegisterForm(request.POST)
         if form.is_valid():
-            # ✅ User create
-            user = form.save(commit=False)
-            user.set_password(form.cleaned_data['password'])
-            user.save()
+            email = form.cleaned_data['email']
 
-            # ✅ UserProfile already exists check
-            if not UserProfile.objects.filter(user=user).exists():
-                UserProfile.objects.create(
-                    user=user,
-                    role='customer',
-                    phone=form.cleaned_data['phone'],
-                    # email=form.cleaned_data.get('email'),
-                    address=form.cleaned_data.get('address'),
-                    gender=form.cleaned_data.get('gender'),
-                    date_of_birth=form.cleaned_data.get('date_of_birth')
-                )
-            else:
-                messages.warning(request, "UserProfile already exists for this user.")
+            # ✅ Session ထဲသိမ်း
+            request.session['otp_email'] = email
+            request.session['reg_data'] = {
+                'username': form.cleaned_data['username'],
+                'email': email,
+                'password': form.cleaned_data['password'],
+                'first_name': form.cleaned_data['first_name'],
+                'last_name': form.cleaned_data['last_name'],
+                'phone': form.cleaned_data['phone'],
+                'address': form.cleaned_data.get('address'),
+                'gender': form.cleaned_data.get('gender'),
+                'date_of_birth': str(form.cleaned_data.get('date_of_birth')),
+                'role': 'customer',
+            }
 
-            # ✅ Login
-            login(request, user)
-            messages.success(request, "Account created and logged in successfully.")
-            return redirect('customer_dashboard')
+            # ✅ OTP generate
+            otp = f"{random.randint(100000, 999999)}"
+
+            # ✅ OTP တည်ဆောက်/ပြင်
+            EmailOTP.objects.update_or_create(
+                email=email,
+                defaults={'otp': otp, 'created_at': timezone.now()}
+            )
+
+            # ✅ Email ပေးပို့
+            send_mail(
+                subject="Your OTP for Pharmacy Registration",
+                message=f"Your OTP is: {otp}",
+                from_email="khtetsan399@gmail.com",  # ဒီမှာ သင့် email ပြောင်းဖို့လိုတယ်
+                recipient_list=[email],
+                fail_silently=False,
+            )
+
+            messages.info(request, "An OTP has been sent to your email. Please verify.")
+            return redirect('verify_registration_otp')  # ✅ make sure you have this URL name
+
         else:
             messages.error(request, "Form is invalid. Please check your inputs.")
     else:
@@ -92,6 +112,78 @@ def customer_register(request):
 
     return render(request, 'register.html', {'form': form})
 
+
+
+from django.contrib.auth.models import User
+from django.contrib.auth import login
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.utils import timezone
+from .models import EmailOTP, UserProfile
+import datetime
+
+def verify_registration_otp(request):
+    email = request.session.get('otp_email')
+    reg_data = request.session.get('reg_data')
+
+    if not email or not reg_data:
+        messages.error(request, "Session expired. Please register again.")
+        return redirect('customer_register')
+
+    if request.method == 'POST':
+        otp_input = request.POST.get('otp')
+
+        try:
+            otp_record = EmailOTP.objects.get(email=email)
+
+            if otp_record.otp == otp_input and not otp_record.is_expired():
+                # ✅ Optional Check: avoid duplicate usernames/emails
+                if User.objects.filter(username=reg_data['username']).exists():
+                    messages.error(request, "Username already taken.")
+                    return redirect('customer_register')
+
+                if User.objects.filter(email=reg_data['email']).exists():
+                    messages.error(request, "Email already registered.")
+                    return redirect('customer_register')
+
+                # ✅ Create user
+                user = User.objects.create_user(
+                    username=reg_data['username'],
+                    email=reg_data['email'],
+                    password=reg_data['password'],
+                    first_name=reg_data['first_name'],
+                    last_name=reg_data['last_name']
+                )
+
+                # ✅ Create UserProfile
+                UserProfile.objects.create(
+                    user=user,
+                    role=reg_data['role'],
+                    phone=reg_data['phone'],
+                    address=reg_data.get('address'),
+                    gender=reg_data.get('gender'),
+                    date_of_birth=reg_data.get('date_of_birth') or None
+                )
+
+                # ✅ Cleanup session + login
+                del request.session['otp_email']
+                del request.session['reg_data']
+                otp_record.delete()
+
+                login(request, user)
+                messages.success(request, "Account verified and created successfully.")
+                return redirect('customer_dashboard')
+
+            else:
+                messages.error(request, "❌ Invalid or expired OTP.")
+
+        except EmailOTP.DoesNotExist:
+            messages.error(request, "❌ OTP not found. Please re-register.")
+            return redirect('customer_register')
+
+    return render(request, 'verify_registration_otp.html', {
+        'email': email
+    })
 
 
 @csrf_exempt
@@ -121,6 +213,158 @@ def register_customer_ajax(request):
 
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
+from django.core.mail import send_mail, BadHeaderError
+from smtplib import SMTPException
+import socket
+import random
+from django.utils import timezone
+from django.contrib import messages
+from django.shortcuts import render, redirect
+from django.contrib.auth.models import User
+from .models import EmailOTP
+
+def forgot_password_request(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+
+        # ✅ Email check
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            messages.error(request, "This email is not registered.")
+            return redirect('forgot_password')
+
+        # ✅ Generate OTP
+        otp = f"{random.randint(100000, 999999)}"
+
+        # ✅ Save OTP to DB
+        EmailOTP.objects.update_or_create(
+            email=email,
+            defaults={'otp': otp, 'created_at': timezone.now()}
+        )
+
+        # ✅ Save to session
+        request.session['reset_email'] = email
+
+        # ✅ Send Email with network error handling
+        try:
+            send_mail(
+                subject="Your OTP for Password Reset",
+                message=f"Your OTP is: {otp}",
+                from_email="khtetsan399@gmail.com",
+                recipient_list=[email],
+                fail_silently=False,
+            )
+            messages.success(request, "An OTP has been sent to your email.")
+            return redirect('verify_reset_otp')
+
+        except (BadHeaderError, SMTPException, socket.error):
+            messages.error(request, "⚠ Check your network connection and try again.")
+            return redirect('forgot_password')
+
+    # ✅ GET request → Show form
+    return render(request, 'auth/forgot_password.html')
+
+from django.contrib.auth.models import User
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from .models import EmailOTP
+from django.utils import timezone
+
+def verify_reset_otp(request):
+    email = request.session.get('reset_email')
+
+    if not email:
+        messages.error(request, "Session expired. Please start again.")
+        return redirect('forgot_password')
+
+    if request.method == 'POST':
+        otp_input = request.POST.get('otp')
+
+        try:
+            otp_record = EmailOTP.objects.get(email=email)
+
+            if otp_record.otp == otp_input and not otp_record.is_expired():
+                # OTP valid => allow password reset
+                request.session['otp_verified'] = True
+                return redirect('reset_password')
+
+            messages.error(request, "Invalid or expired OTP.")
+        except EmailOTP.DoesNotExist:
+            messages.error(request, "OTP not found. Please restart the process.")
+            return redirect('forgot_password')
+
+    return render(request, 'auth/verify_reset_otp.html', {'email': email})
+
+from django.contrib.auth.models import User
+from django.contrib import messages
+from django.shortcuts import render, redirect
+from django.contrib.auth.hashers import make_password
+from .forms import SetNewPasswordForm
+
+def set_new_password(request):
+    email = request.session.get('reset_email')
+    if not email:
+        messages.error(request, "Session expired. Please try again.")
+        return redirect('forget_password')  # redirect to step1
+
+    if request.method == 'POST':
+        form = SetNewPasswordForm(request.POST)
+        if form.is_valid():
+            new_password = form.cleaned_data['new_password']
+            try:
+                user = User.objects.get(email=email)
+                user.password = make_password(new_password)
+                user.save()
+
+                # ✅ Clean session
+                del request.session['reset_email']
+                messages.success(request, "Your password has been reset successfully.")
+                return redirect('login')
+            except User.DoesNotExist:
+                messages.error(request, "User not found.")
+                return redirect('forget_password')
+    else:
+        form = SetNewPasswordForm()
+
+    return render(request, 'auth/set_new_password.html', {'form': form})
+
+from django.contrib.auth.models import User
+from django.contrib.auth import update_session_auth_hash
+
+def reset_password_view(request):
+    email = request.session.get('reset_email')
+
+    if not email:
+        messages.error(request, "Session expired.")
+        return redirect('forgot_password')
+
+    if request.method == 'POST':
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+
+        if new_password != confirm_password:
+            messages.error(request, "Passwords do not match.")
+            return redirect('reset_password')
+
+        try:
+            user = User.objects.get(email=email)
+            user.set_password(new_password)
+            user.save()
+
+            # optional: keep the user logged in
+            update_session_auth_hash(request, user)
+
+            # clear session
+            del request.session['reset_email']
+            messages.success(request, "Password reset successful.")
+            return redirect('login')
+
+        except User.DoesNotExist:
+            messages.error(request, "User not found.")
+            return redirect('forgot_password')
+
+    return render(request, 'reset_password.html')
 
 def login_view(request):
     if request.method == 'POST':
@@ -638,93 +882,158 @@ def delete_item(request, item_id):
     return redirect('medicine_diseaseview')  # your template name
 
 
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.core.paginator import Paginator
+from django.utils.dateparse import parse_date
+from django.utils import timezone
+from django.db.models import Q
+from django.db import transaction
+import datetime
+
+# models imported already in your file:
+# from .models import Item, Category, Cart, CartProduct, StockHistory, Supplier, etc.
+
 @login_required
 def inventory_view(request):
+    # Role check
     if request.user.userprofile.role != 'pharmacist':
         messages.error(request, "You do not have permission to access this page.")
         return redirect('login')
 
+    # Query items & compute days_left
     items = Item.objects.all().order_by('-id')
     for item in items:
         if item.exp_date:
-            item.days_left = (item.exp_date - date.today()).days
+            item.days_left = (item.exp_date - datetime.date.today()).days
         else:
             item.days_left = None
-    categories = Category.objects.all()
+
+    # Categories list for modal select
+    categories = Category.objects.all().order_by('name')
 
     # ---------------------- CATEGORY CREATE ----------------------
-    if request.method == 'POST' and 'save_category' in request.POST:
-        name = request.POST.get('category_name')
-        description = request.POST.get('category_description', '')
-        if name:
-            Category.objects.create(name=name, description=description)
-            messages.success(request, "Category added successfully.")
-        else:
-            messages.error(request, "Category name is required.")
-        return redirect('inventory_view')
-
-    # ---------------------- ITEM CREATE OR EDIT ----------------------
-    if request.method == 'POST' and 'save_item' in request.POST:
-        item_id = request.POST.get('item_id')
-        is_edit = bool(item_id)
-
-        try:
-            category = Category.objects.get(id=request.POST.get('category'))
-        except Category.DoesNotExist:
-            messages.error(request, "Invalid category.")
+    if request.method == 'POST':
+        # Create new category
+        if 'save_category' in request.POST and request.POST.get('save_category'):
+            name = request.POST.get('category_name', '').strip()
+            description = request.POST.get('category_description', '').strip()
+            if name:
+                Category.objects.create(name=name, description=description)
+                messages.success(request, "Category added successfully.")
+            else:
+                messages.error(request, "Category name is required.")
             return redirect('inventory_view')
 
-        # Prepare cleaned data
-        data = {
-            'category': category,
-            'item_name': request.POST.get('item_name'),
-            'item_quantity': request.POST.get('item_quantity') or 0,
-            'item_price': request.POST.get('item_price') or 0,
-            'purcharse_price': request.POST.get('purcharse_price') or 0,
-            'item_description': request.POST.get('item_description') or '',
-            'exp_date': parse_date(request.POST.get('exp_date')),
-            'brand_name': request.POST.get('brand_name') or '',
-            'batch_number': request.POST.get('batch_number') or '',
-            'stock_minimum': request.POST.get('stock_minimum') or 10,
-            'is_limited': 'is_limited' in request.POST,
-            'max_quantity': request.POST.get('max_quantity') or 5,
-        }
+        # Update existing category
+        if 'update_category' in request.POST and request.POST.get('update_category'):
+            category_id = request.POST.get('category_id')
+            name = request.POST.get('category_name', '').strip()
+            description = request.POST.get('category_description', '').strip()
+            if not category_id:
+                messages.error(request, "Invalid category.")
+                return redirect('inventory_view')
+            category = get_object_or_404(Category, id=category_id)
+            if name:
+                category.name = name
+                category.description = description
+                category.save()
+                messages.success(request, "Category updated successfully.")
+            else:
+                messages.error(request, "Category name is required.")
+            return redirect('inventory_view')
 
-        # Get image from FILES
-        item_photo = request.FILES.get('item_photo')
-        if item_photo:
-            data['item_photo'] = item_photo
+        # Delete category (safe: prevent delete if items exist)
+        if 'delete_category' in request.POST and request.POST.get('delete_category'):
+            category_id = request.POST.get('delete_category')
+            category = get_object_or_404(Category, id=category_id)
+            # Prevent deleting category that still has items
+            if Item.objects.filter(category=category).exists():
+                messages.error(request, "Cannot delete category with items. Reassign or delete items first.")
+            else:
+                category.delete()
+                messages.success(request, "Category deleted successfully.")
+            return redirect('inventory_view')
 
-        if is_edit:
-            item = get_object_or_404(Item, id=item_id)
-            for field, value in data.items():
-                setattr(item, field, value)
-            item.save()
-            messages.success(request, "Item updated successfully.")
-        else:
-            if not item_photo:
-                messages.error(request, "Medication image is required.")
+        # ---------------------- ITEM CREATE OR EDIT ----------------------
+        if 'save_item' in request.POST:
+            item_id = request.POST.get('item_id')
+            is_edit = bool(item_id)
+
+            try:
+                category = Category.objects.get(id=request.POST.get('category'))
+            except Category.DoesNotExist:
+                messages.error(request, "Invalid category.")
                 return redirect('inventory_view')
 
-            Item.objects.create(**data)
-            messages.success(request, "Item created successfully.")
+            # Prepare cleaned data
+            data = {
+                'category': category,
+                'item_name': request.POST.get('item_name'),
+                'item_quantity': request.POST.get('item_quantity') or 0,
+                'item_price': request.POST.get('item_price') or 0,
+                'purcharse_price': request.POST.get('purcharse_price') or 0,
+                'item_description': request.POST.get('item_description') or '',
+                'exp_date': parse_date(request.POST.get('exp_date')) if request.POST.get('exp_date') else None,
+                'brand_name': request.POST.get('brand_name') or '',
+                'batch_number': request.POST.get('batch_number') or '',
+                'stock_minimum': request.POST.get('stock_minimum') or 10,
+                'is_limited': 'is_limited' in request.POST,
+                'max_quantity': request.POST.get('max_quantity') or 5,
+            }
 
-        return redirect('inventory_view')
+            # Get image from FILES
+            item_photo = request.FILES.get('item_photo')
+            if item_photo:
+                data['item_photo'] = item_photo
 
-    # ---------------------- ITEM DELETE ----------------------
-    if request.method == 'POST' and 'delete_item' in request.POST:
-        item_id = request.POST.get('delete_item')
-        item = get_object_or_404(Item, id=item_id)
-        item.delete()
-        messages.success(request, "Item deleted successfully.")
-        return redirect('inventory_view')
+            if is_edit:
+                item = get_object_or_404(Item, id=item_id)
+                for field, value in data.items():
+                    setattr(item, field, value)
+                item.save()
+                messages.success(request, "Item updated successfully.")
+            else:
+                if not item_photo:
+                    messages.error(request, "Medication image is required.")
+                    return redirect('inventory_view')
+                Item.objects.create(**data)
+                messages.success(request, "Item created successfully.")
+            return redirect('inventory_view')
 
-    # ---------------------- RENDER PAGE ----------------------
+        # ---------------------- ITEM DELETE ----------------------
+        if 'delete_item' in request.POST:
+            item_id = request.POST.get('delete_item')
+            item = get_object_or_404(Item, id=item_id)
+            item.delete()
+            messages.success(request, "Item deleted successfully.")
+            return redirect('inventory_view')
+
+    # ---------------------- Pagination & other lists (GET render) ----------------------
+    # Low stock
+    low_stock_queryset = Item.objects.filter(item_quantity__lt=10).order_by('item_quantity')
+    low_stock_paginator = Paginator(low_stock_queryset, 5)
+    low_stock_page_number = request.GET.get('low_stock_page')
+    low_stock_items = low_stock_paginator.get_page(low_stock_page_number)
+    low_stock_count = low_stock_queryset.count()
+
+    # Expiring
+    today = datetime.date.today()
+    expiring_queryset = Item.objects.filter(exp_date__lte=today + datetime.timedelta(days=90)).order_by('exp_date')
+    expiring_paginator = Paginator(expiring_queryset, 5)
+    expiring_page_number = request.GET.get('expiring_page')
+    expiring_items = expiring_paginator.get_page(expiring_page_number)
+    expiring_count = expiring_queryset.count()
+
     return render(request, 'inventory.html', {
         'items': items,
         'categories': categories,
+        'low_stock_items': low_stock_items,
+        'low_stock_count': low_stock_count,
+        'low_stock_page_number': low_stock_page_number,
+        'expiring_items': expiring_items,
+        'expiring_count': expiring_count,
     })
-
 
 
 @require_POST
@@ -1257,10 +1566,10 @@ def customer_profile_view(request):
     # ✅ Role check
     if not hasattr(user, 'userprofile') or user.userprofile.role != 'customer':
         messages.error(request, "Only customers can access this page.")
-        return redirect('homeview')
+        return redirect('base')
 
     # ✅ Get purchase history with final amount
-    sales = Sale.objects.filter(user=user).order_by('-created_date')
+    sales = Sale.objects.filter(user=user, status='confirmed').order_by('-created_date')
 
     # စုစုပေါင်းအသုံးစရိတ် (ခေါင်းစဉ်ပြချင်လို့)
     total_spent = sales.aggregate(
@@ -1273,22 +1582,66 @@ def customer_profile_view(request):
     })
 
 
+# @login_required
+# @csrf_exempt
+# def chatbot_view(request):
+#     if request.method == 'POST':
+#         question = request.POST.get('message', '')
+#         print(f"User asked: {question}")
 
-@csrf_exempt
+
+#     client = genai.Client(api_key="AIzaSyAuE0XYFF61K9Po0sJlLDfgvZn6XDVu3D4")
+
+#     response = client.models.generate_content(
+#         model="gemini-2.5-flash",
+#         contents={question} ,
+#     )
+
+#     # print(response.text)
+
+
+#     return JsonResponse({'reply': response.text })
+
+# views.py (update)
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_protect
+# import your genai client as before
+
+@require_POST
+@csrf_protect
 def chatbot_view(request):
-    if request.method == 'POST':
-        question = request.POST.get('message', '')
-        print(f"User asked: {question}")
+    # 1) user auth check (don't redirect)
+    if not request.user.is_authenticated:
+        return JsonResponse({
+            'reply': "You need to register or login first.",
+            'type': 'system',
+            'code': 'unauthenticated'
+        })
 
+    # 2) get message
+    question = request.POST.get('message', '').strip()
+    if not question:
+        return JsonResponse({
+            'reply': "Please enter a question.",
+            'type': 'system',
+            'code': 'empty'
+        })
 
-    client = genai.Client(api_key="AIzaSyAuE0XYFF61K9Po0sJlLDfgvZn6XDVu3D4")
+    # 3) call your AI client (keep same as before)
+    try:
+        client = genai.Client(api_key="AIzaSyAuE0XYFF61K9Po0sJlLDfgvZn6XDVu3D4")  # your key
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents={question},
+        )
+        text = getattr(response, 'text', '') or str(response)
+    except Exception as e:
+        # handle errors gracefully
+        text = "Sorry, something went wrong. Please try again later."
 
-    response = client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents={question} ,
-    )
-
-    # print(response.text)
-
-
-    return JsonResponse({'reply': response.text })
+    return JsonResponse({
+        'reply': text,
+        'type': 'bot',
+        'code': 'ok'
+    })

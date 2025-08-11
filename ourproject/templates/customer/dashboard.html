@@ -343,44 +343,52 @@
     {% endfor %}
 </div>
 
-<div class="chatbot-container">
-    <!-- Floating action button -->
-    <button id="chatbot-button" class="btn btn-primary rounded-circle shadow-lg">
-        <i class="fas fa-comment-dots fa-lg"></i>
-        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="unread-count" style="display: none;">
-            0
-        </span>
-    </button>
-    
-    <!-- Chatbot modal -->
-    <div id="chatbot-modal" class="chatbot-modal">
-        <div class="chatbot-header">
-            <div class="d-flex align-items-center">
-                <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/120c636b-923a-456a-a13a-39844d5d3a4a.png" alt="Pharmastics logo" style="height: 24px; margin-right: 10px;">
-                <h6 class="mb-0">Pharmastics Assistant</h6>
-            </div>
-            <button id="close-chatbot" class="btn btn-sm btn-link text-white">
-                <i class="fas fa-times"></i>
-            </button>
+<!-- chat-widget.html (partial) -->
+<div class="fixed bottom-6 right-6 z-50">
+  <!-- Floating button -->
+  <button id="chatbot-button"
+          class="bg-indigo-600 text-white p-3 rounded-full shadow-lg hover:scale-105 focus:outline-none">
+    <!-- chat icon (inline SVG) -->
+    <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+      <path d="M2 5a2 2 0 012-2h12a2 2 0 012 2v9a2 2 0 01-2 2H7l-5 3V5z"/>
+    </svg>
+  </button>
+
+  <!-- Modal -->
+  <div id="chatbot-modal" class="hidden mt-3 w-80 md:w-96 bg-white rounded-xl shadow-2xl overflow-hidden">
+    <div class="px-4 py-3 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="bg-white/20 rounded-full p-1">
+          <svg class="w-6 h-6" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M2 5a2 2 0 012-2h12a2 2 0 012 2v9a2 2 0 01-2 2H7l-5 3V5z"/>
+          </svg>
         </div>
-        <div class="chatbot-body">
-            <div class="chatbot-messages">
-   
-                 <div class="chatbot-message bot-message">
-                
-                </div> 
-            </div>
-            <div class="Rig chatbot-input">
-                
-                
-                <input type="text" placeholder="Type your message..." name="message" class="form-control" id="chat-input">
-                <button  class="btn btn-primary " id="sendmessagebtn" >
-                    <i class="fas fa-paper-plane"></i>
-                </button>
-                
-            </div>
+        <div>
+          <div class="text-sm font-semibold">Pharmastics Assistant</div>
+          <div class="text-xs opacity-80">Ask about medicines, orders, and more</div>
         </div>
+      </div>
+      <button id="close-chatbot" class="text-white/90 hover:text-white">
+        ✕
+      </button>
     </div>
+
+    <!-- messages -->
+    <div id="chatbot-body" class="p-3 max-h-72 overflow-y-auto space-y-3 bg-gray-50">
+      <!-- messages will be appended here -->
+    </div>
+
+    <!-- input -->
+    <div class="flex items-center gap-2 p-3 border-t">
+      <input id="chat-input" type="text" maxlength="500"
+             class="flex-1 px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-indigo-400"
+             placeholder="Type your message..." />
+      <button id="sendmessagebtn"
+              class="bg-indigo-600 text-white px-3 py-2 rounded-lg hover:bg-indigo-700">
+        Send
+      </button>
+    </div>
+  </div>
 </div>
 
             <!-- Notifications -->
@@ -515,7 +523,7 @@
         });
     </script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script>
+<!-- <script>
 $(document).ready(function () {
     // Toggle chatbot modal
     $('#chatbot-button').on('click', function () {
@@ -592,6 +600,116 @@ $(document).ready(function () {
         const container = $('.chatbot-body');
         container.scrollTop(container[0].scrollHeight);
     }
+});
+</script> -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const btn = document.getElementById('chatbot-button');
+  const modal = document.getElementById('chatbot-modal');
+  const closeBtn = document.getElementById('close-chatbot');
+  const body = document.getElementById('chatbot-body');
+  const input = document.getElementById('chat-input');
+  const sendBtn = document.getElementById('sendmessagebtn');
+
+  // toggle
+  btn.addEventListener('click', () => modal.classList.toggle('hidden'));
+  closeBtn.addEventListener('click', () => modal.classList.add('hidden'));
+
+  // helper: create message bubble safely (text set via textContent)
+  function createBubble(text, who='bot') {
+    const wrap = document.createElement('div');
+    wrap.className = 'flex';
+
+    const bubble = document.createElement('div');
+    bubble.classList.add('px-3','py-2','rounded-lg','max-w-[85%]','shadow-sm');
+
+    if (who === 'user') {
+      wrap.classList.add('justify-end');
+      bubble.classList.add('bg-white','border','border-gray-200','text-gray-800');
+    } else if (who === 'bot') {
+      wrap.classList.add('justify-start');
+      bubble.classList.add('bg-indigo-600','text-white');
+    } else if (who === 'system') {
+      wrap.classList.add('justify-center');
+      bubble.classList.add('bg-yellow-50','text-yellow-800','border','border-yellow-200');
+    }
+
+    // ensure safe text insertion
+    bubble.textContent = text;
+    wrap.appendChild(bubble);
+    return wrap;
+  }
+
+  function appendMessage(text, who='bot') {
+    const el = createBubble(text, who);
+    body.appendChild(el);
+    body.scrollTop = body.scrollHeight;
+  }
+
+  // CSRF token (Django template provides it)
+  function getCsrfToken() {
+    const cookieValue = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
+    return cookieValue ? cookieValue.split('=')[1] : '';
+  }
+
+  function disableInput(state=true) {
+    input.disabled = state;
+    sendBtn.disabled = state;
+    if (state) {
+      input.classList.add('opacity-60','cursor-not-allowed');
+    } else {
+      input.classList.remove('opacity-60','cursor-not-allowed');
+    }
+  }
+
+  // send
+  async function sendMessage() {
+    const msg = input.value.trim();
+    if (!msg) return;
+    // show user bubble
+    appendMessage(msg, 'user');
+    input.value = '';
+
+    try {
+      const res = await fetch("{% url 'chatbot_view' %}", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+          'X-CSRFToken': getCsrfToken()
+        },
+        body: new URLSearchParams({ message: msg })
+      });
+
+      const data = await res.json();
+
+      // handle types
+      if (data.type === 'system' && data.code === 'unauthenticated') {
+        appendMessage(data.reply, 'system');
+        // optionally disable input & show login/register link
+        const actionWrap = document.createElement('div');
+        actionWrap.className = 'flex justify-center mt-2';
+        actionWrap.innerHTML = `
+          <a href="{% url 'login' %}" class="text-sm px-3 py-1 rounded bg-indigo-600 text-white mr-2">Login</a>
+          <a href="{% url 'customer_register' %}" class="text-sm px-3 py-1 rounded border border-indigo-600 text-indigo-600">Register</a>
+        `;
+        body.appendChild(actionWrap);
+        disableInput(true);
+        return;
+      }
+
+      // normal bot reply
+      appendMessage(data.reply, data.type === 'bot' ? 'bot' : 'system');
+
+    } catch (err) {
+      appendMessage('Sorry, something went wrong. Try again later.', 'system');
+      console.error(err);
+    }
+  }
+
+  sendBtn.addEventListener('click', sendMessage);
+  input.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); sendMessage(); }
+  });
 });
 </script>
 </body>

@@ -16,7 +16,13 @@ urlpatterns += i18n_patterns(  # ✅ this enables language-prefixed URLs
     path('', base, name='base'),
     path('login/', login_view, name='login'),
     path('logout/', logout_view, name='logout'),
+    
+    path('forgot_password/', forgot_password_request, name='forgot_password'),
     path('customer_register/', customer_register, name='customer_register'),
+    path('verify-otp/', verify_registration_otp, name='verify_registration_otp'),
+    path('verify_reset_otp/', verify_reset_otp, name='verify_reset_otp'),
+    path('set_new_password/', set_new_password, name='set_new_password'),
+    path('reset_password/', reset_password_view, name='reset_password'),
     path('register_customer_ajax/', register_customer_ajax, name='register_customer_ajax'),
 
     path('admin-dashboard/', admin_dashboard, name='admin_dashboard'),
