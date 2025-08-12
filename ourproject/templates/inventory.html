@@ -388,6 +388,37 @@
                 </tbody>
             </table>
         </div>
+        <!-- Items Pagination -->
+<div class="flex justify-center mt-6">
+    <nav class="inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+        {% if items.has_previous %}
+        <a href="?items_page={{ items.previous_page_number }}"
+           class="relative inline-flex items-center px-3 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 rounded-l-md">
+            Previous
+        </a>
+        {% endif %}
+
+        {% for num in items.paginator.page_range %}
+            {% if items.number == num %}
+            <span class="relative inline-flex items-center px-3 py-2 border border-indigo-500 bg-indigo-50 text-sm font-medium text-indigo-600">
+                {{ num }}
+            </span>
+            {% else %}
+            <a href="?items_page={{ num }}"
+               class="relative inline-flex items-center px-3 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                {{ num }}
+            </a>
+            {% endif %}
+        {% endfor %}
+
+        {% if items.has_next %}
+        <a href="?items_page={{ items.next_page_number }}"
+           class="relative inline-flex items-center px-3 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 rounded-r-md">
+            Next
+        </a>
+        {% endif %}
+    </nav>
+</div>
     </div>
 
     <!-- Categories Section -->
@@ -447,6 +478,37 @@
             </table>
         </div>
     </div>
+    <!-- Categories Pagination -->
+<div class="flex justify-center mt-6">
+    <nav class="inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+        {% if categories.has_previous %}
+        <a href="?categories_page={{ categories.previous_page_number }}"
+           class="relative inline-flex items-center px-3 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 rounded-l-md">
+            Previous
+        </a>
+        {% endif %}
+
+        {% for num in categories.paginator.page_range %}
+            {% if categories.number == num %}
+            <span class="relative inline-flex items-center px-3 py-2 border border-indigo-500 bg-indigo-50 text-sm font-medium text-indigo-600">
+                {{ num }}
+            </span>
+            {% else %}
+            <a href="?categories_page={{ num }}"
+               class="relative inline-flex items-center px-3 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                {{ num }}
+            </a>
+            {% endif %}
+        {% endfor %}
+
+        {% if categories.has_next %}
+        <a href="?categories_page={{ categories.next_page_number }}"
+           class="relative inline-flex items-center px-3 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 rounded-r-md">
+            Next
+        </a>
+        {% endif %}
+    </nav>
+</div>
 </main>    
 
  

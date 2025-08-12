@@ -902,15 +902,25 @@ def inventory_view(request):
         return redirect('login')
 
     # Query items & compute days_left
-    items = Item.objects.all().order_by('-id')
-    for item in items:
+    items_queryset = Item.objects.all().order_by('-id')
+    for item in items_queryset:
         if item.exp_date:
             item.days_left = (item.exp_date - datetime.date.today()).days
         else:
             item.days_left = None
 
-    # Categories list for modal select
-    categories = Category.objects.all().order_by('name')
+    # Categories queryset
+    categories_queryset = Category.objects.all().order_by('name')
+
+    # ---------------------- Pagination for Items ----------------------
+    items_paginator = Paginator(items_queryset, 10)  # 10 items per page
+    items_page_number = request.GET.get('items_page')
+    items = items_paginator.get_page(items_page_number)
+
+    # ---------------------- Pagination for Categories ----------------------
+    categories_paginator = Paginator(categories_queryset, 5)  # 5 categories per page
+    categories_page_number = request.GET.get('categories_page')
+    categories = categories_paginator.get_page(categories_page_number)
 
     # ---------------------- CATEGORY CREATE ----------------------
     if request.method == 'POST':
@@ -1054,6 +1064,26 @@ def send_to_promotion(request):
     return redirect('inventory_view')
 
 
+# @login_required
+# def order_view(request):
+#     if request.user.userprofile.role != 'pharmacist':
+#         messages.error(request, "You do not have permission to access this page.")
+#         return redirect('pharmacist_dashboard')
+
+#     category_id = request.GET.get('cid')
+#     categories = Category.objects.all()
+#     if category_id:
+#         items = Item.objects.filter(category_id=category_id).order_by('-id') 
+#     else:
+#         items = Item.objects.all().order_by('-id') 
+  
+#     context = {
+#         'categories': categories,
+#         'items': items,
+#     }
+#     return render(request, 'POS.html', context)
+
+
 @login_required
 def order_view(request):
     if request.user.userprofile.role != 'pharmacist':
@@ -1061,15 +1091,28 @@ def order_view(request):
         return redirect('pharmacist_dashboard')
 
     category_id = request.GET.get('cid')
+    search_query = request.GET.get('q', '')  # <-- Search box value
+
     categories = Category.objects.all()
+
+    # Base queryset
+    items = Item.objects.all()
+
+    # Category filter
     if category_id:
-        items = Item.objects.filter(category_id=category_id).order_by('-id') 
-    else:
-        items = Item.objects.all().order_by('-id') 
-  
+        items = items.filter(category_id=category_id)
+
+    # Search filter (case-insensitive)
+    if search_query:
+        items = items.filter(item_name__icontains=search_query)
+
+    # Order by newest first
+    items = items.order_by('-id')
+
     context = {
         'categories': categories,
         'items': items,
+        'search_query': search_query,  # For keeping input value in template
     }
     return render(request, 'POS.html', context)
 
@@ -1386,61 +1429,63 @@ def update_quantity(request, item_id):
 
 
 #@login_required
+from django.core.paginator import Paginator
+
 def medicine_list(request):
     user = request.user
     categories = Category.objects.all()
-    # items = Item.objects.all().order_by('-id')
-    # context = {'categories':categories,'items':items}
+
     cid = request.GET.get('cid')
+    search_query = request.GET.get('search', '')
+
+    items = Item.objects.all().order_by('-id')
+
     if cid:
-        items = Item.objects.filter(category_id=cid).order_by('-id')
-    else:
-        items = Item.objects.all().order_by('-id')
+        items = items.filter(category_id=cid)
+
+    if search_query:
+        items = items.filter(item_name__icontains=search_query)
+
+    # ✅ Pagination
+    paginator = Paginator(items, 8)  # တစ်မျက်နှာလျှင် 8 ခု
+    page_number = request.GET.get('page')
+    items = paginator.get_page(page_number)
 
     # ✅ Only customers can access this page
     if not hasattr(user, 'userprofile') or user.userprofile.role != 'customer':
         messages.error(request, "Dear customer, you need register to encourage purchases.")
-        return render(request,'medicine_list.html', {
+        return render(request, 'medicine_list.html', {
             'categories': categories,
             'items': items
         })
-
-
 
     # ✅ Get or create cart
     cart, created = Cart.objects.get_or_create(user=user, defaults={'created_date': timezone.now()})
     cart_products = CartProduct.objects.filter(cart=cart)
 
-
-
-    
     # ✅ Refresh cart total
-    cart.update_total_amount()  # Ensure this includes shipping and tax
+    cart.update_total_amount()
     cart.refresh_from_db()
 
-    # ✅ If POST, handle checkout (place order logic)
+    # ✅ If POST, handle checkout
     if request.method == 'POST' and 'place_order' in request.POST:
         if not cart_products.exists():
             messages.warning(request, "Your cart is empty.")
             return redirect('medicine_list')
 
-        # Calculate total with shipping and tax
         shipping_fee = 1000
         tax = 500
-        total_amount = cart.total_amount + shipping_fee + tax  # Final total with shipping and tax
+        total_amount = cart.total_amount + shipping_fee + tax
 
-        # Create sale
         sale = Sale.objects.create(
             invoice_no=f"INV-{timezone.now().strftime('%Y%m%d%H%M%S')}",
             user=user,
-            total_amount=cart.total_amount,  # Use the final total here
+            total_amount=cart.total_amount,
             final_amount=total_amount
         )
 
-        # Process cart items and update stock
         for cp in cart_products:
             cp.total_price = cp.qty * cp.item.item_price
-
             SaleItem.objects.create(
                 sale=sale,
                 item=cp.item,
@@ -1448,8 +1493,6 @@ def medicine_list(request):
                 price=cp.price
             )
 
-
-        # Clear the cart after checkout
         cart_products.delete()
         cart.total_amount = 0
         cart.save()
@@ -1464,13 +1507,13 @@ def medicine_list(request):
             'sale': sale
         })
 
-    # ✅ GET request: just show page
     return render(request, 'medicine_list.html', {
         'items': items,
-        'categories':categories,
+        'categories': categories,
         'cart': cart,
         'cart_products': cart_products,
-        'total_amount': cart.total_amount + 1000 + 500,  # Pass the total to template
+        'total_amount': cart.total_amount + 1000 + 500,
+        'search_query': search_query,
     })
 
 @login_required
