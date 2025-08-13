@@ -214,7 +214,7 @@ class Notification(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True, verbose_name=_("Created At"))
 
     def __str__(self):
-        return f"To: {self.recipient.username} | {self.message[:50]}"
+        return f"To: {self.recipient.username} | {self.message[:1000]}"
 
 
 class Chatbot(models.Model):

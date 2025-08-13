@@ -1220,21 +1220,27 @@ def search_customer(request):
     return JsonResponse(results, safe=False)
 
 
+@login_required
 def purchaseorder_view(request):
-    # Get all suppliers ordered by name and paginate them
+    if request.user.userprofile.role != 'pharmacist':
+        messages.error(request, "You do not have permission to access this page.")
+        return redirect('login')
+
     supplier_list = Supplier.objects.all().order_by('supplier_name')
-    paginator = Paginator(supplier_list, 10)  # Show 10 suppliers per page
+    paginator = Paginator(supplier_list, 10)
     page_number = request.GET.get('page')
     suppliers = paginator.get_page(page_number)
-    
+
     return render(request, 'purchaseorder.html', {'suppliers': suppliers})
 
-def create_supplier(request):
+
+@login_required
+def create_or_update_supplier(request):
     if request.method == 'POST':
         try:
             supplier_id = request.POST.get('supplier_id')
-            
-            if supplier_id:  # Update existing supplier
+
+            if supplier_id:  # Update
                 supplier = get_object_or_404(Supplier, pk=supplier_id)
                 supplier.supplier_name = request.POST.get('supplier_name')
                 supplier.company = request.POST.get('company')
@@ -1244,8 +1250,8 @@ def create_supplier(request):
                 supplier.address = request.POST.get('address')
                 supplier.status = request.POST.get('status') == 'active'
                 supplier.save()
-                messages.success(request, "Supplier updated successfully.")
-            else:  # Create new supplier
+                messages.success(request, "✅Supplier updated successfully.")
+            else:  # Create
                 Supplier.objects.create(
                     supplier_name=request.POST.get('supplier_name'),
                     company=request.POST.get('company'),
@@ -1253,57 +1259,30 @@ def create_supplier(request):
                     email=request.POST.get('email'),
                     phone=request.POST.get('phone'),
                     address=request.POST.get('address'),
-                    status = request.POST.get('status') == 'active'
+                    status=request.POST.get('status') == 'active'
                 )
-                messages.success(request, "Supplier created successfully.")
-            
-            return redirect('purchaseorder_view')
-            
-        except Exception as e:
-            messages.error(request, f"Error: {str(e)}")
+                messages.success(request, "✅Supplier created successfully.")
+
             return redirect('purchaseorder_view')
 
-    # If not POST, show the form
+        except Exception as e:
+            messages.error(request, f"❌Error: {str(e)}")
+            return redirect('purchaseorder_view')
+
     return redirect('purchaseorder_view')
 
-def edit_supplier(request, pk):
-    supplier = get_object_or_404(Supplier, pk=pk)
-    
-    if request.method == 'POST':
-        try:
-            supplier.supplier_name = request.POST.get('supplier_name')
-            supplier.company = request.POST.get('company')
-            supplier.contact_person = request.POST.get('contact_person')
-            supplier.email = request.POST.get('email')
-            supplier.phone = request.POST.get('phone')
-            supplier.address = request.POST.get('address')
-            supplier.status = request.POST.get('status') == 'active'
-            supplier.save()
-            
-            messages.success(request, "Supplier updated successfully.")
-            return redirect('purchaseorder_view')
-            
-        except Exception as e:
-            messages.error(request, f"Error: {str(e)}")
-            return redirect('purchaseorder_view')
 
-    # If not POST, show the form
-    return redirect('purchaseorder_view')
-
+@login_required
 def delete_supplier(request, pk):
     supplier = get_object_or_404(Supplier, pk=pk)
-    
     if request.method == 'POST':
         try:
-            supplier.delete()
-            messages.success(request, "Supplier deleted successfully.")  
-            return redirect('purchaseorder_view')
-            
-        except Exception as e:
-            messages.error(request, f"Error: {str(e)}")
-            return redirect('purchaseorder_view')
 
-    # If not POST, show the confirmation
+            supplier.delete()
+            messages.success(request, "✅Supplier deleted successfully.")
+        except Exception as e:
+            messages.error(request, f"❌Error: {str(e)}")
+
     return redirect('purchaseorder_view')
 
 # ✅ Update this function to block low stock item for online cart

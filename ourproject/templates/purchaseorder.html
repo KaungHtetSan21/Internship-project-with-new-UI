@@ -215,21 +215,7 @@
     {% else %}
     {{ user.userprofile.role }}  
     {% endif %}
-    <div class="w-full px-4 py-8">
-        <!-- Supplier Header -->
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900">{% trans "Supplier Management" %}</h1>
-            </div>
-            <div class="mt-4 md:mt-0">
-                <button id="add-supplier-btn"
-                    class="flex items-center text-white bg-primary hover:bg-darkblue focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
-                    <i class="fas fa-plus mr-2"></i> {% trans "Add Supplier" %}
-                </button>
-            </div>
-        </div>
-
-        <!-- Display Messages -->
+            <!-- Display Messages -->
         {% if messages %}
         <div class="mb-6">
             {% for message in messages %}
@@ -244,6 +230,17 @@
             {% endfor %}
         </div>
         {% endif %}
+    <div class="w-full px-4 py-8">
+        <!-- Supplier Header -->
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">{% trans "Suppliers" %}</h1>
+        <button onclick="openSupplierModal()" 
+                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow transition">
+            + {% trans "Add Supplier" %}
+        </button>
+    </div>
+
+
 
         <!-- Search and Filter -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -267,197 +264,153 @@
             </div>
         </div>
 
-        <!-- Supplier Table -->
-        <div class="card bg-white rounded-lg overflow-hidden mb-6">
-            <div class="responsive-table">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% trans "Supplier" %}</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% trans "Contact" %}</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% trans "Products" %}</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{% trans "Status" %}</th>
-                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{% trans "Actions" %}</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200" id="supplier-items">
-                        {% for supplier in suppliers %}
-                        <tr class="hover:bg-gray-50" data-status="{% if supplier.is_active %}active{% else %}inactive{% endif %}">
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="flex items-center">
-                                    <div class="flex-shrink-0 h-10 w-10 flex items-center justify-center bg-blue-50 rounded-md">
-                                        <i class="fas fa-truck text-blue-500"></i>
-                                    </div>
-                                    <div class="ml-4">
-                                        <div class="text-sm font-medium text-gray-900">{{ supplier.supplier_name }}</div>
-                                        <div class="text-sm text-gray-500">{% trans "ID" %}: {{ supplier.id }}</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900">{{ supplier.contact_person }}</div>
-                                <div class="text-sm text-gray-500">{{ supplier.phone }}</div>
-                                <div class="text-sm text-gray-500">{{ supplier.email }}</div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900">{{ supplier.products.count }} {% trans "items" %}</div>
-                                <div class="text-xs text-gray-500">{% trans "Last delivery" %}: {{ supplier.last_delivery|date:"Y-m-d"|default:_("Never") }}</div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {% if supplier.is_active %}badge-active{% else %}badge-inactive{% endif %}">
-                                    {% if supplier.is_active %}{% trans "Active" %}{% else %}{% trans "Inactive" %}{% endif %}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <button class="text-blue-600 hover:text-blue-900 mr-3 edit-supplier-btn"
-                                    data-id="{{ supplier.id }}"
-                                    data-name="{{ supplier.supplier_name }}"
-                                    data-company="{{ supplier.company }}"
-                                    data-contact="{{ supplier.contact_person }}"
-                                    data-phone="{{ supplier.phone }}"
-                                    data-email="{{ supplier.email }}"
-                                    data-address="{{ supplier.address }}"
-                                    data-active="{{ supplier.status }}">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="text-red-600 hover:text-red-900 delete-supplier-btn"
-                                    data-id="{{ supplier.id }}">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="5" class="px-6 py-4 text-center text-gray-500">
-                                {% trans "No suppliers found" %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Pagination -->
-        <div class="flex items-center justify-between">
-            <div class="text-sm text-gray-500">
-                {% blocktrans with start=suppliers.start_index end=suppliers.end_index total=suppliers.paginator.count %}
-                Showing {{ start }} to {{ end }} of {{ total }} results
-                {% endblocktrans %}
-            </div>
-            <nav class="flex space-x-2">
-                {% if suppliers.has_previous %}
-                <a href="?page={{ suppliers.previous_page_number }}" class="px-3 py-1 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">{% trans "Previous" %}</a>
-                {% else %}
-                <span class="px-3 py-1 rounded-md border border-gray-300 bg-gray-100 text-sm font-medium text-gray-400 cursor-not-allowed">{% trans "Previous" %}</span>
-                {% endif %}
-
-                {% for i in suppliers.paginator.page_range %}
-                {% if suppliers.number == i %}
-                <span class="px-3 py-1 rounded-md border border-gray-300 bg-white text-sm font-medium text-primary bg-blue-50">{{ i }}</span>
-                {% else %}
-                <a href="?page={{ i }}" class="px-3 py-1 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">{{ i }}</a>
-                {% endif %}
-                {% endfor %}
-
-                {% if suppliers.has_next %}
-                <a href="?page={{ suppliers.next_page_number }}" class="px-3 py-1 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">{% trans "Next" %}</a>
-                {% else %}
-                <span class="px-3 py-1 rounded-md border border-gray-300 bg-gray-100 text-sm font-medium text-gray-400 cursor-not-allowed">{% trans "Next" %}</span>
-                {% endif %}
-            </nav>
-        </div>
-    </div>
-
-    <!-- Add/Edit Supplier Modal -->
-    <div id="supplier-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto">
-            <div class="p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-medium text-gray-900" id="supplier-modal-title">{% trans "Add New Supplier" %}</h3>
-                    <button id="close-supplier-modal" class="text-gray-400 hover:text-gray-500">
-                        <i class="fas fa-times"></i>
+    <!-- Supplier Table -->
+<div class="bg-white shadow-md rounded-lg overflow-hidden">
+    <table class="min-w-full divide-y divide-gray-200 text-sm text-left text-gray-600">
+        <thead class="bg-gray-50">
+            <tr class="text-gray-700 uppercase text-xs tracking-wider">
+                <th class="px-6 py-3">{% trans "Name" %}</th>
+                <th class="px-6 py-3">{% trans "Company" %}</th>
+                <th class="px-6 py-3">{% trans "Contact Person" %}</th>
+                <th class="px-6 py-3">{% trans "Email" %}</th>
+                <th class="px-6 py-3">{% trans "Phone" %}</th>
+                <th class="px-6 py-3">{% trans "Status" %}</th>
+                <th class="px-6 py-3 text-right">{% trans "Actions" %}</th>
+            </tr>
+        </thead>
+        <tbody id="supplier-items" class="divide-y divide-gray-200">
+            {% for supplier in suppliers %}
+            <tr class="hover:bg-gray-50 transition-colors" data-status="{{ supplier.status|yesno:'active,inactive' }}">
+                <td class="px-6 py-4">
+                    <div class="text-sm font-medium text-gray-900">{{ supplier.supplier_name }}</div>
+                </td>
+                <td class="px-6 py-4 text-gray-700">{{ supplier.company }}</td>
+                <td class="px-6 py-4 text-gray-700">{{ supplier.contact_person }}</td>
+                <td class="px-6 py-4 text-gray-700">{{ supplier.email }}</td>
+                <td class="px-6 py-4 text-gray-700">{{ supplier.phone }}</td>
+                <td class="px-6 py-4">
+                    {% if supplier.status %}
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            {% trans "Active" %}
+                        </span>
+                    {% else %}
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            {% trans "Inactive" %}
+                        </span>
+                    {% endif %}
+                </td>
+                <td class="px-6 py-4 text-right space-x-3">
+                    <button onclick="editSupplier({{ supplier.id }}, '{{ supplier.supplier_name }}', '{{ supplier.company }}', '{{ supplier.contact_person }}', '{{ supplier.email }}', '{{ supplier.phone }}', '{{ supplier.address }}', '{{ supplier.status|yesno:'true,false' }}')" 
+                            class="text-blue-600 hover:text-blue-900 font-medium">
+                        {% trans "Edit" %}
                     </button>
-                </div>
-                <form method="POST" id="supplier-form" action="{% url 'create_supplier' %}">
-                    {% csrf_token %}
-                    <input type="hidden" name="supplier_id" id="supplier-id">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1 required-field">{% trans "Supplier Name" %}</label>
-                            <input type="text" name="supplier_name" id="supplier-name" placeholder="{% trans 'Supplier Name' %}" required
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">{% trans "Company" %}</label>
-                            <input type="text" name="company" id="company" placeholder="{% trans 'Company' %}"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">{% trans "Contact Person" %}</label>
-                            <input type="text" name="contact_person" id="contact-person" placeholder="{% trans 'Contact Person' %}"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">{% trans "Email" %}</label>
-                            <input type="email" name="email" id="email" placeholder="{% trans 'Email' %}"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">{% trans "Phone" %}</label>
-                            <input type="text" name="phone" id="phone" placeholder="{% trans 'Phone' %}"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">{% trans "Status" %}</label>
-                            <select name="status" id="status"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
-                                <option value="active">{% trans "Active" %}</option>
-                                <option value="inactive">{% trans "Inactive" %}</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">{% trans "Address" %}</label>
-                        <textarea name="address" id="address" placeholder="{% trans 'Address' %}" rows="3"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"></textarea>
-                    </div>
-                    <div class="flex justify-end space-x-3">
-                        <button type="button" id="cancel-supplier-btn"
-                            class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
-                            {% trans "Cancel" %}
-                        </button>
-                        <button type="submit" id="submit-supplier-btn"
-                            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-darkblue">
-                            {% trans "Save Supplier" %}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Delete Confirmation Modal -->
-    <div id="delete-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg p-6 max-w-sm w-full">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">{% trans "Confirm Deletion" %}</h3>
-            <p class="text-gray-600 mb-6">{% trans "Are you sure you want to delete this supplier? This action cannot be undone." %}</p>
-            <form method="POST" id="delete-form" action="{% url 'delete_supplier' 0 %}">
-                {% csrf_token %}
-                <input type="hidden" name="delete_supplier" id="delete-supplier-id">
-                <div class="flex justify-end space-x-3">
-                    <button type="button" id="cancel-delete"
-                        class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
-                        {% trans "Cancel" %}
-                    </button>
-                    <button type="submit" id="confirm-delete-btn"
-                        class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700">
+                    <button onclick="openDeleteModal('{% url 'delete_supplier' supplier.id %}')" 
+                            class="text-red-600 hover:text-red-900 font-medium">
                         {% trans "Delete" %}
                     </button>
-                </div>
-            </form>
-        </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="px-6 py-4 text-center text-gray-500">
+                    {% trans "No suppliers found." %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+
+
+    <!-- Pagination -->
+    <div class="mt-6 flex justify-center">
+        <nav class="inline-flex rounded-md shadow-sm">
+            {% if suppliers.has_previous %}
+                <a href="?page={{ suppliers.previous_page_number }}" class="px-3 py-2 border border-gray-300 bg-white hover:bg-gray-100">&laquo;</a>
+            {% endif %}
+            {% for num in suppliers.paginator.page_range %}
+                {% if suppliers.number == num %}
+                    <span class="px-3 py-2 border border-blue-500 bg-blue-500 text-white">{{ num }}</span>
+                {% elif num > suppliers.number|add:'-3' and num < suppliers.number|add:'3' %}
+                    <a href="?page={{ num }}" class="px-3 py-2 border border-gray-300 bg-white hover:bg-gray-100">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+            {% if suppliers.has_next %}
+                <a href="?page={{ suppliers.next_page_number }}" class="px-3 py-2 border border-gray-300 bg-white hover:bg-gray-100">&raquo;</a>
+            {% endif %}
+        </nav>
     </div>
+</div>
+
+
+</div>
+
+
+
+
+<div id="supplierModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white w-full max-w-lg rounded-lg shadow-lg p-6">
+        <h2 id="modalTitle" class="text-xl font-semibold mb-4">{% trans "Add Supplier" %}</h2>
+        <form method="POST" action="{% url 'create_or_update_supplier' %}">
+            {% csrf_token %}
+            <input type="hidden" name="supplier_id" id="supplier_id">
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium">{% trans "Name" %}</label>
+                <input type="text" name="supplier_name" id="supplier_name" class="w-full border border-gray-300 rounded p-2">
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium">{% trans "Company" %}</label>
+                <input type="text" name="company" id="company" class="w-full border border-gray-300 rounded p-2">
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium">{% trans "Contact Person" %}</label>
+                <input type="text" name="contact_person" id="contact_person" class="w-full border border-gray-300 rounded p-2">
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium">{% trans "Email" %}</label>
+                <input type="email" name="email" id="email" class="w-full border border-gray-300 rounded p-2">
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium">{% trans "Phone" %}</label>
+                <input type="text" name="phone" id="phone" class="w-full border border-gray-300 rounded p-2">
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium">{% trans "Address" %}</label>
+                <textarea name="address" id="address" class="w-full border border-gray-300 rounded p-2"></textarea>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium">{% trans "Status" %}</label>
+                <select name="status" id="status" class="w-full border border-gray-300 rounded p-2">
+                    <option value="active">{% trans "Active" %}</option>
+                    <option value="inactive">{% trans "Inactive" %}</option>
+                </select>
+            </div>
+
+            <div class="flex justify-end space-x-2">
+                <button type="button" onclick="closeSupplierModal()" class="px-4 py-2 bg-gray-300 rounded">{% trans "Cancel" %}</button>
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">{% trans "Save" %}</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<!-- Delete Modal -->
+<div id="deleteModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white w-full max-w-md rounded-lg shadow-lg p-6">
+        <h2 class="text-lg font-semibold mb-4">{% trans "Delete Supplier" %}</h2>
+        <p class="mb-6">{% trans "Are you sure you want to delete this supplier?" %}</p>
+        <form method="POST" id="deleteForm">
+            {% csrf_token %}
+            <div class="flex justify-end space-x-2">
+                <button type="button" onclick="closeDeleteModal()" class="px-4 py-2 bg-gray-300 rounded">{% trans "Cancel" %}</button>
+                <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded">{% trans "Delete" %}</button>
+            </div>
+        </form>
+    </div>
+</div>
 
     <!-- Footer -->
     <footer class="bg-gray-800 text-white py-8">
@@ -519,57 +472,41 @@
         </div>
     </div>
 
+<script>
+    function openSupplierModal() {
+        document.getElementById('supplierModal').classList.remove('hidden');
+        document.getElementById('modalTitle').innerText = "Add Supplier";
+        document.getElementById('supplier_id').value = "";
+        document.querySelector('form').reset();
+    }
+    function editSupplier(id, name, company, contact, email, phone, address, status) {
+        openSupplierModal();
+        document.getElementById('modalTitle').innerText = "Edit Supplier";
+        document.getElementById('supplier_id').value = id;
+        document.getElementById('supplier_name').value = name;
+        document.getElementById('company').value = company;
+        document.getElementById('contact_person').value = contact;
+        document.getElementById('email').value = email;
+        document.getElementById('phone').value = phone;
+        document.getElementById('address').value = address;
+        document.getElementById('status').value = status === "true" ? "active" : "inactive";
+    }
+    function closeSupplierModal() {
+        document.getElementById('supplierModal').classList.add('hidden');
+    }
+    function openDeleteModal(deleteUrl) {
+        const modal = document.getElementById('deleteModal');
+        const form = document.getElementById('deleteForm');
+        form.action = deleteUrl; 
+        modal.classList.remove('hidden');
+    }
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').classList.add('hidden');
+    }
+</script>
+
+
     <script>
-        // Modal functionality
-        const supplierModal = document.getElementById('supplier-modal');
-        const deleteModal = document.getElementById('delete-modal');
-        const addSupplierBtn = document.getElementById('add-supplier-btn');
-        const closeSupplierModal = document.getElementById('close-supplier-modal');
-        const cancelSupplierBtn = document.getElementById('cancel-supplier-btn');
-        const cancelDelete = document.getElementById('cancel-delete');
-
-        // Add new supplier button click
-        addSupplierBtn.addEventListener('click', () => {
-            document.getElementById('supplier-modal-title').textContent = '{% trans "Add New Supplier" %}';
-            document.getElementById('supplier-form').reset();
-            document.getElementById('supplier-id').value = '';
-            supplierModal.classList.remove('hidden');
-        });
-
-        // Edit supplier buttons
-        document.querySelectorAll('.edit-supplier-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.getElementById('supplier-modal-title').textContent = '{% trans "Edit Supplier" %}';
-                document.getElementById('supplier-id').value = btn.dataset.id;
-                document.getElementById('supplier-name').value = btn.dataset.name;
-                document.getElementById('company').value = btn.dataset.company || '';
-                document.getElementById('contact-person').value = btn.dataset.contact || '';
-                document.getElementById('phone').value = btn.dataset.phone || '';
-                document.getElementById('email').value = btn.dataset.email || '';
-                document.getElementById('address').value = btn.dataset.address || '';
-                document.getElementById('status').value = btn.dataset.active === 'True' ? 'active' : 'inactive';
-
-                // Update form action to edit URL
-                document.getElementById('supplier-form').action = `/suppliers/edit/${btn.dataset.id}/`;
-                
-                supplierModal.classList.remove('hidden');
-            });
-        });
-
-        // Delete supplier buttons
-        document.querySelectorAll('.delete-supplier-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.getElementById('delete-supplier-id').value = btn.dataset.id;
-                // Update form action with the correct supplier ID
-                document.getElementById('delete-form').action = `/suppliers/delete/${btn.dataset.id}/`;
-                deleteModal.classList.remove('hidden');
-            });
-        });
-
-        // Close modals
-        closeSupplierModal.addEventListener('click', () => supplierModal.classList.add('hidden'));
-        cancelSupplierBtn.addEventListener('click', () => supplierModal.classList.add('hidden'));
-        cancelDelete.addEventListener('click', () => deleteModal.classList.add('hidden'));
 
         // Filter functionality
         document.getElementById('search-input').addEventListener('input', filterSuppliers);
@@ -580,11 +517,18 @@
             const statusFilter = document.getElementById('status-filter').value;
 
             document.querySelectorAll('#supplier-items tr').forEach(row => {
-                const name = row.querySelector('td:first-child .text-sm.font-medium').textContent.toLowerCase();
-                const statusMatch = statusFilter === 'all' || row.dataset.status === statusFilter;
+                const nameCell = row.querySelector('td:first-child .text-sm.font-medium');
+                const name = nameCell ? nameCell.textContent.toLowerCase() : '';
+                const rowStatus = row.dataset.status; // active or inactive
+
+                const statusMatch = (statusFilter === 'all') || (rowStatus === statusFilter);
                 const searchMatch = name.includes(searchTerm);
 
-                row.style.display = (statusMatch && searchMatch) ? '' : 'none';
+                if (statusMatch && searchMatch) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
             });
         }
 
