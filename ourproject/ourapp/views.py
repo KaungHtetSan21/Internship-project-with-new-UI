@@ -409,17 +409,133 @@ def admin_dashboard(request):
         return HttpResponseForbidden("Admins only.")
     return render(request, 'admin/dashboard.html')
 
+# @login_required
+# def pharmacist_dashboard_view(request):
+#     if request.user.userprofile.role != 'pharmacist':
+#         return HttpResponseForbidden("Unauthorized")
+
+#     # ✅ POS Orders
+#     pos_orders = Cart.objects.filter(payment_method__in=['cash', 'mobile', 'print'])
+#     pos_total = pos_orders.count()
+#     pos_revenue = pos_orders.aggregate(total=Coalesce(Sum('total_amount'), 0))['total']
+
+#     # ✅ Online Orders (all, for pharmacist to confirm/cancel)
+#     online_orders_queryset = (
+#         Sale.objects
+#         .exclude(user__userprofile__role='pharmacist')
+#         .select_related('user')
+#         .order_by('-created_date')
+#     )
+
+#     paginator = Paginator(online_orders_queryset, 5)
+#     page_number = request.GET.get('page')
+#     online_orders_list = paginator.get_page(page_number)
+
+#     # ✅ Only confirmed orders counted for totals
+#     confirmed_online_orders = online_orders_queryset.filter(status='confirmed')
+#     online_total = confirmed_online_orders.count()
+#     online_revenue = confirmed_online_orders.aggregate(
+#         total=Coalesce(Sum('final_amount'), 0)
+#     )['total']
+
+#     total_orders = pos_total + online_total
+
+#     # ✅ Low Stock
+#     low_stock_queryset = Item.objects.filter(item_quantity__lt=10).order_by('item_quantity')
+#     low_stock_paginator = Paginator(low_stock_queryset, 5)
+#     low_stock_page_number = request.GET.get('low_stock_page')
+#     low_stock_items = low_stock_paginator.get_page(low_stock_page_number)
+#     low_stock_count = low_stock_queryset.count()
+
+#     # ✅ Expiring Items
+#     today = datetime.date.today()
+#     expiring_queryset = Item.objects.filter(exp_date__lte=today + datetime.timedelta(days=90)).order_by('exp_date')
+#     expiring_paginator = Paginator(expiring_queryset, 5)
+#     expiring_page_number = request.GET.get('expiring_page')
+#     expiring_items = expiring_paginator.get_page(expiring_page_number)
+#     expiring_count = expiring_queryset.count()
+
+#     for order in online_orders_list:
+#         if not order.name:
+#             order.name = order.user.username
+
+#     dashboard_stats = [
+#         {
+#             'label': 'Total Orders',
+#             'icon': '💊',
+#             'bg': 'bg-blue-100',
+#             'text': 'text-blue-600',
+#             'value': total_orders
+#         },
+#         {
+#             'label': 'POS Orders',
+#             'icon': '🏷️',
+#             'bg': 'bg-green-100',
+#             'text': 'text-green-600',
+#             'value': pos_total
+#         },
+#         {
+#             'label': 'Online Orders',
+#             'icon': '🌐',
+#             'bg': 'bg-purple-100',
+#             'text': 'text-purple-600',
+#             'value': online_total
+#         },
+#         {
+#             'label': 'POS Revenue',
+#             'icon': '💰',
+#             'bg': 'bg-green-100',
+#             'text': 'text-green-600',
+#             'value': f"{pos_revenue} Ks"
+#         },
+#         {
+#             'label': 'Online Revenue',
+#             'icon': '💳',
+#             'bg': 'bg-yellow-100',
+#             'text': 'text-yellow-600',
+#             'value': f"{online_revenue} Ks"
+#         },
+#         {
+#             'label': 'Low Stock Items',
+#             'icon': '⚠️',
+#             'bg': 'bg-red-100',
+#             'text': 'text-red-600',
+#             'value': low_stock_count
+#         },
+#     ]
+
+#     context = {
+#         'dashboard_stats': dashboard_stats,
+#         'low_stock_items': low_stock_items,
+#         'expiring_items': expiring_items,
+#         'online_orders_list': online_orders_list,
+#         'expiring_count': expiring_count,
+#     }
+
+#     return render(request, 'pharmacist/dashboard.html', context)
+
+
 @login_required
 def pharmacist_dashboard_view(request):
     if request.user.userprofile.role != 'pharmacist':
         return HttpResponseForbidden("Unauthorized")
+
+    # ✅ Keep existing GET params for pagination links
+    qs = request.GET.copy()
+    if 'page' in qs:
+        qs.pop('page')
+    if 'low_stock_page' in qs:
+        qs.pop('low_stock_page')
+    if 'expiring_page' in qs:
+        qs.pop('expiring_page')
+    qs = qs.urlencode()
 
     # ✅ POS Orders
     pos_orders = Cart.objects.filter(payment_method__in=['cash', 'mobile', 'print'])
     pos_total = pos_orders.count()
     pos_revenue = pos_orders.aggregate(total=Coalesce(Sum('total_amount'), 0))['total']
 
-    # ✅ Online Orders (all, for pharmacist to confirm/cancel)
+    # ✅ Online Orders
     online_orders_queryset = (
         Sale.objects
         .exclude(user__userprofile__role='pharmacist')
@@ -510,6 +626,7 @@ def pharmacist_dashboard_view(request):
         'expiring_items': expiring_items,
         'online_orders_list': online_orders_list,
         'expiring_count': expiring_count,
+        'qs': qs,  # ✅ Added for pagination links
     }
 
     return render(request, 'pharmacist/dashboard.html', context)
@@ -894,6 +1011,170 @@ import datetime
 # models imported already in your file:
 # from .models import Item, Category, Cart, CartProduct, StockHistory, Supplier, etc.
 
+# @login_required
+# def inventory_view(request):
+#     # Role check
+#     if request.user.userprofile.role != 'pharmacist':
+#         messages.error(request, "You do not have permission to access this page.")
+#         return redirect('login')
+
+#     # Query items & compute days_left
+#     items_queryset = Item.objects.all().order_by('-id')
+#     for item in items_queryset:
+#         if item.exp_date:
+#             item.days_left = (item.exp_date - datetime.date.today()).days
+#         else:
+#             item.days_left = None
+
+#     # Categories queryset
+#     categories_queryset = Category.objects.all().order_by('name')
+
+#     # ---------------------- Pagination for Items ----------------------
+#     items_paginator = Paginator(items_queryset, 10)  # 10 items per page
+#     items_page_number = request.GET.get('items_page')
+#     items = items_paginator.get_page(items_page_number)
+
+#     # ---------------------- Pagination for Categories ----------------------
+#     categories_paginator = Paginator(categories_queryset, 5)  # 5 categories per page
+#     categories_page_number = request.GET.get('categories_page')
+#     categories = categories_paginator.get_page(categories_page_number)
+
+#     # ---------------------- CATEGORY CREATE ----------------------
+#     if request.method == 'POST':
+#         # Create new category
+#         if 'save_category' in request.POST and request.POST.get('save_category'):
+#             name = request.POST.get('category_name', '').strip()
+#             description = request.POST.get('category_description', '').strip()
+#             if name:
+#                 Category.objects.create(name=name, description=description)
+#                 messages.success(request, "Category added successfully.")
+#             else:
+#                 messages.error(request, "Category name is required.")
+#             return redirect('inventory_view')
+
+#         # Update existing category
+#         if 'update_category' in request.POST and request.POST.get('update_category'):
+#             category_id = request.POST.get('category_id')
+#             name = request.POST.get('category_name', '').strip()
+#             description = request.POST.get('category_description', '').strip()
+#             if not category_id:
+#                 messages.error(request, "Invalid category.")
+#                 return redirect('inventory_view')
+#             category = get_object_or_404(Category, id=category_id)
+#             if name:
+#                 category.name = name
+#                 category.description = description
+#                 category.save()
+#                 messages.success(request, "Category updated successfully.")
+#             else:
+#                 messages.error(request, "Category name is required.")
+#             return redirect('inventory_view')
+
+#         # Delete category (safe: prevent delete if items exist)
+#         if 'delete_category' in request.POST and request.POST.get('delete_category'):
+#             category_id = request.POST.get('delete_category')
+#             category = get_object_or_404(Category, id=category_id)
+#             # Prevent deleting category that still has items
+#             if Item.objects.filter(category=category).exists():
+#                 messages.error(request, "Cannot delete category with items. Reassign or delete items first.")
+#             else:
+#                 category.delete()
+#                 messages.success(request, "Category deleted successfully.")
+#             return redirect('inventory_view')
+
+#         # ---------------------- ITEM CREATE OR EDIT ----------------------
+#         if 'save_item' in request.POST:
+#             item_id = request.POST.get('item_id')
+#             is_edit = bool(item_id)
+
+#             try:
+#                 category = Category.objects.get(id=request.POST.get('category'))
+#             except Category.DoesNotExist:
+#                 messages.error(request, "Invalid category.")
+#                 return redirect('inventory_view')
+
+#             # Prepare cleaned data
+#             data = {
+#                 'category': category,
+#                 'item_name': request.POST.get('item_name'),
+#                 'item_quantity': request.POST.get('item_quantity') or 0,
+#                 'item_price': request.POST.get('item_price') or 0,
+#                 'purcharse_price': request.POST.get('purcharse_price') or 0,
+#                 'item_description': request.POST.get('item_description') or '',
+#                 'exp_date': parse_date(request.POST.get('exp_date')) if request.POST.get('exp_date') else None,
+#                 'brand_name': request.POST.get('brand_name') or '',
+#                 'batch_number': request.POST.get('batch_number') or '',
+#                 'stock_minimum': request.POST.get('stock_minimum') or 10,
+#                 'is_limited': 'is_limited' in request.POST,
+#                 'max_quantity': request.POST.get('max_quantity') or 5,
+#             }
+
+#             # Get image from FILES
+#             item_photo = request.FILES.get('item_photo')
+#             if item_photo:
+#                 data['item_photo'] = item_photo
+
+#             if is_edit:
+#                 item = get_object_or_404(Item, id=item_id)
+#                 for field, value in data.items():
+#                     setattr(item, field, value)
+#                 item.save()
+#                 messages.success(request, "Item updated successfully.")
+#             else:
+#                 if not item_photo:
+#                     messages.error(request, "Medication image is required.")
+#                     return redirect('inventory_view')
+#                 Item.objects.create(**data)
+#                 messages.success(request, "Item created successfully.")
+#             return redirect('inventory_view')
+
+#         # ---------------------- ITEM DELETE ----------------------
+#         if 'delete_item' in request.POST:
+#             item_id = request.POST.get('delete_item')
+#             item = get_object_or_404(Item, id=item_id)
+#             item.delete()
+#             messages.success(request, "Item deleted successfully.")
+#             return redirect('inventory_view')
+
+#     # ---------------------- Pagination & other lists (GET render) ----------------------
+#     # Low stock
+#     low_stock_queryset = Item.objects.filter(item_quantity__lt=10).order_by('item_quantity')
+#     low_stock_paginator = Paginator(low_stock_queryset, 5)
+#     low_stock_page_number = request.GET.get('low_stock_page')
+#     low_stock_items = low_stock_paginator.get_page(low_stock_page_number)
+#     low_stock_count = low_stock_queryset.count()
+
+#     # Expiring
+#     today = datetime.date.today()
+#     expiring_queryset = Item.objects.filter(exp_date__lte=today + datetime.timedelta(days=90)).order_by('exp_date')
+#     expiring_paginator = Paginator(expiring_queryset, 5)
+#     expiring_page_number = request.GET.get('expiring_page')
+#     expiring_items = expiring_paginator.get_page(expiring_page_number)
+#     expiring_count = expiring_queryset.count()
+
+#     return render(request, 'inventory.html', {
+#         'items': items,
+#         'categories': categories,
+#         'low_stock_items': low_stock_items,
+#         'low_stock_count': low_stock_count,
+#         'low_stock_page_number': low_stock_page_number,
+#         'expiring_items': expiring_items,
+#         'expiring_count': expiring_count,
+#     })
+
+
+
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.core.paginator import Paginator
+from django.shortcuts import render, redirect, get_object_or_404
+from django.utils.dateparse import parse_date
+from django.utils import timezone
+import datetime
+
+# models import
+# from .models import Item, Category
+
 @login_required
 def inventory_view(request):
     # Role check
@@ -901,28 +1182,61 @@ def inventory_view(request):
         messages.error(request, "You do not have permission to access this page.")
         return redirect('login')
 
-    # Query items & compute days_left
-    items_queryset = Item.objects.all().order_by('-id')
-    for item in items_queryset:
-        if item.exp_date:
-            item.days_left = (item.exp_date - datetime.date.today()).days
-        else:
-            item.days_left = None
+    # ---------- Filters from GET ----------
+    filter_type = request.GET.get('filter')           # None | 'low' | 'expiring'
+    expiring_days = request.GET.get('days') or 90     # expiring window days
+    try:
+        expiring_days = int(expiring_days)
+        if expiring_days <= 0:
+            expiring_days = 90
+    except ValueError:
+        expiring_days = 90
 
-    # Categories queryset
+    focus_id = request.GET.get('focus_id')            # item id to focus & jump
+    items_page_number = request.GET.get('items_page') # main items page
+    categories_page_number = request.GET.get('categories_page')
+
+    # ---------- Base Querysets ----------
+    # Items (DESC by id)
+    items_queryset = Item.objects.all().order_by('-id')
+    # Apply filter if provided
+    if filter_type == 'low':
+        # same condition with dashboard/widgets
+        items_queryset = items_queryset.filter(item_quantity__lt=10)
+    elif filter_type == 'expiring':
+        today = datetime.date.today()
+        items_queryset = items_queryset.filter(exp_date__lte=today + datetime.timedelta(days=expiring_days))
+
+    # Add days_left attribute for display (optional)
+    for it in items_queryset:
+        it.days_left = (it.exp_date - datetime.date.today()).days if it.exp_date else None
+
+    # Categories queryset (alphabetical)
     categories_queryset = Category.objects.all().order_by('name')
 
-    # ---------------------- Pagination for Items ----------------------
-    items_paginator = Paginator(items_queryset, 10)  # 10 items per page
-    items_page_number = request.GET.get('items_page')
+    # ---------- Pagination: Items ----------
+    per_page = 10
+    items_paginator = Paginator(items_queryset, per_page)
+
+    # If focus_id is provided and the item exists inside CURRENT filtered queryset,
+    # jump to the page that contains it (remember: ordering is '-id')
+    if focus_id:
+        try:
+            f_id = int(focus_id)
+            if items_queryset.filter(id=f_id).exists():
+                # Count how many rows (in current filtered queryset) have id > focus_id (because '-id' order)
+                before_count = items_queryset.filter(id__gt=f_id).count()
+                items_page_number = (before_count // per_page) + 1
+        except (ValueError, TypeError):
+            pass
+
     items = items_paginator.get_page(items_page_number)
 
-    # ---------------------- Pagination for Categories ----------------------
-    categories_paginator = Paginator(categories_queryset, 5)  # 5 categories per page
-    categories_page_number = request.GET.get('categories_page')
+    # ---------- Pagination: Categories ----------
+    categories_paginator = Paginator(categories_queryset, 5)
     categories = categories_paginator.get_page(categories_page_number)
 
-    # ---------------------- CATEGORY CREATE ----------------------
+    # ---------- POST: CATEGORY CRUD ----------
     if request.method == 'POST':
         # Create new category
         if 'save_category' in request.POST and request.POST.get('save_category'):
@@ -940,6 +1254,8 @@ def inventory_view(request):
             category_id = request.POST.get('category_id')
             name = request.POST.get('category_name', '').strip()
             description = request.POST.get('category_description', '').strip()
+
+
             if not category_id:
                 messages.error(request, "Invalid category.")
                 return redirect('inventory_view')
@@ -957,7 +1273,6 @@ def inventory_view(request):
         if 'delete_category' in request.POST and request.POST.get('delete_category'):
             category_id = request.POST.get('delete_category')
             category = get_object_or_404(Category, id=category_id)
-            # Prevent deleting category that still has items
             if Item.objects.filter(category=category).exists():
                 messages.error(request, "Cannot delete category with items. Reassign or delete items first.")
             else:
@@ -965,7 +1280,7 @@ def inventory_view(request):
                 messages.success(request, "Category deleted successfully.")
             return redirect('inventory_view')
 
-        # ---------------------- ITEM CREATE OR EDIT ----------------------
+        # ---------- ITEM CREATE OR EDIT ----------
         if 'save_item' in request.POST:
             item_id = request.POST.get('item_id')
             is_edit = bool(item_id)
@@ -976,7 +1291,6 @@ def inventory_view(request):
                 messages.error(request, "Invalid category.")
                 return redirect('inventory_view')
 
-            # Prepare cleaned data
             data = {
                 'category': category,
                 'item_name': request.POST.get('item_name'),
@@ -992,7 +1306,7 @@ def inventory_view(request):
                 'max_quantity': request.POST.get('max_quantity') or 5,
             }
 
-            # Get image from FILES
+            # file
             item_photo = request.FILES.get('item_photo')
             if item_photo:
                 data['item_photo'] = item_photo
@@ -1011,7 +1325,7 @@ def inventory_view(request):
                 messages.success(request, "Item created successfully.")
             return redirect('inventory_view')
 
-        # ---------------------- ITEM DELETE ----------------------
+        # ---------- ITEM DELETE ----------
         if 'delete_item' in request.POST:
             item_id = request.POST.get('delete_item')
             item = get_object_or_404(Item, id=item_id)
@@ -1019,15 +1333,14 @@ def inventory_view(request):
             messages.success(request, "Item deleted successfully.")
             return redirect('inventory_view')
 
-    # ---------------------- Pagination & other lists (GET render) ----------------------
-    # Low stock
+    # ---------- (Side widgets) Low stock & Expiring lists ----------
     low_stock_queryset = Item.objects.filter(item_quantity__lt=10).order_by('item_quantity')
     low_stock_paginator = Paginator(low_stock_queryset, 5)
     low_stock_page_number = request.GET.get('low_stock_page')
     low_stock_items = low_stock_paginator.get_page(low_stock_page_number)
     low_stock_count = low_stock_queryset.count()
 
-    # Expiring
+
     today = datetime.date.today()
     expiring_queryset = Item.objects.filter(exp_date__lte=today + datetime.timedelta(days=90)).order_by('exp_date')
     expiring_paginator = Paginator(expiring_queryset, 5)
@@ -1035,14 +1348,23 @@ def inventory_view(request):
     expiring_items = expiring_paginator.get_page(expiring_page_number)
     expiring_count = expiring_queryset.count()
 
+    # ---------- Keep querystring for pagination links ----------
+    qd = request.GET.copy()
+    for key in ['items_page', 'categories_page', 'low_stock_page', 'expiring_page']:
+        if key in qd:
+            del qd[key]
+    qs = qd.urlencode()  # e.g. "filter=low&focus_id=123"
+
     return render(request, 'inventory.html', {
         'items': items,
         'categories': categories,
         'low_stock_items': low_stock_items,
         'low_stock_count': low_stock_count,
-        'low_stock_page_number': low_stock_page_number,
         'expiring_items': expiring_items,
         'expiring_count': expiring_count,
+        'filter_type': filter_type,
+        'expiring_days': expiring_days,
+        'qs': qs,  # use this to append to pagination links
     })
 
 

@@ -93,18 +93,20 @@
 
         /* Highlight animation */
         .highlight-row {
-            animation: blink-highlight 2s ease-in-out;
+            animation: flash 1.8s ease-out 1;
         }
+        
         
         tr:target {
-            scroll-margin-top: 80px;
-            animation: blink-highlight 1.5s ease-in-out;
+            outline: 2px solid #2563eb; /* blue-600 */
+            animation: flash 1.8s ease-out 1;
+            scroll-margin-top: 96px; /* sticky header offset */
+        }
+        @keyframes flash {
+            0% { background: #dbeafe; }
+            100% { background: transparent; }
         }
         
-        @keyframes blink-highlight {
-            0% { background-color: #fef9c3; } /* yellow-100 */
-            100% { background-color: transparent; }
-        }
     </style>
 </head>
 <body class="bg-gray-50 flex flex-col min-h-screen">
@@ -388,11 +390,11 @@
                 </tbody>
             </table>
         </div>
-        <!-- Items Pagination -->
+<!-- Items Pagination -->
 <div class="flex justify-center mt-6">
     <nav class="inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
         {% if items.has_previous %}
-        <a href="?items_page={{ items.previous_page_number }}"
+        <a href="?{% if qs %}{{ qs }}&{% endif %}items_page={{ items.previous_page_number }}"
            class="relative inline-flex items-center px-3 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 rounded-l-md">
             Previous
         </a>
@@ -404,7 +406,7 @@
                 {{ num }}
             </span>
             {% else %}
-            <a href="?items_page={{ num }}"
+            <a href="?{% if qs %}{{ qs }}&{% endif %}items_page={{ num }}"
                class="relative inline-flex items-center px-3 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
                 {{ num }}
             </a>
@@ -412,7 +414,7 @@
         {% endfor %}
 
         {% if items.has_next %}
-        <a href="?items_page={{ items.next_page_number }}"
+        <a href="?{% if qs %}{{ qs }}&{% endif %}items_page={{ items.next_page_number }}"
            class="relative inline-flex items-center px-3 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 rounded-r-md">
             Next
         </a>
@@ -479,10 +481,11 @@
         </div>
     </div>
     <!-- Categories Pagination -->
+<!-- Categories Pagination -->
 <div class="flex justify-center mt-6">
     <nav class="inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
         {% if categories.has_previous %}
-        <a href="?categories_page={{ categories.previous_page_number }}"
+        <a href="?{% if qs %}{{ qs }}&{% endif %}categories_page={{ categories.previous_page_number }}"
            class="relative inline-flex items-center px-3 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 rounded-l-md">
             Previous
         </a>
@@ -494,7 +497,7 @@
                 {{ num }}
             </span>
             {% else %}
-            <a href="?categories_page={{ num }}"
+            <a href="?{% if qs %}{{ qs }}&{% endif %}categories_page={{ num }}"
                class="relative inline-flex items-center px-3 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
                 {{ num }}
             </a>
@@ -502,7 +505,7 @@
         {% endfor %}
 
         {% if categories.has_next %}
-        <a href="?categories_page={{ categories.next_page_number }}"
+        <a href="?{% if qs %}{{ qs }}&{% endif %}categories_page={{ categories.next_page_number }}"
            class="relative inline-flex items-center px-3 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 rounded-r-md">
             Next
         </a>
