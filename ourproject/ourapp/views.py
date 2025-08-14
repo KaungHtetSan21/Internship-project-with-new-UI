@@ -819,7 +819,7 @@ def report_view(request):
     if request.user.userprofile.role != 'pharmacist':
         return HttpResponseForbidden("Pharmacists only.")
 
-    filter_type = request.GET.get('filter', 'daily')
+    filter_type = request.GET.get('filter', 'yearly')
     today = now().date()
 
     # ✅ Confirmed Online Orders Filter
