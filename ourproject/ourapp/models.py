@@ -3,6 +3,8 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from django.core.validators import RegexValidator
+
 
 
 class UserProfile(models.Model):
@@ -19,7 +21,17 @@ class UserProfile(models.Model):
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     role = models.CharField(max_length=50, choices=ROLE_CHOICES)
-    phone = models.CharField(max_length=20, blank=True, null=True)
+    phone = models.CharField(
+        max_length=11,
+        blank=False,
+        null=False,
+        validators=[
+            RegexValidator(
+                regex=r'^\d{11}$',
+                message="Phone number must be exactly 11 digits and contain only numbers."
+            )
+        ],
+    )
     # email = models.EmailField( blank=True, null=True)
     address = models.CharField(max_length=255, blank=True, null=True)
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES, blank=True, null=True)
@@ -42,7 +54,18 @@ class Supplier(models.Model):
     company = models.CharField(max_length=255, blank=True, null=True, verbose_name=_("Company"))
     contact_person = models.CharField(max_length=255, blank=True, null=True, verbose_name=_("Contact Person"))
     email = models.EmailField(blank=True, null=True, verbose_name=_("Email"))
-    phone = models.CharField(max_length=50, blank=True, null=True, verbose_name=_("Phone"))
+    phone = models.CharField(
+        max_length=11,
+        blank=False,
+        null=False,
+        verbose_name=_("Phone"),
+        validators=[
+            RegexValidator(
+                regex=r'^\d{11}$',
+                message=_("Phone number must be exactly 11 digits (numbers only).")
+            )
+        ],
+    )    
     address = models.TextField(blank=True, null=True, verbose_name=_("Address"))
     status = models.BooleanField(blank=True, null=True, verbose_name=_("Active"))
 
@@ -149,7 +172,18 @@ class Sale(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=_("User"))
     invoice_no = models.CharField(max_length=100, verbose_name=_("Invoice No"))
     name = models.CharField(max_length=255, blank=True, null=True, verbose_name=_("Customer Name"))
-    phone = models.CharField(max_length=50, blank=True, null=True, verbose_name=_("Phone"))
+    phone = models.CharField(
+        max_length=11,
+        blank=False,
+        null=False,
+        verbose_name=_("Phone"),
+        validators=[
+            RegexValidator(
+                regex=r'^\d{11}$',
+                message=_("Phone number must be exactly 11 digits (numbers only).")
+            )
+        ],
+    )    
     address = models.CharField(max_length=255, blank=True, null=True, verbose_name=_("Address"))
     total_amount = models.PositiveIntegerField(verbose_name=_("Total Amount"))
     created_date = models.DateTimeField(auto_now_add=True, verbose_name=_("Created Date"))
@@ -200,7 +234,18 @@ class Possalesreport(models.Model):
 
 class customerpos(models.Model):
     name = models.CharField(max_length=100, verbose_name=_("Customer Name"))
-    phone = models.CharField(max_length=20, blank=True, null=True, verbose_name=_("Phone"))
+    phone = models.CharField(
+        max_length=11,
+        blank=False,
+        null=False,
+        verbose_name=_("Phone"),
+        validators=[
+            RegexValidator(
+                regex=r'^\d{11}$',
+                message=_("Phone number must be exactly 11 digits (numbers only).")
+            )
+        ],
+    )    
     address = models.CharField(max_length=255, blank=True, null=True, verbose_name=_("Address"))
 
     def __str__(self):

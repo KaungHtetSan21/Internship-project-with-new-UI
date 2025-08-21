@@ -7,6 +7,8 @@
     <title>{% trans "Reports" %} | {% trans "Pharmacy Pro" %}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -60,6 +62,7 @@
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
     </style>
+
 </head>
 <body class="bg-gray-50 flex flex-col min-h-screen">
 <!-- Navigation -->
@@ -109,50 +112,7 @@
                     </select>
                 </form>
                 
-                <!-- Notification Bell -->
-                <div class="ml-3 relative">
-                    <button id="notif-bell" class="p-1 rounded-full text-white focus:outline-none relative hover:bg-[#3b82f6] hover:bg-opacity-20">
-                        <span class="text-xl">🔔</span>
-                        {% if expiring_items %}
-                        <span class="absolute -top-1 -right-1 bg-[#ef4444] text-white text-xs rounded-full px-1.5 py-0.5">
-                            {{ expiring_items|length }}
-                        </span>
-                        {% endif %}
-                    </button>
-                    <!-- Dropdown -->
-                    <div id="notif-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-white shadow-lg rounded-md z-50 border border-gray-200">
-                        <div class="px-4 py-3 border-b bg-gray-50 text-sm font-semibold text-gray-700 flex justify-between items-center">
-                            <span>{% trans "Notifications" %}</span>
-                            <span class="text-xs text-[#1e40af] cursor-pointer">{% trans "Mark all as read" %}</span>
-                        </div>
-                        <ul class="max-h-60 overflow-y-auto divide-y divide-gray-100">
-                            {% for item in expiring_items %}
-                            <li class="px-4 py-3 hover:bg-gray-50">
-                                <div class="flex items-start">
-                                    <div class="flex-shrink-0 pt-0.5">
-                                        <div class="h-8 w-8 rounded-full bg-red-100 flex items-center justify-center">
-                                            <span class="text-red-500">⚠️</span>
-                                        </div>
-                                    </div>
-                                    <div class="ml-3 flex-1">
-                                        <p class="text-sm font-medium text-gray-900">{{ item.item_name }}</p>
-                                        <p class="text-xs text-gray-500">{% trans "Expires on" %} {{ item.exp_date|date:"M d, Y" }}</p>
-                                    </div>
-                                    <span class="text-xs text-red-600">{{ item.exp_date|timeuntil }}</span>
-                                </div>
-                            </li>
-                            {% empty %}
-                            <li class="px-4 py-4 text-center">
-                                <span class="text-gray-300 text-2xl mb-2">🔕</span>
-                                <p class="text-gray-500 text-sm">{% trans "No new notifications" %}</p>
-                            </li>
-                            {% endfor %}
-                        </ul>
-                        <div class="px-4 py-2 border-t bg-gray-50 text-center">
-                            <a href="#" class="text-xs text-[#1e40af] font-medium">{% trans "View all notifications" %}</a>
-                        </div>
-                    </div>
-                </div>
+
                 
                 <!-- User Profile -->
                 <div class="ml-3 relative">
@@ -214,6 +174,26 @@
 <div class="w-full px-4 py-8">
     <h1 class="text-3xl font-bold mb-6">{% trans "Reports" %}</h1>
 
+<!-- Filter Tabs -->
+<div class="mb-6 flex flex-wrap items-center gap-2">
+  <a href="?filter=daily"
+     class="px-4 py-2 rounded-md border text-sm {% if filter_type == 'daily' %} bg-indigo-600 text-white border-indigo-600 {% else %} bg-white text-gray-700 border-gray-300 hover:bg-gray-50 {% endif %}">
+    Daily
+  </a>
+  <a href="?filter=weekly"
+     class="px-4 py-2 rounded-md border text-sm {% if filter_type == 'weekly' %} bg-indigo-600 text-white border-indigo-600 {% else %} bg-white text-gray-700 border-gray-300 hover:bg-gray-50 {% endif %}">
+    Weekly
+  </a>
+  <a href="?filter=monthly"
+     class="px-4 py-2 rounded-md border text-sm {% if filter_type == 'monthly' %} bg-indigo-600 text-white border-indigo-600 {% else %} bg-white text-gray-700 border-gray-300 hover:bg-gray-50 {% endif %}">
+    Monthly
+  </a>
+  <a href="?filter=yearly"
+     class="px-4 py-2 rounded-md border text-sm {% if filter_type == 'yearly' %} bg-indigo-600 text-white border-indigo-600 {% else %} bg-white text-gray-700 border-gray-300 hover:bg-gray-50 {% endif %}">
+    Yearly
+  </a>
+</div>
+
     <!-- ✅ Tabs -->
     <div class="mb-6 border-b">
         <ul class="flex space-x-4" id="tabs">
@@ -229,24 +209,24 @@
     <!-- ✅ Sales Report Tab -->
     <div id="sales-report" class="tab-content block">
         <h2 class="text-xl font-semibold mb-4">{% trans "Sales Summary" %}</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            {% for summary in summary_list %}
-                <div class="bg-white rounded shadow p-4">
-                    <div class="flex items-center">
-                        <div class="p-3 rounded-full {{ summary.bg }} mr-3">
-                            <i class="fas {{ summary.icon }} {{ summary.text }}"></i>
-                        </div>
-                        <div>
-                            <p class="text-gray-500 text-sm">{% trans summary.label %}</p>
-                            <p class="text-lg font-bold">{{ summary.value }}{% if summary.unit %} {{ summary.unit }}{% endif %}</p>
-                        </div>
-                    </div>
-                </div>
-            {% endfor %}
-        </div>
+<!-- Summary Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-8">
+  {% for c in summary_list %}
+    <div class="rounded-xl shadow bg-white p-5 flex items-center gap-4">
+      <div class="shrink-0 w-12 h-12 rounded-full flex items-center justify-center {{ c.bg }} {{ c.text }}">
+        <i class="fas {{ c.icon }}"></i>
+      </div>
+      <div class="min-w-0">
+        <p class="text-sm text-gray-500 truncate">{{ c.label }}</p>
+        <p class="text-2xl font-semibold text-gray-900">
+          {{ c.value|default:0 }}{% if c.unit %} <span class="text-base text-gray-500">{{ c.unit }}</span>{% endif %}
+        </p>
+      </div>
+    </div>
+  {% endfor %}
+</div>
 
-<!-- Chart.js CDN -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 
 <!-- Tailwind Layout for POS & Online Pie Charts -->
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
@@ -282,7 +262,7 @@
                         <li><strong>{% trans "Online Revenue:" %}</strong> {{ online_revenue }} {% trans "Ks" %}</li>
                     </ul>
                 </div>
-            </div>
+        </div>
             
 
     </div>
@@ -291,149 +271,130 @@
     <!-- ✅ POS Report Tab -->
     <div id="pos-report" class="tab-content hidden">
 
-    <div class="bg-white p-6 rounded-lg shadow">
-        <h3 class="text-lg font-semibold mb-4 text-blue-600 flex items-center">
-            <i class="fas fa-chart-bar mr-2"></i> POS Top-Selling Products
-        </h3>
-        <ul class="space-y-3">
-            {% for product in top_pos_products %}
-            <li class="flex justify-between items-center border-b pb-2">
-                <div>
-                    <div class="font-semibold">{{ product.item__item_name }}</div>
-                    <div class="text-sm text-gray-500">{{ product.category_name }}</div>
-                </div>
-                <div class="text-right">
-                    <div class="text-blue-600 font-bold">{{ product.total_qty }} pcs</div>
-                    <div class="text-sm text-green-600">{{ product.total_revenue }} Ks</div>
-                    <div class="text-sm text-yellow-600">Margin: {{ product.margin }}%</div>
-                </div>
-            </li>
-            {% endfor %}
-        </ul>
+<!-- POS Orders -->
+<div class="bg-white rounded-xl shadow mb-8">
+  <div class="p-4 border-b flex items-center justify-between">
+    <h3 class="text-base font-semibold text-gray-900">POS Orders</h3>
+<span class="text-sm text-gray-500">
+    Total: {{ pos_transactions }} | Revenue: {{ pos_revenue }}
+</span>
+  </div>
+  <div class="p-4 overflow-x-auto">
+    <table class="min-w-full text-sm">
+      <thead class="text-gray-500 text-xs uppercase">
+        <tr>
+          <th class="px-3 py-2 text-left">Date</th>
+          <th class="px-3 py-2 text-left">Customer</th>
+          <th class="px-3 py-2 text-left">Method</th>
+          <th class="px-3 py-2 text-right">Amount</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y">
+        {% for o in pos_orders_list %}
+        <tr class="hover:bg-gray-50">
+          <td class="px-3 py-2">{{ o.created_date|date:"Y-m-d H:i" }}</td>
+          <td class="px-3 py-2">{{ o.customer_name|default:"Customer" }}</td>
+          <td class="px-3 py-2">{{ o.payment_method|upper }}</td>
+          <td class="px-3 py-2 text-right">{{ o.total_amount|default:0 }}</td>
+        </tr>
+        {% empty %}
+        <tr><td class="px-3 py-3 text-gray-500" colspan="4">No POS orders</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- POS Pagination (preserve filter) -->
+  <div class="px-4 pb-4">
+    <div class="flex justify-center items-center gap-1">
+      {% if pos_orders_list.has_previous %}
+        <a class="px-3 py-1 rounded border bg-white hover:bg-gray-50"
+           href="?filter={{ filter_type }}&pos_page=1">&laquo; First</a>
+        <a class="px-3 py-1 rounded border bg-white hover:bg-gray-50"
+           href="?filter={{ filter_type }}&pos_page={{ pos_orders_list.previous_page_number }}">&#8249; Prev</a>
+      {% endif %}
+      <span class="px-3 py-1 rounded bg-indigo-600 text-white">
+        Page {{ pos_orders_list.number }} / {{ pos_orders_list.paginator.num_pages }}
+      </span>
+      {% if pos_orders_list.has_next %}
+        <a class="px-3 py-1 rounded border bg-white hover:bg-gray-50"
+           href="?filter={{ filter_type }}&pos_page={{ pos_orders_list.next_page_number }}">Next &#8250;</a>
+        <a class="px-3 py-1 rounded border bg-white hover:bg-gray-50"
+           href="?filter={{ filter_type }}&pos_page={{ pos_orders_list.paginator.num_pages }}">Last &raquo;</a>
+      {% endif %}
     </div>
-        <h2 class="text-xl font-semibold mb-4">{% trans "POS Orders (All)" %}</h2>
-
-        <div class="space-y-4">
-            {% if pos_orders_list %}
-                {% for order in pos_orders_page %}
-                    <div class="bg-white border rounded p-4 shadow">
-                        <div class="flex justify-between">
-                            <div>
-                                <p><strong>{% trans "Customer:" %}</strong> {{ order.customer_name|default:_("Walking Customer") }}</p>
-                                <p><strong>{% trans "Payment:" %}</strong> {{ order.payment_method|default:"-" }}</p>
-                            </div>
-                            <div class="text-right">
-                                <p><strong>{% trans "Date:" %}</strong> {{ order.created_date|date:"M d, Y h:i A" }}</p>
-                                <p><strong>{% trans "Total:" %}</strong> {{ order.total_amount }} {% trans "Ks" %}</p>
-                            </div>
-                        </div>
-                    </div>
-                {% endfor %}
-            {% else %}
-                <p class="text-gray-500">{% trans "No POS orders yet." %}</p>
-            {% endif %}
-            <div class="pagination">
-            {% if pos_orders_page.has_previous %}
-                <a href="?pos_page={{ pos_orders_page.previous_page_number }}&filter={{ filter_type }}">Previous</a>
-            {% endif %}
-
-            <span>Page {{ pos_orders_page.number }} of {{ pos_orders_page.paginator.num_pages }}</span>
-
-            {% if pos_orders_page.has_next %}
-                <a href="?pos_page={{ pos_orders_page.next_page_number }}&filter={{ filter_type }}">Next</a>
-            {% endif %}
-            </div>
-        </div>
-
+  </div>
+</div>
 
 
     </div>
 
 
     <!-- ✅ Online Report Tab -->
-    <div id="online-report" class="tab-content hidden">
+<div id="online-report" class="tab-content hidden">
+ <!-- Online Orders -->
+<div class="bg-white rounded-xl shadow mb-8">
+  <div class="p-4 border-b flex items-center justify-between">
+    <h3 class="text-base font-semibold text-gray-900">Online Orders (Confirmed)</h3>
+<span class="text-sm text-gray-500">
+    Total: {{ online_transactions }} | Revenue: {{ online_revenue }}
+</span>
+  </div>
+  <div class="p-4 overflow-x-auto">
+    <table class="min-w-full text-sm">
+      <thead class="text-gray-500 text-xs uppercase">
+        <tr>
+          <th class="px-3 py-2 text-left">Date</th>
+          <th class="px-3 py-2 text-left">Order</th>
+          <th class="px-3 py-2 text-left">Customer</th>
+          <th class="px-3 py-2 text-right">Final Amount</th>
+          <th class="px-3 py-2 text-left">Status</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y">
+        {% for s in online_orders_list %}
+        <tr class="hover:bg-gray-50">
+          <td class="px-3 py-2">{{ s.created_date|date:"Y-m-d H:i" }}</td>
+          <td class="px-3 py-2">{{ s.invoice_no|default:"—" }}</td>
+          <td class="px-3 py-2">{{ s.user.username|default:"—" }}</td>
+          <td class="px-3 py-2 text-right">{{ s.final_amount|default:0 }}</td>
+          <td class="px-3 py-2">
+            <span class="px-2 py-1 rounded text-xs
+                        {% if s.status == 'confirmed' %} bg-green-100 text-green-700
+                        {% else %} bg-gray-100 text-gray-600 {% endif %}">
+              {{ s.status|title }}
+            </span>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td class="px-3 py-3 text-gray-500" colspan="5">No online orders</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 
-
-    <!-- Online Top Selling Chart -->
-    <div class="bg-white p-6 rounded-lg shadow">
-        <h3 class="text-lg font-semibold mb-4 text-green-600 flex items-center">
-            <i class="fas fa-chart-line mr-2"></i> Online Top-Selling Products
-        </h3>
-        <ul class="space-y-3">
-            {% for product in top_online_products %}
-            <li class="flex justify-between items-center border-b pb-2">
-                <div>
-                    <div class="font-semibold">{{ product.item__item_name }}</div>
-                    <div class="text-sm text-gray-500">{{ product.category_name }}</div>
-                </div>
-                <div class="text-right">
-                    <div class="text-green-600 font-bold">{{ product.total_qty }} pcs</div>
-                    <div class="text-sm text-blue-600">{{ product.total_revenue }} Ks</div>
-                    <div class="text-sm text-yellow-600">Margin: {{ product.margin }}%</div>
-                </div>
-            </li>
-            {% endfor %}
-        </ul>
+  <!-- Online Pagination (preserve filter) -->
+  <div class="px-4 pb-4">
+    <div class="flex justify-center items-center gap-1">
+      {% if online_orders_list.has_previous %}
+        <a class="px-3 py-1 rounded border bg-white hover:bg-gray-50"
+           href="?filter={{ filter_type }}&online_page=1">&laquo; First</a>
+        <a class="px-3 py-1 rounded border bg-white hover:bg-gray-50"
+           href="?filter={{ filter_type }}&online_page={{ online_orders_list.previous_page_number }}">&#8249; Prev</a>
+      {% endif %}
+      <span class="px-3 py-1 rounded bg-indigo-600 text-white">
+        Page {{ online_orders_list.number }} / {{ online_orders_list.paginator.num_pages }}
+      </span>
+      {% if online_orders_list.has_next %}
+        <a class="px-3 py-1 rounded border bg-white hover:bg-gray-50"
+           href="?filter={{ filter_type }}&online_page={{ online_orders_list.next_page_number }}">Next &#8250;</a>
+        <a class="px-3 py-1 rounded border bg-white hover:bg-gray-50"
+           href="?filter={{ filter_type }}&online_page={{ online_orders_list.paginator.num_pages }}">Last &raquo;</a>
+      {% endif %}
     </div>
-        <h2 class="text-xl font-semibold mb-4">{% trans "Online Orders (All)" %}</h2>
-            <!-- Report Filter -->
-    <form method="get" class="mb-6 flex flex-wrap items-center space-x-4">
-        <label for="filter" class="text-gray-700 font-medium">{% trans "Filter by" %}</label>
-        <select name="filter" id="filter"
-            class="px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm text-gray-700 bg-white">
-            <option value="daily" {% if request.GET.filter == 'daily' %}selected{% endif %}>{% trans "Daily" %}</option>
-            <option value="weekly" {% if request.GET.filter == 'weekly' %}selected{% endif %}>{% trans "Weekly" %}</option>
-            <option value="monthly" {% if request.GET.filter == 'monthly' %}selected{% endif %}>{% trans "Monthly" %}</option>
-            <option value="yearly" {% if request.GET.filter == 'yearly' %}selected{% endif %}>{% trans "Yearly" %}</option>
-        </select>
-        <button type="submit"
-            class="bg-blue-600 text-white px-4 py-2 rounded-md shadow hover:bg-blue-700 transition">{% trans "Apply Filter" %}</button>
-    </form>
-        <div class="space-y-4">
-            {% if online_orders_list %}
-                {% for order in online_orders_page %}
-                    <div class="bg-white border rounded p-4 shadow">
-                        <div class="flex justify-between">
-                            <div>
-                                <p><strong>{% trans "Customer:" %}</strong> {{ order.name|default:order.user.username }}</p>
-                                <p><strong>{% trans "Phone:" %}</strong> {{ order.phone|default:"-" }}</p>
-                                <p><strong>{% trans "Address:" %}</strong> {{ order.address|default:"-" }}</p>
-                            </div>
-                            <div class="text-right">
-                                <p><strong>{% trans "Invoice:" %}</strong> {{ order.invoice_no }}</p>
-                                <p><strong>{% trans "Date:" %}</strong> {{ order.created_date|date:"M d, Y h:i A" }}</p>
-                                <p><strong>{% trans "Total:" %}</strong> {{ order.total_amount }} {% trans "Ks" %}</p>
-                                <p>
-                                    <strong>{% trans "Status:" %}</strong>
-                                    {% if order.status == "pending" %}
-                                        <span class="text-yellow-600">{% trans "Pending" %}</span>
-                                    {% elif order.status == "confirmed" %}
-                                        <span class="text-green-600">{% trans "Confirmed" %}</span>
-                                    {% elif order.status == "cancelled" %}
-                                        <span class="text-red-600">{% trans "Cancelled" %}</span>
-                                    {% else %}
-                                        <span class="text-gray-500">{% trans "Unknown" %}</span>
-                                    {% endif %}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                {% endfor %}
-            {% else %}
-                <p class="text-gray-500">{% trans "No online orders yet." %}</p>
-            {% endif %}
-            <div class="pagination">
-            {% if online_orders_page.has_previous %}
-                <a href="?online_page={{ online_orders_page.previous_page_number }}&filter={{ filter_type }}">Previous</a>
-            {% endif %}
+  </div>
+</div>
 
-            <span>Page {{ online_orders_page.number }} of {{ online_orders_page.paginator.num_pages }}</span>
-
-            {% if online_orders_page.has_next %}
-                <a href="?online_page={{ online_orders_page.next_page_number }}&filter={{ filter_type }}">Next</a>
-            {% endif %}
-            </div>
-        </div>
     </div>
 </div>
 

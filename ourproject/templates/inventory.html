@@ -157,50 +157,7 @@
                     </select>
                 </form>
             <div class="flex items-center">
-                <!-- Notification Bell -->
-                <div class="ml-3 relative">
-                    <button id="notif-bell" class="p-1 rounded-full text-white focus:outline-none relative hover:bg-[#3b82f6] hover:bg-opacity-20">
-                        <span class="text-xl">🔔</span>
-                        {% if expiring_items %}
-                        <span class="absolute -top-1 -right-1 bg-[#ef4444] text-white text-xs rounded-full px-1.5 py-0.5">
-                            {{ expiring_items|length }}
-                        </span>
-                        {% endif %}
-                    </button>
-                    <!-- Dropdown -->
-                    <div id="notif-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-white shadow-lg rounded-md z-50 border border-gray-200">
-                        <div class="px-4 py-3 border-b bg-gray-50 text-sm font-semibold text-gray-700 flex justify-between items-center">
-                            <span>{% trans "Notifications" %}</span>
-                            <span class="text-xs text-[#1e40af] cursor-pointer">{% trans "Mark all as read" %}</span>
-                        </div>
-                        <ul class="max-h-60 overflow-y-auto divide-y divide-gray-100">
-                            {% for item in expiring_items %}
-                            <li class="px-4 py-3 hover:bg-gray-50">
-                                <div class="flex items-start">
-                                    <div class="flex-shrink-0 pt-0.5">
-                                        <div class="h-8 w-8 rounded-full bg-red-100 flex items-center justify-center">
-                                            <span class="text-red-500">⚠️</span>
-                                        </div>
-                                    </div>
-                                    <div class="ml-3 flex-1">
-                                        <p class="text-sm font-medium text-gray-900">{{ item.item_name }}</p>
-                                        <p class="text-xs text-gray-500">{% trans "Expires on" %} {{ item.exp_date|date:"M d, Y" }}</p>
-                                    </div>
-                                    <span class="text-xs text-red-600">{{ item.exp_date|timeuntil }}</span>
-                                </div>
-                            </li>
-                            {% empty %}
-                            <li class="px-4 py-4 text-center">
-                                <span class="text-gray-300 text-2xl mb-2">🔕</span>
-                                <p class="text-gray-500 text-sm">{% trans "No new notifications" %}</p>
-                            </li>
-                            {% endfor %}
-                        </ul>
-                        <div class="px-4 py-2 border-t bg-gray-50 text-center">
-                            <a href="#" class="text-xs text-[#1e40af] font-medium">{% trans "View all notifications" %}</a>
-                        </div>
-                    </div>
-                </div>
+
                 
                 <!-- User Profile -->
                 <div class="ml-3 relative">

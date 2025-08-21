@@ -640,7 +640,7 @@ def get_order_details(request, order_id):
         data = {
             "customer": order.name or order.user.username,
             "invoice": order.invoice_no,
-            "total_amount": order.total_amount,
+            "total_amount": order.final_amount,
             "items": [
                 {
                     "item_name": i.item.item_name,
@@ -814,33 +814,213 @@ import json
 
 from .models import Cart, CartProduct, Sale, SaleItem, Item
 
+# @login_required
+# def report_view(request):
+#     if request.user.userprofile.role != 'pharmacist':
+#         return HttpResponseForbidden("Pharmacists only.")
+
+#     filter_type = request.GET.get('filter', 'yearly')
+#     today = now().date()
+
+#     # ✅ Confirmed Online Orders Filter
+#     confirmed_online_orders = Sale.objects.exclude(user__userprofile__role='pharmacist')\
+#                                           .filter(status='confirmed')
+
+#     if filter_type == 'daily':
+#         confirmed_online_orders = confirmed_online_orders.filter(created_date__date=today)
+#     elif filter_type == 'weekly':
+#         start_week = today - timedelta(days=today.weekday())
+#         end_week = start_week + timedelta(days=6)
+#         confirmed_online_orders = confirmed_online_orders.filter(created_date__date__range=(start_week, end_week))
+#     elif filter_type == 'monthly':
+#         confirmed_online_orders = confirmed_online_orders.filter(created_date__month=today.month, created_date__year=today.year)
+#     elif filter_type == 'yearly':
+#         confirmed_online_orders = confirmed_online_orders.filter(created_date__year=today.year)
+
+#     confirmed_online_orders = confirmed_online_orders.order_by('-created_date')
+
+#     # ✅ POS Orders
+#     pos_orders = Cart.objects.filter(payment_method__in=['cash', 'mobile', 'print']).order_by('-created_date')
+#     pos_transactions = pos_orders.count()
+#     pos_revenue = pos_orders.aggregate(total=Coalesce(Sum('total_amount'), 0))['total']
+
+#     for order in pos_orders:
+#         if not order.customer_name:
+#             order.customer_name = "Customer"
+
+#     # ✅ Pagination
+#     pos_page_number = request.GET.get('pos_page')
+#     pos_paginator = Paginator(pos_orders, 10)
+#     pos_orders_page = pos_paginator.get_page(pos_page_number)
+
+#     online_page_number = request.GET.get('online_page')
+#     online_paginator = Paginator(confirmed_online_orders, 10)
+#     online_orders_page = online_paginator.get_page(online_page_number)
+
+#     # ✅ Top Selling POS Products
+#     top_pos_products = (
+#         CartProduct.objects
+#         .values('item_id', 'item__item_name', category_name=F('item__category__name'))
+#         .annotate(total_qty=Sum('qty'), total_revenue=Sum('price'))
+#         .order_by('-total_qty')[:5]
+#     )
+
+#     # ✅ Top Selling Online Products (confirmed only)
+#     top_online_products = (
+#         SaleItem.objects
+#         .filter(sale__status='confirmed')
+#         .values('item_id', 'item__item_name', category_name=F('item__category__name'))
+#         .annotate(total_qty=Sum('quantity'), total_revenue=Sum('price'))
+#         .order_by('-total_qty')[:5]
+#     )
+
+#     # ✅ Chart Data
+#     pos_chart_labels = json.dumps([p['item__item_name'] for p in top_pos_products])
+#     pos_chart_data = json.dumps([p['total_qty'] for p in top_pos_products])
+#     online_chart_labels = json.dumps([p['item__item_name'] for p in top_online_products])
+#     online_chart_data = json.dumps([p['total_qty'] for p in top_online_products])
+
+#     # ✅ Item Sold
+#     pos_items_sold = CartProduct.objects.aggregate(total_qty=Coalesce(Sum('qty'), 0))['total_qty']
+#     online_items_sold = SaleItem.objects.filter(sale__status='confirmed')\
+#                                         .aggregate(total=Coalesce(Sum('quantity'), 0))['total']
+#     items_sold = pos_items_sold + online_items_sold
+
+#     # ✅ Avg. Margin (POS only)
+#     cart_products = CartProduct.objects.annotate(
+#         margin=ExpressionWrapper(
+#             (F('price') - F('item__purcharse_price')) / F('item__purcharse_price') * 100.0,
+#             output_field=FloatField()
+#         )
+#     )
+#     margin_data = cart_products.aggregate(
+#         total_margin=Coalesce(Sum('margin'), 0.0),
+#         count=Coalesce(Count('id'), 1)
+#     )
+#     avg_margin = round(margin_data['total_margin'] / margin_data['count'], 2)
+
+#     # ✅ Revenue and Transactions
+#     online_transactions = confirmed_online_orders.count()
+#     online_revenue = confirmed_online_orders.aggregate(total=Coalesce(Sum('final_amount'), 0))['total']
+#     total_transactions = pos_transactions + online_transactions
+#     total_revenue = pos_revenue + online_revenue
+
+#     # ✅ Summary Cards
+#     summary_list = [
+#         {
+#             'label': 'POS Transactions',
+#             'icon': 'fa-receipt',
+#             'bg': 'bg-blue-100',
+#             'text': 'text-blue-600',
+#             'value': pos_transactions,
+#         },
+#         {
+#             'label': 'Online Transactions',
+#             'icon': 'fa-receipt',
+#             'bg': 'bg-blue-100',
+#             'text': 'text-blue-600',
+#             'value': online_transactions,
+#         },
+#         {
+#             'label': 'POS Revenue',
+#             'icon': 'fa-dollar-sign',
+#             'bg': 'bg-green-100',
+#             'text': 'text-green-600',
+#             'value': pos_revenue,
+#             'unit': 'Ks',
+#         },
+#         {
+#             'label': 'Online Revenue',
+#             'icon': 'fa-dollar-sign',
+#             'bg': 'bg-green-100',
+#             'text': 'text-green-600',
+#             'value': online_revenue,
+#             'unit': 'Ks',
+#         },
+#         {
+#             'label': 'Items Sold',
+#             'icon': 'fa-shopping-basket',
+#             'bg': 'bg-purple-100',
+#             'text': 'text-purple-600',
+#             'value': items_sold,
+#         },
+#         {
+#             'label': 'Avg. Margin',
+#             'icon': 'fa-percentage',
+#             'bg': 'bg-yellow-100',
+#             'text': 'text-yellow-600',
+#             'value': avg_margin,
+#             'unit': '%',
+#         },
+#     ]
+
+#     return render(request, 'report.html', {
+#         'filter_type': filter_type,
+#         'summary_list': summary_list,
+#         'top_pos_products': top_pos_products,
+#         'top_online_products': top_online_products,
+#         'pos_chart_labels': pos_chart_labels,
+#         'pos_chart_data': pos_chart_data,
+#         'online_chart_labels': online_chart_labels,
+#         'online_chart_data': online_chart_data,
+#         'pos_orders_list': pos_orders,
+#         'pos_transactions': pos_transactions,
+#         'pos_revenue': pos_revenue,
+#         'pos_orders_page': pos_orders_page,
+#         'online_orders_list': confirmed_online_orders,
+#         'online_transactions': online_transactions,
+#         'online_revenue': online_revenue,
+#         'online_orders_page': online_orders_page,
+#         'total_transactions': total_transactions,
+#         'total_revenue': total_revenue,
+#         'items_sold': items_sold,
+#         'avg_margin': avg_margin,
+#     })
+
+
+
+
+
+from django.db.models import Sum, Count, F, Value, FloatField, ExpressionWrapper, Case, When
+from django.db.models.functions import Coalesce
+from django.core.paginator import Paginator
+from django.utils import timezone
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseForbidden
+from datetime import timedelta
+import json
+
 @login_required
 def report_view(request):
     if request.user.userprofile.role != 'pharmacist':
         return HttpResponseForbidden("Pharmacists only.")
 
     filter_type = request.GET.get('filter', 'yearly')
-    today = now().date()
+    now = timezone.now()
 
-    # ✅ Confirmed Online Orders Filter
-    confirmed_online_orders = Sale.objects.exclude(user__userprofile__role='pharmacist')\
-                                          .filter(status='confirmed')
+    # --- Python-side date range filtering ---
+    if filter_type == "daily":
+        start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        end_date = now
+    elif filter_type == "weekly":
+        start_date = now - timedelta(days=now.weekday())
+        end_date = start_date + timedelta(days=6, hours=23, minutes=59, seconds=59)
+    elif filter_type == "monthly":
+        start_date = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        end_date = now
+    elif filter_type == "yearly":
+        start_date = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+        end_date = now
+    else:
+        start_date = None
+        end_date = None
 
-    if filter_type == 'daily':
-        confirmed_online_orders = confirmed_online_orders.filter(created_date__date=today)
-    elif filter_type == 'weekly':
-        start_week = today - timedelta(days=today.weekday())
-        end_week = start_week + timedelta(days=6)
-        confirmed_online_orders = confirmed_online_orders.filter(created_date__date__range=(start_week, end_week))
-    elif filter_type == 'monthly':
-        confirmed_online_orders = confirmed_online_orders.filter(created_date__month=today.month, created_date__year=today.year)
-    elif filter_type == 'yearly':
-        confirmed_online_orders = confirmed_online_orders.filter(created_date__year=today.year)
+    # --- POS Orders ---
+    pos_orders = Cart.objects.filter(payment_method__in=['cash', 'mobile', 'print'])
+    if start_date and end_date:
+        pos_orders = pos_orders.filter(created_date__range=(start_date, end_date))
+    pos_orders = pos_orders.order_by('-created_date')
 
-    confirmed_online_orders = confirmed_online_orders.order_by('-created_date')
-
-    # ✅ POS Orders
-    pos_orders = Cart.objects.filter(payment_method__in=['cash', 'mobile', 'print']).order_by('-created_date')
     pos_transactions = pos_orders.count()
     pos_revenue = pos_orders.aggregate(total=Coalesce(Sum('total_amount'), 0))['total']
 
@@ -848,114 +1028,78 @@ def report_view(request):
         if not order.customer_name:
             order.customer_name = "Customer"
 
-    # ✅ Pagination
-    pos_page_number = request.GET.get('pos_page')
-    pos_paginator = Paginator(pos_orders, 10)
-    pos_orders_page = pos_paginator.get_page(pos_page_number)
+    # --- Online Orders (Confirmed only) ---
+    confirmed_online_orders = Sale.objects.exclude(
+        user__userprofile__role='pharmacist'
+    ).filter(status='confirmed')
+    if start_date and end_date:
+        confirmed_online_orders = confirmed_online_orders.filter(created_date__range=(start_date, end_date))
+    confirmed_online_orders = confirmed_online_orders.order_by('-created_date')
 
-    online_page_number = request.GET.get('online_page')
-    online_paginator = Paginator(confirmed_online_orders, 10)
-    online_orders_page = online_paginator.get_page(online_page_number)
+    online_transactions = confirmed_online_orders.count()
+    online_revenue = confirmed_online_orders.aggregate(total=Coalesce(Sum('final_amount'), 0))['total']
 
-    # ✅ Top Selling POS Products
-    top_pos_products = (
-        CartProduct.objects
-        .values('item_id', 'item__item_name', category_name=F('item__category__name'))
-        .annotate(total_qty=Sum('qty'), total_revenue=Sum('price'))
+    # --- Pagination ---
+    pos_orders_page = Paginator(pos_orders, 10).get_page(request.GET.get('pos_page'))
+    online_orders_page = Paginator(confirmed_online_orders, 10).get_page(request.GET.get('online_page'))
+
+    # --- Top Selling Products ---
+    top_pos_products = CartProduct.objects.filter(cart__in=pos_orders)\
+        .values('item_id', 'item__item_name', category_name=F('item__category__name'))\
+        .annotate(total_qty=Sum('qty'), total_revenue=Sum('price'))\
         .order_by('-total_qty')[:5]
-    )
 
-    # ✅ Top Selling Online Products (confirmed only)
-    top_online_products = (
-        SaleItem.objects
-        .filter(sale__status='confirmed')
-        .values('item_id', 'item__item_name', category_name=F('item__category__name'))
-        .annotate(total_qty=Sum('quantity'), total_revenue=Sum('price'))
+    top_online_products = SaleItem.objects.filter(sale__in=confirmed_online_orders)\
+        .values('item_id', 'item__item_name', category_name=F('item__category__name'))\
+        .annotate(total_qty=Sum('quantity'), total_revenue=Sum('price'))\
         .order_by('-total_qty')[:5]
-    )
 
-    # ✅ Chart Data
+    # --- Chart Data ---
     pos_chart_labels = json.dumps([p['item__item_name'] for p in top_pos_products])
     pos_chart_data = json.dumps([p['total_qty'] for p in top_pos_products])
     online_chart_labels = json.dumps([p['item__item_name'] for p in top_online_products])
     online_chart_data = json.dumps([p['total_qty'] for p in top_online_products])
 
-    # ✅ Item Sold
-    pos_items_sold = CartProduct.objects.aggregate(total_qty=Coalesce(Sum('qty'), 0))['total_qty']
-    online_items_sold = SaleItem.objects.filter(sale__status='confirmed')\
-                                        .aggregate(total=Coalesce(Sum('quantity'), 0))['total']
+    # --- Items Sold ---
+    pos_items_sold = CartProduct.objects.filter(cart__in=pos_orders)\
+        .aggregate(total_qty=Coalesce(Sum('qty'), 0))['total_qty']
+    online_items_sold = SaleItem.objects.filter(sale__in=confirmed_online_orders)\
+        .aggregate(total=Coalesce(Sum('quantity'), 0))['total']
     items_sold = pos_items_sold + online_items_sold
 
-    # ✅ Avg. Margin (POS only)
-    cart_products = CartProduct.objects.annotate(
-        margin=ExpressionWrapper(
-            (F('price') - F('item__purcharse_price')) / F('item__purcharse_price') * 100.0,
+    # --- Avg. Margin ---
+    pos_margins = CartProduct.objects.filter(cart__in=pos_orders).annotate(
+        margin=Case(
+            When(item__purcharse_price=0, then=Value(0.0)),
+            default=(F('price') - F('item__purcharse_price')) / F('item__purcharse_price') * 100.0,
             output_field=FloatField()
         )
     )
-    margin_data = cart_products.aggregate(
-        total_margin=Coalesce(Sum('margin'), 0.0),
-        count=Coalesce(Count('id'), 1)
+    online_margins = SaleItem.objects.filter(sale__in=confirmed_online_orders).annotate(
+        margin=Case(
+            When(item__purcharse_price=0, then=Value(0.0)),
+            default=(F('price') - F('item__purcharse_price')) / F('item__purcharse_price') * 100.0,
+            output_field=FloatField()
+        )
     )
-    avg_margin = round(margin_data['total_margin'] / margin_data['count'], 2)
+    total_margin_sum = pos_margins.aggregate(sum=Coalesce(Sum('margin'), 0.0))['sum'] + \
+                       online_margins.aggregate(sum=Coalesce(Sum('margin'), 0.0))['sum']
+    total_margin_count = pos_margins.aggregate(count=Coalesce(Count('id'), 0))['count'] + \
+                         online_margins.aggregate(count=Coalesce(Count('id'), 0))['count']
+    avg_margin = round(total_margin_sum / total_margin_count, 2) if total_margin_count > 0 else 0.0
 
-    # ✅ Revenue and Transactions
-    online_transactions = confirmed_online_orders.count()
-    online_revenue = confirmed_online_orders.aggregate(total=Coalesce(Sum('final_amount'), 0))['total']
-    total_transactions = pos_transactions + online_transactions
-    total_revenue = pos_revenue + online_revenue
-
-    # ✅ Summary Cards
+    # --- Summary Cards ---
     summary_list = [
-        {
-            'label': 'POS Transactions',
-            'icon': 'fa-receipt',
-            'bg': 'bg-blue-100',
-            'text': 'text-blue-600',
-            'value': pos_transactions,
-        },
-        {
-            'label': 'Online Transactions',
-            'icon': 'fa-receipt',
-            'bg': 'bg-blue-100',
-            'text': 'text-blue-600',
-            'value': online_transactions,
-        },
-        {
-            'label': 'POS Revenue',
-            'icon': 'fa-dollar-sign',
-            'bg': 'bg-green-100',
-            'text': 'text-green-600',
-            'value': pos_revenue,
-            'unit': 'Ks',
-        },
-        {
-            'label': 'Online Revenue',
-            'icon': 'fa-dollar-sign',
-            'bg': 'bg-green-100',
-            'text': 'text-green-600',
-            'value': online_revenue,
-            'unit': 'Ks',
-        },
-        {
-            'label': 'Items Sold',
-            'icon': 'fa-shopping-basket',
-            'bg': 'bg-purple-100',
-            'text': 'text-purple-600',
-            'value': items_sold,
-        },
-        {
-            'label': 'Avg. Margin',
-            'icon': 'fa-percentage',
-            'bg': 'bg-yellow-100',
-            'text': 'text-yellow-600',
-            'value': avg_margin,
-            'unit': '%',
-        },
+        {'label': 'POS Transactions', 'icon': 'fa-receipt', 'bg': 'bg-blue-100', 'text': 'text-blue-600', 'value': pos_transactions},
+        {'label': 'Online Transactions', 'icon': 'fa-receipt', 'bg': 'bg-blue-100', 'text': 'text-blue-600', 'value': online_transactions},
+        {'label': 'POS Revenue', 'icon': 'fa-dollar-sign', 'bg': 'bg-green-100', 'text': 'text-green-600', 'value': pos_revenue, 'unit': 'Ks'},
+        {'label': 'Online Revenue', 'icon': 'fa-dollar-sign', 'bg': 'bg-green-100', 'text': 'text-green-600', 'value': online_revenue, 'unit': 'Ks'},
+        {'label': 'Items Sold', 'icon': 'fa-shopping-basket', 'bg': 'bg-purple-100', 'text': 'text-purple-600', 'value': items_sold},
+        {'label': 'Avg. Margin', 'icon': 'fa-percentage', 'bg': 'bg-yellow-100', 'text': 'text-yellow-600', 'value': avg_margin, 'unit': '%'},
     ]
 
     return render(request, 'report.html', {
-        'filter_type': filter_type,
+        'filter_type': filter_type,  # HTML filter comparison fix
         'summary_list': summary_list,
         'top_pos_products': top_pos_products,
         'top_online_products': top_online_products,
@@ -963,19 +1107,18 @@ def report_view(request):
         'pos_chart_data': pos_chart_data,
         'online_chart_labels': online_chart_labels,
         'online_chart_data': online_chart_data,
-        'pos_orders_list': pos_orders,
-        'pos_transactions': pos_transactions,
-        'pos_revenue': pos_revenue,
-        'pos_orders_page': pos_orders_page,
-        'online_orders_list': confirmed_online_orders,
-        'online_transactions': online_transactions,
-        'online_revenue': online_revenue,
-        'online_orders_page': online_orders_page,
-        'total_transactions': total_transactions,
-        'total_revenue': total_revenue,
+        'pos_orders_list': pos_orders_page,
+        'online_orders_list': online_orders_page,
+        'total_transactions': pos_transactions + online_transactions,
+        'total_revenue': pos_revenue + online_revenue,
         'items_sold': items_sold,
         'avg_margin': avg_margin,
+        'pos_transactions': pos_transactions,
+        'pos_revenue': pos_revenue,
+        'online_transactions': online_transactions,
+        'online_revenue': online_revenue,
     })
+
 
 @csrf_exempt
 def edit_item_view(request, item_id):
@@ -1817,26 +1960,41 @@ def medicine_list(request):
         'search_query': search_query,
     })
 
+import re
+from django.contrib import messages
+
+import re
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
+from django.utils import timezone
+from django.contrib.auth.decorators import login_required
+
 @login_required
 def place_order_view(request):
-    user = request.user 
-    name = request.GET['name']
-    phone = request.GET['phone']
-    address = request.GET['address']
+    user = request.user
+    name = request.GET.get("name")
+    phone = request.GET.get("phone")
+    address = request.GET.get("address")
 
+    # ✅ Phone validation (11 digits only)
+    if not re.fullmatch(r'\d{11}', phone or ""):
+        messages.error(request, "Phone number must be exactly 11 digits (numbers only).")
+        return redirect("medicine_list")
+
+    # ✅ Role check
     if not hasattr(user, 'userprofile') or user.userprofile.role != 'customer':
         messages.error(request, "Only customers can place an order.")
-        return redirect('base')
+        return redirect("base")
 
     try:
-        cart = Cart.objects.get(user=user)
+        cart = get_object_or_404(Cart, user=user)
         cart_items = CartProduct.objects.filter(cart=cart)
 
         if not cart_items.exists():
             messages.warning(request, "Your cart is empty.")
-            return redirect('base')
+            return redirect("medicine_list")
 
-        # ✅ Add shipping & tax
+        cart.update_total_amount()
         shipping_fee = 1000
         tax = 500
         total_amount = cart.total_amount + shipping_fee + tax
@@ -1849,27 +2007,46 @@ def place_order_view(request):
             phone=phone,
             address=address,
             total_amount=cart.total_amount,
-            final_amount=total_amount
+            final_amount=total_amount,
         )
 
+        # ✅ Handle promotions
+        promo_cart = request.session.get("promo_cart", {})
         for cp in cart_items:
+            promo_id = promo_cart.get(str(cp.id))
+            promotion = None
+            is_promotion = False
+            if promo_id:
+                try:
+                    promotion = PromotionItem.objects.get(id=promo_id, status="active")
+                    is_promotion = True
+                except PromotionItem.DoesNotExist:
+                    pass
+
             SaleItem.objects.create(
                 sale=sale,
                 item=cp.item,
                 quantity=cp.qty,
-                price=cp.price
+                price=cp.unit_price,  # unit_price သုံးထားတာ promotion ထည့်ပြီးသား
+                promotion=promotion if is_promotion else None,
+                is_promotion=is_promotion,
             )
 
+        # ✅ Clear cart
         cart_items.delete()
         cart.total_amount = 0
         cart.save()
 
+        # ✅ Clear promo session
+        if "promo_cart" in request.session:
+            del request.session["promo_cart"]
+
         messages.success(request, "Order placed successfully!")
-        return redirect('medicine_list')
+        return redirect("medicine_list")
 
     except Cart.DoesNotExist:
         messages.error(request, "No active cart found.")
-        return redirect('medicine_list')    
+        return redirect("medicine_list")
     
 
 @login_required

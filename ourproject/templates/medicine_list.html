@@ -6,6 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pharmastics - Customer Dashboard</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -56,20 +57,20 @@
                 <h2 class="font-bold text-lg">Pharmastics</h2>
             </div>
             <nav class="mt-4 space-y-1 px-2">
-                <a href="{% url 'customer_dashboard' %}" class="sidebar-link active block px-4 py-2 rounded transition">
-                    📊 {% trans "Dashboard" %}
+                <a href="{% url 'customer_dashboard' %}" class="sidebar-link block px-4 py-2 rounded transition">
+                    <i class="fas fa-chart-bar mr-2"></i> {% trans "Dashboard" %}
                 </a>
                 <a href="{% url 'medicine_list' %}" class="sidebar-link block px-4 py-2 rounded transition">
-                    💊 {% trans "Medicine" %}
+                    <i class="fas fa-pills mr-2"></i> {% trans "Medicine" %}
                 </a>
                 <a href="{% url 'customer_profilereal' %}" class="sidebar-link block px-4 py-2 rounded transition">
                     <i class="fas fa-user mr-2"></i> {% trans "My Profile" %}
                 </a>
-                <a href="{% url 'customer_profile' %}" class="sidebar-link block px-4 py-2 rounded transition">
-                    👤 {% trans " Purchase History" %}
+                <a href="{% url 'customer_profile' %}" class="sidebar-link active block px-4 py-2 rounded transition">
+                    <i class="fas fa-history mr-2"></i> {% trans "Purchase History" %}
                 </a>
                 <a href="{% url 'logout' %}" class="block px-4 py-2 bg-red-500 hover:bg-red-600 rounded transition mt-4">
-                    {% trans "Logout" %}
+                    <i class="fas fa-sign-out-alt mr-2"></i> {% trans "Logout" %}
                 </a>
                 
             </nav>
@@ -355,7 +356,12 @@
                                         </div>
                                         <div>
                                             <label class="block mb-2 text-sm font-medium text-gray-900">{% trans "Phone" %}</label>
-                                            <input type="tel" name="phone" value="(555) 123-4567" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+<input type="tel" name="phone" 
+       pattern="[0-9]{11}" 
+       maxlength="11"
+       title="Phone number must be exactly 11 digits" 
+       required
+       class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
                                         </div>
                                     </div>
                                 </div>

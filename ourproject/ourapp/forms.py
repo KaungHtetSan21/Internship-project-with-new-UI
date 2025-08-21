@@ -3,11 +3,12 @@ from django import forms
 from django.contrib.auth.models import User
 from .models import *
 
+# forms.py
+
 class CustomerRegisterForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput)
     confirm_password = forms.CharField(widget=forms.PasswordInput)
-    # email = forms.EmailField(blank=True,null=True,required=True)
-    phone = forms.CharField(max_length=20, required=True)
+    phone = forms.CharField(max_length=11, required=True)  # 11 လုံးအထိသာ ခွင့်ပြုမယ်
     address = forms.CharField(max_length=255, required=False)
     gender = forms.ChoiceField(choices=[('male', 'Male'), ('female', 'Female')], required=False)
     date_of_birth = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
@@ -18,7 +19,6 @@ class CustomerRegisterForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(CustomerRegisterForm, self).__init__(*args, **kwargs)
-        # Mark fields as required
         self.fields['first_name'].required = True
         self.fields['last_name'].required = True
         self.fields['email'].required = True
@@ -29,7 +29,16 @@ class CustomerRegisterForm(forms.ModelForm):
         confirm = cleaned_data.get("confirm_password")
         if password != confirm:
             raise forms.ValidationError("Passwords do not match.")
-        return cleaned_data    
+        return cleaned_data
+
+    def clean_phone(self):
+        phone = self.cleaned_data.get("phone")
+        if not phone.isdigit():
+            raise forms.ValidationError("Phone number must contain digits only.")
+        if len(phone) != 11:
+            raise forms.ValidationError("Phone number must be exactly 11 digits.")
+        return phone
+
 
 
 

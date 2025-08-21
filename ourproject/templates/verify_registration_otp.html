@@ -1,42 +1,344 @@
-<!-- templates/verify_registration_otp.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Verify OTP</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://unpkg.com/@heroicons/react/outline/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .card {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+    
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
+    }
+    
+    .otp-container {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 20px 0;
+    }
+    
+    .otp-input {
+      width: 50px;
+      height: 60px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: 600;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      background: white;
+      transition: all 0.3s;
+    }
+    
+    .otp-input:focus {
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+      outline: none;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(45deg, #4f46e5, #7c3aed);
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .btn-primary:hover {
+      background: linear-gradient(45deg, #4338ca, #6d28d9);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(79, 70, 229, 0.25);
+    }
+    
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+    
+    .countdown {
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+    }
+    
+    .resend-link {
+      transition: all 0.3s;
+    }
+    
+    .resend-link:hover {
+      color: #4f46e5;
+    }
+    
+    .verification-icon {
+      background: linear-gradient(45deg, #4f46e5, #7c3aed);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+      20%, 40%, 60%, 80% { transform: translateX(5px); }
+    }
+    
+    .shake {
+      animation: shake 0.5s;
+    }
+    
+    .progress-bar {
+      height: 4px;
+      background: #e5e7eb;
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 16px;
+    }
+    
+    .progress {
+      height: 100%;
+      background: linear-gradient(45deg, #4f46e5, #7c3aed);
+      border-radius: 2px;
+      width: 100%;
+      animation: progressAnimation 300s linear forwards;
+    }
+    
+    @keyframes progressAnimation {
+      0% { width: 100%; }
+      100% { width: 0%; }
+    }
+  </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center">
-  <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
-    <div class="flex items-center space-x-3 mb-6">
-      <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" stroke-width="2"
-           viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round"
-              d="M16 12H8m0 0l4-4m-4 4l4 4"></path>
-      </svg>
-      <h2 class="text-2xl font-semibold text-gray-800">Verify Your Email</h2>
-    </div>
-
-    <p class="text-gray-600 mb-4">
-      We have sent an OTP to <strong class="text-blue-600">{{ email }}</strong>.  
-      Please enter it below to complete your registration.
-    </p>
-
-    <form method="post" class="space-y-4">
-      {% csrf_token %}
-      <div>
-        <label for="otp" class="block text-sm font-medium text-gray-700">Enter OTP</label>
-        <input type="text" name="otp" maxlength="6"
-               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-               required>
+<body>
+  <div class="w-full max-w-md card">
+    <div class="p-8">
+      <div class="text-center mb-8">
+        <div class="flex justify-center mb-4">
+          <div class="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center">
+            <i class="fas fa-envelope verification-icon text-3xl"></i>
+          </div>
+        </div>
+        <h1 class="text-2xl font-bold text-gray-800 mb-2">Verify Your Email</h1>
+        <p class="text-gray-600">
+          We've sent a verification code to <br>
+          <strong class="text-blue-600">{{ email }}</strong>
+        </p>
       </div>
 
-      <button type="submit"
-              class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition duration-150">
-        Verify OTP
-      </button>
-    </form>
+      <form method="post" class="space-y-6">
+        {% csrf_token %}
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-3 text-center">
+            Enter the 6-digit code
+          </label>
+          <div class="otp-container">
+            <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" autocomplete="one-time-code" required>
+            <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" required>
+            <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" required>
+            <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" required>
+            <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" required>
+            <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" required>
+          </div>
+          <input type="hidden" name="otp" id="otp">
+          
+          <div class="progress-bar">
+            <div class="progress" id="progress"></div>
+          </div>
+          
+          <div class="text-center mt-4">
+            <p class="text-sm text-gray-600">
+              Code expires in: <span class="countdown text-indigo-600" id="countdown">05:00</span>
+            </p>
+          </div>
+        </div>
+
+        <button type="submit" id="verifyButton"
+                class="w-full btn-primary text-white font-semibold py-3 px-4 rounded-lg flex items-center justify-center">
+          <i class="fas fa-check-circle mr-2"></i> Verify & Continue
+        </button>
+      </form>
+      
+      <div class="text-center mt-6">
+        <p class="text-sm text-gray-600">
+          Didn't receive the code? 
+          <a href="#" class="resend-link text-indigo-600 font-medium" id="resendLink">Resend OTP</a>
+        </p>
+      </div>
+    </div>
+    
+    <div class="px-8 py-4 bg-gray-50 text-center border-t border-gray-100">
+      <p class="text-xs text-gray-500">
+        <i class="fas fa-shield-alt mr-1 text-indigo-500"></i> 
+        Secure verification process
+      </p>
+    </div>
   </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const inputs = document.querySelectorAll('.otp-input');
+      const form = document.querySelector('form');
+      const hiddenInput = document.getElementById('otp');
+      const verifyButton = document.getElementById('verifyButton');
+      const countdownEl = document.getElementById('countdown');
+      const resendLink = document.getElementById('resendLink');
+      const progressBar = document.getElementById('progress');
+      
+      let timeLeft = 300; // 5 minutes in seconds
+      let canResend = false;
+      let timer;
+      
+      // Auto-focus and move between inputs
+      inputs.forEach((input, index) => {
+        input.addEventListener('input', function() {
+          const value = this.value;
+          
+          if (value.length === 1) {
+            if (index < inputs.length - 1) {
+              inputs[index + 1].focus();
+            } else {
+              inputs[index].blur();
+            }
+          }
+          
+          updateOTPValue();
+        });
+        
+        input.addEventListener('keydown', function(e) {
+          if (e.key === 'Backspace' && this.value === '' && index > 0) {
+            inputs[index - 1].focus();
+          }
+        });
+        
+        input.addEventListener('paste', function(e) {
+          e.preventDefault();
+          const pasteData = e.clipboardData.getData('text').slice(0, 6);
+          
+          pasteData.split('').forEach((char, i) => {
+            if (inputs[i]) {
+              inputs[i].value = char;
+            }
+          });
+          
+          updateOTPValue();
+          
+          if (pasteData.length === 6) {
+            inputs[5].blur();
+          } else if (pasteData.length < 6) {
+            inputs[pasteData.length].focus();
+          }
+        });
+      });
+      
+      function updateOTPValue() {
+        let otpValue = '';
+        inputs.forEach(input => {
+          otpValue += input.value;
+        });
+        hiddenInput.value = otpValue;
+      }
+      
+      // Countdown timer
+      function startTimer() {
+        clearInterval(timer);
+        timeLeft = 300;
+        updateCountdown();
+        progressBar.style.animation = 'none';
+        // Trigger reflow
+        void progressBar.offsetWidth;
+        progressBar.style.animation = 'progressAnimation 300s linear forwards';
+        
+        timer = setInterval(() => {
+          timeLeft--;
+          updateCountdown();
+          
+          if (timeLeft <= 0) {
+            clearInterval(timer);
+            canResend = true;
+            resendLink.classList.remove('text-gray-400');
+            resendLink.classList.add('text-indigo-600', 'font-medium');
+          }
+        }, 1000);
+      }
+      
+      function updateCountdown() {
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        countdownEl.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        
+        if (timeLeft < 60) {
+          countdownEl.classList.add('text-red-500');
+        } else {
+          countdownEl.classList.remove('text-red-500');
+        }
+      }
+      
+      // Resend OTP functionality
+      resendLink.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        if (!canResend) return;
+        
+        // Simulate resend request
+        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+        
+        setTimeout(() => {
+          canResend = false;
+          startTimer();
+          this.innerHTML = 'Resend OTP';
+          
+          // Show notification (simulated)
+          inputs.forEach(input => input.value = '');
+          hiddenInput.value = '';
+          inputs[0].focus();
+          
+          // Simulate shake animation for notification
+          document.querySelector('.otp-container').classList.add('shake');
+          setTimeout(() => {
+            document.querySelector('.otp-container').classList.remove('shake');
+          }, 500);
+        }, 1500);
+      });
+      
+      // Form submission
+      form.addEventListener('submit', function(e) {
+        const otpValue = hiddenInput.value;
+        
+        if (otpValue.length !== 6) {
+          e.preventDefault();
+          document.querySelector('.otp-container').classList.add('shake');
+          setTimeout(() => {
+            document.querySelector('.otp-container').classList.remove('shake');
+          }, 500);
+          return;
+        }
+        
+        verifyButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Verifying...';
+        verifyButton.disabled = true;
+      });
+      
+      // Initialize
+      startTimer();
+      inputs[0].focus();
+    });
+  </script>
 </body>
 </html>

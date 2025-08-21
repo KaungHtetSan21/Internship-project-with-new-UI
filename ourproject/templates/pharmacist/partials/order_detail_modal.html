@@ -2,7 +2,7 @@
   <p><strong>Customer:</strong> {{ order.name }}</p>
   <p><strong>Phone:</strong> {{ order.phone|default:"-" }}</p>
   <p><strong>Address:</strong> {{ order.address|default:"-" }}</p>
-  <p><strong>Total Amount:</strong> {{ order.total_amount }} Ks</p>
+  <p><strong>Total Amount:</strong> {{ order.final_amount }} Ks</p>
   <p><strong>Date:</strong> {{ order.created_date|date:"M d, Y H:i" }}</p>
   <hr>
   <h6 class="fw-semibold mb-2">Ordered Items</h6>
