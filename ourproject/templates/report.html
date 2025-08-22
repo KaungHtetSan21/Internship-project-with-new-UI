@@ -172,6 +172,17 @@
 {{ user.userprofile.role }}  
 {% endif %}
 <div class="w-full px-4 py-8">
+            <!-- Message Display -->
+        {% if messages %}
+        <div class="mb-6">
+            {% for message in messages %}
+            <div
+                class="p-3 rounded text-white font-semibold {% if message.tags == 'success' %}bg-green-500 {% elif message.tags == 'error' %}bg-red-500 {% elif message.tags == 'warning' %}bg-yellow-500 {% else %}bg-blue-500{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
     <h1 class="text-3xl font-bold mb-6">{% trans "Reports" %}</h1>
 
 <!-- Filter Tabs -->

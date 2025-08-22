@@ -106,4 +106,7 @@ admin.site.register(customerpos)
 
 admin.site.register(Supplier,supplier)
 admin.site.register(Chatbot,chatbot)
-
+admin.site.register(StockBatch)
+admin.site.register(PromotionItem)
+admin.site.register(PromotionAllocation)
+admin.site.register(SaleBatchConsumption)

@@ -1,0 +1,293 @@
+{% load i18n %}
+{% load cart_extras %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharmastics - Customer Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .sidebar-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            transform: translateX(2px);
+        }
+
+        .sidebar-link.active {
+            background-color: rgba(255, 255, 255, 0.2);
+            border-left: 3px solid white;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .tab-content {
+            border-bottom-left-radius: 0.75rem;
+            border-bottom-right-radius: 0.75rem;
+        }
+
+        .nav-tabs .nav-link {
+            border-bottom: none;
+            position: relative;
+        }
+
+        .nav-tabs .nav-link.active {
+            border-bottom: 2px solid #3b82f6;
+            color: #3b82f6;
+        }
+
+        .nav-tabs .nav-link.active:after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: white;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50">
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside class="hidden lg:block w-64 bg-blue-600 text-white fixed h-full">
+            <div class="p-4 text-center border-b border-blue-500">
+                <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/120c636b-923a-456a-a13a-39844d5d3a4a.png"
+                    class="h-12 mx-auto mb-2">
+                <h2 class="font-bold text-lg">Pharmastics</h2>
+            </div>
+            <nav class="mt-4 space-y-1 px-2">
+                {% if request.user.userprofile.role == 'admin' %}
+                <a href="{% url 'admin_dashboard' %}" class="sidebar-link block px-4 py-2 rounded transition">
+                    <i class="fas fa-chart-bar mr-2"></i> {% trans "Admin Dashboard" %}
+                </a>
+                {% elif request.user.userprofile.role == 'pharmacist' %}
+                <a href="{% url 'pharmacist_dashboard' %}" class="sidebar-link block px-4 py-2 rounded transition">
+                    <i class="fas fa-briefcase-medical mr-2"></i> {% trans "Pharmacist Dashboard" %}
+                </a>
+                {% elif request.user.userprofile.role == 'customer' %}
+                <a href="{% url 'customer_dashboard' %}" class="sidebar-link active block px-4 py-2 rounded transition">
+                    <i class="fas fa-tachometer-alt mr-2"></i> {% trans "Customer Dashboard" %}
+                </a>
+                {% endif %}
+
+                <a href="{% url 'promotion_area' %}" class="sidebar-link block px-4 py-2 rounded transition">
+                    <i class="fas fa-pills mr-2"></i> Your Promotion Area
+                </a>
+                <a href="{% url 'medicine_list' %}" class="sidebar-link block px-4 py-2 rounded transition">
+                    <i class="fas fa-pills mr-2"></i> {% trans "Medicine" %}
+                </a>
+                <a href="{% url 'customer_profilereal' %}" class="sidebar-link block px-4 py-2 rounded transition">
+                    <i class="fas fa-user mr-2"></i> {% trans "My Profile" %}
+                </a>
+                <a href="{% url 'customer_profile' %}" class="sidebar-link block px-4 py-2 rounded transition">
+                    <i class="fas fa-user mr-2"></i> {% trans "Purchase History" %}
+                </a>
+                {% if user.is_authenticated %}
+                <a href="{% url 'logout' %}"
+                    class="block px-4 py-2 bg-red-500 hover:bg-red-600 rounded transition mt-4">
+                    <i class="fas fa-sign-out-alt mr-2"></i> {% trans "Logout" %}
+                </a>
+                {% else %}
+                <a href="{% url 'login' %}"
+                    class="block px-4 py-2 bg-green-500 hover:bg-green-600 rounded transition mt-4">
+                    <i class="fas fa-sign-in-alt mr-2"></i> {% trans "Login" %}
+                </a>
+                {% endif %}
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 lg:ml-64 p-4 lg:p-8">
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-2xl font-bold text-gray-800">{% trans "Pharmacy Products" %}</h1>
+
+                <div class="flex space-x-2">
+                    <form action="{% url 'set_language' %}" method="post">
+                        {% csrf_token %}
+                        <input name="next" type="hidden" value="{{ request.path }}">
+                        <input name="language" type="hidden" value="en">
+                        <button type="submit"
+                            class="px-3 py-1 text-sm border border-blue-500 rounded hover:bg-blue-50 transition">English</button>
+                    </form>
+                    <form action="{% url 'set_language' %}" method="post">
+                        {% csrf_token %}
+                        <input name="next" type="hidden" value="{{ request.path }}">
+                        <input name="language" type="hidden" value="my">
+                        <button type="submit"
+                            class="px-3 py-1 text-sm border border-green-500 rounded hover:bg-green-50 transition">မြန်မာ</button>
+                    </form>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/8637fe83-4dd7-4a12-acb3-070973d2f38d.png"
+                        class="w-8 h-8 rounded-full border-2 border-blue-500">
+                    <div class="relative">
+                        <button onclick="toggleDropdown()"
+                            class="bg-blue-600 text-white px-4 py-2 rounded-lg inline-flex items-center hover:bg-blue-700 transition">
+                            {% trans "Customer Account" %}
+                            <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        <div id="dropdownMenu"
+                            class="absolute right-0 mt-1 w-48 hidden bg-white border rounded-lg shadow-lg z-10 overflow-hidden">
+                            <a href="{% url 'logout' %}"
+                                class="block px-4 py-2 text-red-600 hover:bg-gray-100 transition">🚪 {% trans "Logout"
+                                %}</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if messages %}
+            <div class="mb-6">
+                {% for message in messages %}
+                <div class="p-3 rounded-lg text-white font-medium mb-2
+                        {% if message.tags == 'success' %} bg-green-500
+                        {% elif message.tags == 'error' %} bg-red-500
+                        {% elif message.tags == 'warning' %} bg-yellow-500
+                        {% else %} bg-blue-500
+                        {% endif %}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <h1 class="text-xl font-semibold mb-4">{% trans "Promotion Items" %}</h1>
+
+            {% if promotions %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for promo in promotions %}
+                <div class="bg-white shadow rounded-xl p-4 flex flex-col">
+                    <!-- Image -->
+                    <img src="{{ promo.item.item_photo.url }}" alt="{{ promo.item.item_name }}"
+                        class="h-40 object-contain mb-3">
+
+                    <!-- Info -->
+                    <h3 class="text-lg font-semibold">{{ promo.item.item_name }}</h3>
+                    {% if promo.expire_date %}
+                    <p class="text-gray-500 text-sm">Expire: {{ promo.expire_date }}</p>
+                    {% endif %}
+                    <p class="text-gray-500 text-sm">Promo Stock: {{ promo.quantity }}</p>
+
+                    <!-- Price -->
+                    <div class="mt-2">
+                        <span class="line-through text-gray-400 mr-2">
+                            {{ promo.item.item_price }} Ks
+                        </span>
+                        <span class="text-red-600 font-bold">
+                            {{ promo.discounted_price }} Ks
+                        </span>
+                        <span class="ml-1 text-xs text-green-600">(-{{ promo.discount_percent }}%)</span>
+                    </div>
+
+                    <!-- ✅ Add to Promo Cart (NOT add_to_cart) -->
+                    {% if promo.quantity > 0 %}
+                    <form method="post" action="{% url 'add_promo_to_cart' promo.id %}" class="mt-4">
+                        {% csrf_token %}
+                        <input type="number" name="qty" value="1" min="1" max="{{ promo.quantity }}"
+                            class="w-20 border rounded px-2 py-1 text-sm">
+                        <button type="submit"
+                            class="ml-2 bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm">
+                            Add to Cart
+                        </button>
+                    </form>
+                    {% else %}
+                    <p class="text-red-500 text-sm mt-2">Out of stock</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-gray-500">No promotion items available.</p>
+            {% endif %}
+</body>
+
+</html>
+
+</main>
+</div>
+
+<!-- Mobile Footer -->
+<nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-blue-600 text-white flex justify-around py-3 shadow-lg">
+    <a href="{% url 'customer_dashboard' %}" class="flex flex-col items-center text-xs">
+        <span class="text-lg">🏠</span>
+        <span>{% trans "Dashboard" %}</span>
+    </a>
+    <a href="{% url 'medicine_list' %}" class="flex flex-col items-center text-xs">
+        <span class="text-lg">💊</span>
+        <span>{% trans "Medicine" %}</span>
+    </a>
+    <a href="{% url 'customer_profile' %}" class="flex flex-col items-center text-xs">
+        <span class="text-lg">👤</span>
+        <span>{% trans "Profile" %}</span>
+    </a>
+</nav>
+
+
+</body>
+
+<script>
+    // Toggle dropdown
+    function toggleDropdown() {
+        document.getElementById("dropdownMenu").classList.toggle("hidden");
+    }
+
+    // Close dropdown if clicked outside
+    window.addEventListener("click", function (event) {
+        const dropdown = document.getElementById("dropdownMenu");
+        if (!event.target.closest(".relative")) {
+            dropdown.classList.add("hidden");
+        }
+    });
+
+    // Tab switching functionality
+    function switchTab(tabId) {
+        // Hide all tab panes
+        document.querySelectorAll('.tab-pane').forEach(pane => {
+            pane.classList.add('hidden');
+            pane.classList.remove('active');
+        });
+
+        // Deactivate all tab buttons
+        document.querySelectorAll('[role="tab"]').forEach(tab => {
+            tab.classList.remove('active', 'border-blue-600', 'text-blue-600');
+            tab.classList.add('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300');
+        });
+
+        // Show selected pane and activate tab
+        const tab = document.getElementById(tabId);
+        const paneId = tab.getAttribute('data-tabs-target');
+        const pane = document.querySelector(paneId);
+
+        tab.classList.add('active', 'border-blue-600', 'text-blue-600');
+        tab.classList.remove('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300');
+        pane.classList.remove('hidden');
+        pane.classList.add('active');
+    }
+
+    // Initialize tab functionality
+    document.querySelectorAll('[role="tab"]').forEach(tab => {
+        tab.addEventListener('click', function () {
+            switchTab(this.id);
+        });
+    });
+</script>
+</body>
+
+</html>

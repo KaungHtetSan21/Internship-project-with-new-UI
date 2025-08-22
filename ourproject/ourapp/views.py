@@ -656,49 +656,61 @@ def get_order_details(request, order_id):
     
 from django.db import transaction
 
+
+
+# views.py
+from django.contrib.auth.decorators import login_required
 from django.db import transaction
+from django.http import HttpResponseForbidden
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
 
 @login_required
-def confirm_order_view(request, order_id):
+def confirm_order_view(request, sale_id):
+    # Pharmacist only
     if request.user.userprofile.role != 'pharmacist':
         return HttpResponseForbidden()
 
+    # Pending orders only
+    sale = get_object_or_404(Sale, id=sale_id, status='pending')
+
+    # Pull items + promo relation to avoid n+1
+    sale_items = (
+        SaleItem.objects
+        .select_related('item', 'promotion')
+        .filter(sale=sale)
+    )
+
     try:
-        order = Sale.objects.get(id=order_id)
-
-        # ✅ Only process if order is still pending
-        if order.status != 'pending':
-            messages.warning(request, "Order already processed.")
-            return redirect('pharmacist_dashboard')
-
-        # ✅ Atomic transaction block
         with transaction.atomic():
-            for item in order.saleitem_set.all():
-                # ✅ Reduce stock
-                item.item.item_quantity -= item.quantity
-                item.item.save()
-
-                # ✅ Log stock history
-                StockHistory.objects.create(
-                    item=item.item,
-                    action='out',
-                    quantity=item.quantity,
-                    note=f"Confirmed by pharmacist - Order {order.invoice_no}"
+            # FIFO consume per SaleItem
+            for si in sale_items:
+                use_promo = bool(getattr(si, "is_promotion", False) and si.promotion_id)
+                consume_fifo(
+                    item=si.item,
+                    qty=si.quantity,
+                    sale_item=si,
+                    use_promo=use_promo,
+                    promotion=si.promotion if use_promo else None,
+                    note_prefix=f"Invoice {sale.invoice_no}: "
                 )
 
-            # ✅ Update order status
-            order.status = 'confirmed'
-            order.save()
+            # Mark order confirmed only after all stock ops succeed
+            sale.status = 'confirmed'
+            sale.save(update_fields=['status'])
 
-        # ✅ Notify user
-        Notification.objects.create(
-            recipient=order.user,
-            message=f"Your order {order.invoice_no} has been confirmed by the pharmacist."
-        )
+            # Notify customer once
+            Notification.objects.create(
+                recipient=sale.user,
+                message=f"Your order {sale.invoice_no} has been confirmed by the pharmacist."
+            )
 
-        messages.success(request, "Order confirmed successfully.")
-    except Sale.DoesNotExist:
-        messages.error(request, "Order not found.")
+        messages.success(request, "Order confirmed and stock deducted (batch FIFO).")
+
+    except Exception as e:
+        messages.error(request, f"Stock error: {e}")
+        return redirect('pharmacist_dashboard')
+
     return redirect('pharmacist_dashboard')
 
 @login_required
@@ -709,16 +721,14 @@ def cancel_order_view(request, order_id):
     try:
         order = Sale.objects.get(id=order_id)
 
-        # ✅ Only allow if pending
+        # Only allow pending
         if order.status != 'pending':
             messages.warning(request, "Order already processed.")
             return redirect('pharmacist_dashboard')
 
-        # ✅ Update order status
         order.status = 'cancelled'
         order.save()
 
-        # ✅ Notify user
         Notification.objects.create(
             recipient=order.user,
             message=f"Your order {order.invoice_no} has been cancelled by the pharmacist."
@@ -727,6 +737,7 @@ def cancel_order_view(request, order_id):
         messages.warning(request, "Order cancelled.")
     except Sale.DoesNotExist:
         messages.error(request, "Order not found.")
+
     return redirect('pharmacist_dashboard')
 
 
@@ -1511,23 +1522,278 @@ def inventory_view(request):
     })
 
 
-@require_POST
+
+
 @login_required
 def send_to_promotion(request):
-    if request.user.userprofile.role != 'pharmacist':
-        messages.error(request, "Unauthorized.")
-        return redirect('inventory_view')
+    if request.method != "POST":
+        return redirect("inventory_view")
 
-    item_id = request.POST.get('item_id')
+    item_id = request.POST.get("item_id")
+    qty = int(request.POST.get("quantity") or 0)
+    discount = int(request.POST.get("discount") or 0)
+
     item = get_object_or_404(Item, id=item_id)
 
-    # Example: Mark item as promotion or move to another model/table if needed
-    item.is_promotion = True
-    item.save()
+    # quick guard using legacy field
+    if qty <= 0:
+        messages.error(request, "Quantity must be greater than 0.")
+        return redirect("inventory_view")
+    if qty > item.item_quantity:
+        messages.error(request, "Quantity cannot be greater than current stock.")
+        return redirect("inventory_view")
 
-    messages.success(request, f"{item.item_name} has been moved to promotion area.")
-    return redirect('inventory_view')
+    # 🚨 Extra Guard: Prevent expired item from going to promotion
+    if item.exp_date and item.exp_date < timezone.now().date():
+        messages.error(request, f"{item.item_name} သည် Expired ဖြစ်သဖြင့် promotion သို့ မပို့နိုင်ပါ။")
+        return redirect("inventory_view")
 
+    promo = PromotionItem.objects.create(
+        item=item,
+        quantity=qty,
+        discount_percent=discount,
+        expire_date=item.exp_date,
+        status='active'
+    )
+    try:
+        allocate_promotion_fifo(promo)  # reserve only; on_hand not deducted yet
+    except Exception as e:
+        promo.delete()
+        messages.error(request, f"Allocation failed: {e}")
+        return redirect("inventory_view")
+
+    messages.success(request, f"{item.item_name} sent to promotion (reserved: {qty}).")
+    return redirect("inventory_view")
+
+@login_required
+def cancel_promotion(request, promo_id):
+    promo = get_object_or_404(PromotionItem, id=promo_id, status='active')
+
+    with transaction.atomic():
+        allocs = promo.allocations.select_for_update().select_related('batch')
+        for a in allocs:
+            b = a.batch
+            # release reservation only
+            b.reserved_promo = F('reserved_promo') - a.quantity
+            b.save(update_fields=['reserved_promo'])
+        promo.allocations.all().delete()
+        promo.status = 'cancelled'
+        promo.save(update_fields=['status'])
+
+    messages.success(request, "Promotion cancelled and allocations released.")
+    return redirect('promotion_area')  # change to your list view name
+
+
+
+@login_required
+def promotion_area(request):
+    today = timezone.now().date()
+    promotions = (
+        PromotionItem.objects
+        .select_related("item")
+        .filter(status="active", quantity__gt=0)
+        .filter(Q(expire_date__isnull=True) | Q(expire_date__gte=today))
+    )
+    return render(request, "promotion_area.html", {"promotions": promotions})
+
+@login_required
+def add_promo_to_cart(request, promo_id):
+    promo = get_object_or_404(
+        PromotionItem.objects.select_related("item"),
+        id=promo_id, status="active"
+    )
+
+    try:
+        qty = int(request.POST.get("qty", "1"))
+    except ValueError:
+        qty = 1
+    if qty < 1:
+        qty = 1
+    if qty > promo.quantity:
+        messages.error(request, f"Only {promo.quantity} left in promo stock.")
+        return redirect("promotion_area")
+
+    cart, _ = Cart.objects.get_or_create(user=request.user)
+    unit_price = promo.discounted_price()
+
+    cp = CartProduct.objects.create(
+        cart=cart,
+        item=promo.item,
+        qty=qty,
+        unit_price=unit_price,
+        price=qty * unit_price
+    )
+
+    # save promo mapping in session
+    promo_cart = request.session.get("promo_cart", {})
+    promo_cart[str(cp.id)] = promo.id
+    request.session["promo_cart"] = promo_cart
+    request.session.modified = True
+
+    cart.update_total_amount()
+    messages.success(request, f"Added {qty} × {promo.item.item_name} (promo) to cart.")
+    return redirect("promotion_area")
+
+
+def _remove_cp_and_session(request, cp):
+    cp_id_str = str(cp.id)
+    cp.delete()
+    promo_cart = request.session.get("promo_cart", {})
+    if cp_id_str in promo_cart:
+        promo_cart.pop(cp_id_str, None)
+        request.session["promo_cart"] = promo_cart
+        request.session.modified = True
+
+
+def _get_promo_for_cp(request, cp):
+    promo_cart = request.session.get("promo_cart", {})
+    promo_id = promo_cart.get(str(cp.id))
+    if not promo_id:
+        return None
+    try:
+        return PromotionItem.objects.get(id=promo_id, status="active")
+    except PromotionItem.DoesNotExist:
+        promo_cart.pop(str(cp.id), None)
+        request.session["promo_cart"] = promo_cart
+        request.session.modified = True
+        return None
+
+
+# views.py
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.db import transaction
+from django.db.models import F
+from .models import (
+    Item, StockBatch, PromotionItem, PromotionAllocation,
+    StockHistory, Sale, SaleItem, SaleBatchConsumption
+)
+
+# ---------- FIFO: reserve for promotion (Admin sends to promotion) ----------
+def allocate_promotion_fifo(promo: PromotionItem):
+    if promo.status != 'active':
+        raise ValueError("Promotion is not active")
+    needed = int(promo.quantity or 0)
+    if needed <= 0:
+        raise ValueError("Promotion quantity must be > 0")
+
+    with transaction.atomic():
+        batches = (StockBatch.objects
+                   .select_for_update()
+                   .filter(item=promo.item)
+                   .order_by('exp_date', 'id'))
+        for b in batches:
+            if needed <= 0:
+                break
+            take = min(needed, b.available)
+            if take > 0:
+                PromotionAllocation.objects.create(promotion=promo, batch=b, quantity=take)
+                b.reserved_promo = F('reserved_promo') + take
+                b.save(update_fields=['reserved_promo'])
+                needed -= take
+        if needed > 0:
+            raise ValueError("Not enough available stock to allocate for this promotion")
+
+
+
+def consume_fifo(item, qty, sale_item=None,
+                 use_promo=False, promotion=None,
+                 note_prefix=''):
+    """
+    FIFO stock consumption
+    - item: Item object
+    - qty: integer quantity to consume
+    - sale_item: SaleItem (online) or None (POS)
+    - use_promo: bool, True if promotion
+    - promotion: PromotionItem object if use_promo=True
+    - note_prefix: str, for StockHistory note
+    """
+
+    remaining = int(qty or 0)
+    if remaining <= 0:
+        return
+
+    with transaction.atomic():
+        if use_promo:
+            # ✅ Promo: consume from reserved allocations first
+            allocs = (
+                PromotionAllocation.objects
+                .select_for_update()
+                .filter(promotion=promotion)
+                .select_related('batch')
+                .order_by('batch__exp_date', 'batch_id')
+            )
+            for a in allocs:
+                if remaining <= 0:
+                    break
+                b = a.batch
+                take = min(remaining, a.quantity, b.quantity_on_hand, b.reserved_promo)
+                if take <= 0:
+                    continue
+
+                # reduce allocation
+                new_qty = a.quantity - take
+                if new_qty <= 0:
+                    a.delete()
+                else:
+                    a.quantity = new_qty
+                    a.save(update_fields=['quantity'])
+
+                # reduce promo stock
+                promotion.quantity = F('quantity') - take
+                promotion.save(update_fields=['quantity'])
+
+                # reduce batch
+                b.quantity_on_hand = F('quantity_on_hand') - take
+                b.reserved_promo = F('reserved_promo') - take
+                b.save(update_fields=['quantity_on_hand', 'reserved_promo'])
+
+                # log consumption
+                if sale_item:
+                    SaleBatchConsumption.objects.create(
+                        sale_item=sale_item, batch=b, quantity=take
+                    )
+                StockHistory.objects.create(
+                    item=item, action='out', quantity=take,
+                    note=f"{note_prefix}Sale (promo) - batch {b.batch_number}"
+                )
+                remaining -= take
+
+        else:
+            # ✅ Normal: consume from available stock (oldest batch first)
+            batches = (
+                StockBatch.objects
+                .select_for_update()
+                .filter(item=item)
+                .order_by('exp_date', 'id')
+            )
+            for b in batches:
+                if remaining <= 0:
+                    break
+                take = min(remaining, b.available)
+                if take <= 0:
+                    continue
+
+                b.quantity_on_hand = F('quantity_on_hand') - take
+                b.save(update_fields=['quantity_on_hand'])
+
+                if sale_item:
+                    SaleBatchConsumption.objects.create(
+                        sale_item=sale_item, batch=b, quantity=take
+                    )
+                StockHistory.objects.create(
+                    item=item, action='out', quantity=take,
+                    note=f"{note_prefix}Sale - batch {b.batch_number}"
+                )
+                remaining -= take
+
+        if remaining > 0:
+            raise ValueError("Insufficient stock to consume")
+
+        # ✅ Update legacy fast field
+        item.item_quantity = max(0, item.item_quantity - qty)
+        item.save(update_fields=['item_quantity'])
 
 # @login_required
 # def order_view(request):
@@ -1549,113 +1815,154 @@ def send_to_promotion(request):
 #     return render(request, 'POS.html', context)
 
 
-@login_required
+# views.py (order_view ထဲ)
+import json
+from django.utils import timezone
+from django.db.models import Q
+
 def order_view(request):
     if request.user.userprofile.role != 'pharmacist':
         messages.error(request, "You do not have permission to access this page.")
         return redirect('pharmacist_dashboard')
 
     category_id = request.GET.get('cid')
-    search_query = request.GET.get('q', '')  # <-- Search box value
+    search_query = request.GET.get('q', '')
 
     categories = Category.objects.all()
-
-    # Base queryset
     items = Item.objects.all()
-
-    # Category filter
     if category_id:
         items = items.filter(category_id=category_id)
-
-    # Search filter (case-insensitive)
     if search_query:
         items = items.filter(item_name__icontains=search_query)
-
-    # Order by newest first
     items = items.order_by('-id')
+
+    # ✅ Active promotions (earliest expiry per item)
+    today = timezone.now().date()
+    promos_qs = (PromotionItem.objects
+                 .select_related('item')
+                 .filter(status='active', quantity__gt=0)
+                 .filter(Q(expire_date__isnull=True) | Q(expire_date__gte=today))
+                 .filter(item__in=items)
+                 .order_by('item_id', 'expire_date', 'id'))
+
+    promos_map = {}
+    for p in promos_qs:
+        if p.item_id not in promos_map:  # take earliest-exp promotion per item
+            promos_map[p.item_id] = {
+                'promo_id': p.id,
+                'item_id': p.item_id,
+                'promo_price': int(p.discounted_price() or p.item.item_price),
+            }
 
     context = {
         'categories': categories,
         'items': items,
-        'search_query': search_query,  # For keeping input value in template
+        # JSON object keyed by item_id, e.g. { "12": {promo_id: 3, promo_price: 900} }
+        'promotions_map_json': json.dumps({str(k): v for k, v in promos_map.items()}),
+        'search_query': search_query,
     }
     return render(request, 'POS.html', context)
 
 # views.py
+import json
+from django.views import View
+from django.http import JsonResponse
+from django.utils.decorators import method_decorator
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404
+from django.db import transaction
+from django.db.models import Q
+
+from .models import (
+    Item, Cart, CartProduct,
+    PromotionItem
+)
+from .views import consume_fifo  # if it's in views.py, else import from its module
+
+@method_decorator(login_required, name='dispatch')
 class SaveOrderView(View):
     def post(self, request):
+        # POS မှာ JSON body ပို့နေတဲ့အတွက် JSON parse လုပ်ပါ
         try:
-            payload = json.loads(request.body)
-            items = payload.get('cart', [])
-            customer_name = payload.get('customer_name', '')
-            payment_method = payload.get('payment_method', '')
+            payload = json.loads(request.body.decode('utf-8'))
+        except Exception:
+            return JsonResponse({'error': 'Invalid JSON payload.'}, status=400)
 
-            # ✅ Check stock before creating cart
-            for item in items:
-                product = Item.objects.get(id=int(item['id']))
-                quantity = int(item['quantity'])
+        items = payload.get('cart') or payload.get('items') or []
+        payment_method = (payload.get('payment_method') or '').strip()
+        customer_name = (payload.get('customer_name') or '').strip()
 
-                if product.item_quantity < quantity:
-                    return JsonResponse(
-                        {'error': f"'{product.item_name}' is out of stock or not enough quantity!"},
-                        status=400
+        if not items:
+            return JsonResponse({'error': 'Cart is empty.'}, status=400)
+
+        try:
+            with transaction.atomic():
+                cart = Cart.objects.create(
+                    user=request.user,
+                    customer_name=customer_name,
+                    payment_method=payment_method,
+                    source='pos'
+                )
+
+                for row in items:
+                    item_id = row.get('id')
+                    qty = int(row.get('quantity') or 0)
+                    if not item_id or qty <= 0:
+                        continue
+
+                    product = get_object_or_404(Item, id=item_id)
+
+                    # Frontend ကနေ လာနိုင်မယ့် flags
+                    is_promo = bool(row.get('isPromo') or row.get('is_promo') or row.get('promo_id'))
+                    promo_obj = None
+
+                    if is_promo:
+                        promo_id = row.get('promo_id')
+                        promo_obj = get_object_or_404(PromotionItem, id=promo_id, status='active')
+
+                        # ရရှိနိုင်တဲ့ promotion quantity စစ်ဆေး
+                        if qty > promo_obj.quantity:
+                            return JsonResponse(
+                                {'error': f"Promotion for {product.item_name} has only {promo_obj.quantity} left."},
+                                status=400
+                            )
+                        unit_price = int(promo_obj.discounted_price() or product.item_price)
+                    else:
+                        # frontend ထဲက unit price (promo မဟုတ်ရင် product price)
+                        unit_price = int(row.get('unit_price') or row.get('price') or product.item_price)
+
+                    # CartProduct
+                    CartProduct.objects.create(
+                        cart=cart,
+                        item=product,
+                        qty=qty,
+                        unit_price=unit_price,
+                        price=qty * unit_price
                     )
 
-            # ✅ Create cart only if stock is valid
-            cart = Cart.objects.create(
-                user=request.user,
-                total_amount=0,
-                customer_name=customer_name,
-                payment_method=payment_method
-            )
+                    # FIFO stock consumption (exp date အနီးဆုံး မှစတင်ရောင်း)
+                    note = f"POS {payment_method or ''}: "
+                    if is_promo:
+                        consume_fifo(
+                            item=product, qty=qty,
+                            sale_item=None,
+                            use_promo=True, promotion=promo_obj,
+                            note_prefix=note
+                        )
+                    else:
+                        consume_fifo(
+                            item=product, qty=qty,
+                            sale_item=None,
+                            use_promo=False,
+                            note_prefix=note
+                        )
 
-            total = 0
-            for item in items:
-                product_id = int(item['id'])
-                quantity = int(item['quantity'])
-                price = float(item['price'])
+                cart.update_total_amount()
 
-                product = Item.objects.get(id=product_id)
-                amount = quantity * price
-
-                CartProduct.objects.create(
-                    cart=cart,
-                    item=product,
-                    qty=quantity,
-                    price=price
-                )
-
-                # ✅ Update stock
-                product.item_quantity -= quantity
-                product.save()
-
-                # ✅ Stock History Log
-                StockHistory.objects.create(
-                    item=product,
-                    action='out',
-                    quantity=quantity,
-                    note=f"POS sale to {customer_name or 'Walk-in'}"
-                )
-
-                # ✅ Sale Report Log
-                Possalesreport.objects.create(
-                    item=product,
-                    user=request.user,
-                    quantity=quantity,
-                    price=price,
-                    amount=amount
-                )
-
-                total += amount
-
-            cart.total_amount = total
-            cart.save()
-
-            return JsonResponse({'message': 'Order saved successfully!'})
+            return JsonResponse({'ok': True, 'cart_id': cart.id, 'total': cart.total_amount})
 
         except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
-        
+            return JsonResponse({'error': str(e)}, status=400)        
                   
 @login_required
 def print_preview(request):
@@ -1750,130 +2057,81 @@ def delete_supplier(request, pk):
 
     return redirect('purchaseorder_view')
 
-# ✅ Update this function to block low stock item for online cart
-@login_required
-def add_to_cart(request, item_id):
-    item = get_object_or_404(Item, id=item_id)
-    cart, created = Cart.objects.get_or_create(user=request.user)
-
-    # ✅ Block if item_quantity is zero or below
-    if item.item_quantity <= 0:
-        messages.error(request, f"{item.item_name} is out of stock.")
-        return redirect('medicine_list')
-
-    cart_product, created = CartProduct.objects.get_or_create(
-        cart=cart,
-        item=item,
-        defaults={'qty': 0, 'price': 0}
-    )
-
-    # ✅ If limited stock, don't allow more than max_quantity
-    if item.is_limited and (cart_product.qty + 1 > item.max_quantity):
-        messages.warning(request, f"{item.item_name} သည် {item.max_quantity} ခုထက် များ၍မရပါ။")
-        return redirect('medicine_list')
-
-    cart_product.qty += 1
-    cart_product.price = cart_product.qty * item.item_price
-    cart_product.save()
-
-    cart.update_total_amount()
-    cart.refresh_from_db()
-    return redirect('medicine_list')
-
-# ✅ Same logic added in increase_quantity view
-def increase_quantity(request, item_id):
-    cart = get_object_or_404(Cart, user=request.user)
-    item = get_object_or_404(Item, id=item_id)
-    cart_product = get_object_or_404(CartProduct, cart=cart, item=item)
-
-    if item.item_quantity <= 0:
-        messages.error(request, f"{item.item_name} is out of stock.")
-        return redirect('medicine_list')
-
-    if item.is_limited and cart_product.qty + 1 > item.max_quantity:
-        messages.warning(request, f"{item.item_name} သည် {item.max_quantity} ထက် များလွန်းပါသည်။")
-        return redirect('medicine_list')
-
-    cart_product.qty += 1
-    cart_product.price = cart_product.qty * item.item_price
-    cart_product.save()
-
-    cart.update_total_amount()
-    cart.refresh_from_db()
-
-    return redirect('medicine_list')
-
-
-@login_required
-def decrease_quantity(request, item_id):
-    cart = get_object_or_404(Cart, user=request.user)
-    item = get_object_or_404(Item, id=item_id)
-    cart_product = get_object_or_404(CartProduct, cart=cart, item=item)
-
-    if cart_product.qty > 1:
-        cart_product.qty -= 1
-        cart_product.price = cart_product.qty * item.item_price
-        cart_product.save()
-    else:
-        cart_product.delete()
-
-    cart.update_total_amount()
-    cart.refresh_from_db()
-    return redirect('medicine_list')
-
-@login_required
-def remove_from_cart(request, item_id):
-    cart = get_object_or_404(Cart, user=request.user)
-    item = get_object_or_404(Item, id=item_id)
-
-    try:
-        cart_product = CartProduct.objects.get(cart=cart, item=item)
-        cart_product.delete()
-        cart.update_total_amount()
-    except CartProduct.DoesNotExist:
-        pass
-
-    return redirect('medicine_list')
 
 @require_POST
 @login_required
-def update_quantity(request, item_id):
-    user = request.user
+def increase_cp_qty(request, cp_id):
+    cp = get_object_or_404(CartProduct, id=cp_id, cart__user=request.user)
+    promo = _get_promo_for_cp(request, cp)
 
-    # ✅ Role Check (only customers)
-    if not hasattr(user, 'userprofile') or user.userprofile.role != 'customer':
-        messages.error(request, "You do not have permission to update cart items.")
-        return redirect('medicine_list')
+    if promo and cp.qty + 1 > promo.quantity:
+        messages.warning(request, f"Only {promo.quantity} available at promo price.")
+        return redirect("medicine_list")
+    if not promo and cp.qty + 1 > cp.item.item_quantity:
+        messages.warning(request, f"Only {cp.item.item_quantity} left in stock.")
+        return redirect("medicine_list")
 
-    cart = get_object_or_404(Cart, user=user)
-    item = get_object_or_404(Item, id=item_id)
-    cart_product = get_object_or_404(CartProduct, cart=cart, item=item)
+    cp.qty = F("qty") + 1
+    cp.save(update_fields=["qty"])
+    cp.refresh_from_db(fields=["qty"])
+    cp.price = cp.qty * cp.unit_price
+    cp.save(update_fields=["price"])
+    cp.cart.update_total_amount()
+    return redirect("medicine_list")
 
+
+@require_POST
+@login_required
+def decrease_cp_qty(request, cp_id):
+    cp = get_object_or_404(CartProduct, id=cp_id, cart__user=request.user)
+    if cp.qty > 1:
+        cp.qty = F("qty") - 1
+        cp.save(update_fields=["qty"])
+        cp.refresh_from_db(fields=["qty"])
+        cp.price = cp.qty * cp.unit_price
+        cp.save(update_fields=["price"])
+    else:
+        _remove_cp_and_session(request, cp)
+    if Cart.objects.filter(id=getattr(cp.cart, "id", None)).exists():
+        cp.cart.update_total_amount()
+    return redirect("medicine_list")
+
+@require_POST
+@login_required
+def remove_cp(request, cp_id):
+    cp = get_object_or_404(CartProduct, id=cp_id, cart__user=request.user)
+    cart = cp.cart
+    _remove_cp_and_session(request, cp)
+    if Cart.objects.filter(id=getattr(cart, "id", None)).exists():
+        cart.update_total_amount()
+    return redirect("medicine_list")
+
+@require_POST
+@login_required
+def update_cp_qty(request, cp_id):
+    cp = get_object_or_404(CartProduct, id=cp_id, cart__user=request.user)
     try:
-        qty = int(request.POST.get('quantity', 1))
-
-        if item.is_limited and qty > item.max_quantity:
-            messages.warning(request, f"{item.item_name} သည် {item.max_quantity} ခုထက် များ၍မရပါ။")
-            return redirect('medicine_list')
-
-        if qty > 0:
-            cart_product.qty = qty
-            cart_product.price = qty * item.item_price
-            cart_product.save()
-        else:
-            cart_product.delete()  # 0 ဆိုရင်ဖျက်လိုက်မယ်
-
+        qty = int(request.POST.get("quantity", cp.qty))
     except ValueError:
-        messages.error(request, "Invalid quantity value.")
+        qty = cp.qty
 
-    cart.update_total_amount()
-    cart.refresh_from_db()
+    if qty <= 0:
+        _remove_cp_and_session(request, cp)
+        if Cart.objects.filter(id=getattr(cp.cart, "id", None)).exists():
+            cp.cart.update_total_amount()
+        return redirect("medicine_list")
 
-    return redirect('medicine_list')
+    promo = _get_promo_for_cp(request, cp)
+    if promo and qty > promo.quantity:
+        messages.warning(request, f"Only {promo.quantity} available at promo price.")
+        return redirect("medicine_list")
+    if not promo and qty > cp.item.item_quantity:
+        messages.warning(request, f"Only {cp.item.item_quantity} left in stock.")
+        return redirect("medicine_list")
 
 
-#@login_required
-from django.core.paginator import Paginator
+
+
 
 def medicine_list(request):
     user = request.user
@@ -1891,11 +2149,11 @@ def medicine_list(request):
         items = items.filter(item_name__icontains=search_query)
 
     # ✅ Pagination
-    paginator = Paginator(items, 8)  # တစ်မျက်နှာလျှင် 8 ခု
+    paginator = Paginator(items, 8)
     page_number = request.GET.get('page')
     items = paginator.get_page(page_number)
 
-    # ✅ Only customers can access this page
+    # ✅ Only customers
     if not hasattr(user, 'userprofile') or user.userprofile.role != 'customer':
         messages.error(request, "Dear customer, you need register to encourage purchases.")
         return render(request, 'medicine_list.html', {
@@ -1903,7 +2161,6 @@ def medicine_list(request):
             'items': items
         })
 
-    # ✅ Get or create cart
     cart, created = Cart.objects.get_or_create(user=user, defaults={'created_date': timezone.now()})
     cart_products = CartProduct.objects.filter(cart=cart)
 
@@ -1911,7 +2168,7 @@ def medicine_list(request):
     cart.update_total_amount()
     cart.refresh_from_db()
 
-    # ✅ If POST, handle checkout
+    # ✅ Checkout
     if request.method == 'POST' and 'place_order' in request.POST:
         if not cart_products.exists():
             messages.warning(request, "Your cart is empty.")
@@ -1928,18 +2185,37 @@ def medicine_list(request):
             final_amount=total_amount
         )
 
+        # ✅ load promo mapping
+        promo_cart = request.session.get("promo_cart", {})
+
         for cp in cart_products:
-            cp.total_price = cp.qty * cp.item.item_price
+            promo_id = promo_cart.get(str(cp.id))
+            promotion = None
+            is_promotion = False
+            price = cp.price  # default
+
+            if promo_id:
+                try:
+                    promotion = PromotionItem.objects.get(id=promo_id, status="active")
+                    is_promotion = True
+                    price = promotion.discounted_price()   # ✅ force promo price
+                except PromotionItem.DoesNotExist:
+                    pass
+
             SaleItem.objects.create(
                 sale=sale,
                 item=cp.item,
                 quantity=cp.qty,
-                price=cp.price
+                price=price,
+                promotion=promotion if is_promotion else None,
+                is_promotion=is_promotion
             )
 
         cart_products.delete()
         cart.total_amount = 0
         cart.save()
+        if "promo_cart" in request.session:
+            del request.session["promo_cart"]
 
         messages.success(request, "✅ Checkout completed successfully.")
         return render(request, 'medicine_list.html', {
@@ -1960,8 +2236,27 @@ def medicine_list(request):
         'search_query': search_query,
     })
 
-import re
-from django.contrib import messages
+
+@login_required
+def add_to_cart(request, item_id):
+    item = get_object_or_404(Item, id=item_id)
+    cart, _ = Cart.objects.get_or_create(user=request.user)
+
+    if item.item_quantity <= 0:
+        messages.error(request, f"{item.item_name} is out of stock.")
+        return redirect('medicine_list')
+
+    cp, _ = CartProduct.objects.get_or_create(
+        cart=cart, item=item, unit_price=item.item_price,
+        defaults={'qty': 0, 'price': 0}
+    )
+    cp.qty += 1
+    cp.price = cp.qty * cp.unit_price
+    cp.save(update_fields=['qty','price'])
+
+    cart.update_total_amount()
+    return redirect('medicine_list')
+
 
 import re
 from django.shortcuts import get_object_or_404, redirect

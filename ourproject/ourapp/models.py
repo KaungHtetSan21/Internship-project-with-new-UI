@@ -4,6 +4,7 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import RegexValidator
+from datetime import date
 
 
 
@@ -92,6 +93,12 @@ class Item(models.Model):
     max_quantity = models.PositiveIntegerField(default=5, verbose_name=_("Maximum Quantity"))
     last_ordered = models.DateField(blank=True, null=True, verbose_name=_("Last Ordered"))
 
+    @property
+    def get_days_to_expire(self):
+        if self.exp_date:
+            return (self.exp_date - date.today()).days
+        return None
+
     def __str__(self):
         return self.item_name
 
@@ -147,19 +154,26 @@ class Cart(models.Model):
     )
 
     def update_total_amount(self):
-        total = sum([cp.qty * cp.item.item_price for cp in self.cartproduct_set.all()])
+        total = 0
+        for cp in self.cartproduct_set.all():
+            # keep cp.price in sync
+            if cp.price != cp.qty * cp.unit_price:
+                cp.price = cp.qty * cp.unit_price
+                cp.save(update_fields=['price'])
+            total += cp.qty * cp.unit_price
         self.total_amount = total
-        self.save()
+        self.save(update_fields=['total_amount'])
 
 
 class CartProduct(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, verbose_name=_("Cart"))
     item = models.ForeignKey(Item, on_delete=models.CASCADE, verbose_name=_("Item"))
     qty = models.PositiveIntegerField(default=0, verbose_name=_("Quantity"))
+    unit_price = models.PositiveIntegerField(default=0, blank=True, null=True)
     price = models.PositiveIntegerField(default=0, verbose_name=_("Price"))
 
     def __str__(self):
-        return f"CartProduct: {self.item} (Qty: {self.qty})"
+        return f"{self.item.item_name} × {self.qty} ({self.unit_price})"
 
 
 class Sale(models.Model):
@@ -198,6 +212,8 @@ class SaleItem(models.Model):
     item = models.ForeignKey(Item, on_delete=models.CASCADE, verbose_name=_("Item"))
     quantity = models.PositiveIntegerField(verbose_name=_("Quantity"))
     price = models.PositiveIntegerField(verbose_name=_("Price"))
+    is_promotion = models.BooleanField(default=False, blank=True, null=True)
+    promotion = models.ForeignKey('PromotionItem', null=True, blank=True, on_delete=models.SET_NULL)
 
     def __str__(self):
         return f"{self.item.item_name if self.item else _('Unknown Item')} - {self.quantity} pcs"
@@ -280,3 +296,75 @@ class EmailOTP(models.Model):
 
     def is_expired(self):
         return timezone.now() > self.created_at + timedelta(minutes=5)
+    
+
+# models.py
+class PromotionItem(models.Model):
+    item = models.ForeignKey(Item, on_delete=models.CASCADE, verbose_name=_("Item"),blank=True, null=True)
+    quantity = models.PositiveIntegerField(verbose_name=_("Promotion Quantity"),blank=True, null=True)
+    discount_percent = models.PositiveIntegerField(default=0, verbose_name=_("Discount %"),blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True,blank=True, null=True)
+    expire_date = models.DateField(null=True, blank=True)
+    STATUS_CHOICES = [('active', 'Active'), ('cancelled', 'Cancelled'), ('expired', 'Expired')]
+    status = models.CharField(max_length=12, choices=STATUS_CHOICES, default='active',blank=True, null=True)
+
+    def discounted_price(self):
+            if self.discount_percent and self.item.item_price:
+                return int(self.item.item_price * (100 - self.discount_percent) / 100)
+            return self.item.item_price
+
+    def __str__(self):
+        return f"{self.item.item_name} - {self.discount_percent}% off"
+
+    @property
+    def allocated_qty(self):
+        return sum(a.quantity for a in self.allocations.all())
+
+    @property
+    def remaining_qty(self):
+        return max(0, (self.quantity or 0) - self.allocated_qty)
+    
+    def is_valid(self):
+        """Helper method"""
+        return (
+            self.status == 'active'
+            and self.quantity > 0
+            and (self.expire_date is None or self.expire_date >= timezone.now().date())
+        )
+    
+
+    
+
+
+class StockBatch(models.Model):
+    item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name='batches', verbose_name=("Item"))
+    batch_number = models.CharField(max_length=100, blank=True, null=True, verbose_name=("Batch No."))
+    exp_date = models.DateField(verbose_name=("Expiry Date"), blank=True, null=True)
+    quantity_on_hand = models.PositiveIntegerField(default=0, verbose_name=("On Hand"), blank=True, null=True)
+    reserved_promo = models.PositiveIntegerField(default=0, verbose_name=_("Reserved for Promotion"), blank=True, null=True)
+
+    class Meta:
+        ordering = ['exp_date', 'id']
+
+    def __str__(self):
+        return f"{self.item.item_name} | {self.batch_number or 'N/A'} | exp {self.exp_date}"
+
+    @property
+    def available(self):
+        return max(0, self.quantity_on_hand - self.reserved_promo)
+    
+class PromotionAllocation(models.Model):
+    promotion = models.ForeignKey(PromotionItem, on_delete=models.CASCADE, related_name='allocations')
+    batch = models.ForeignKey(StockBatch, on_delete=models.CASCADE, related_name='promo_allocations')
+    quantity = models.PositiveIntegerField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.promotion} @ {self.batch} = {self.quantity}"
+    
+class SaleBatchConsumption(models.Model):
+    sale_item = models.ForeignKey(SaleItem, on_delete=models.CASCADE, related_name='consumptions')
+    batch = models.ForeignKey(StockBatch, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.sale_item} | {self.batch} | {self.quantity}"

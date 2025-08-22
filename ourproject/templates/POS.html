@@ -135,7 +135,9 @@
                     </select>
                 </form>
                 <div class="flex items-center">
+                    <!-- Notification Bell -->
 
+                    
                     <!-- User Profile -->
                     <div class="ml-3 relative">
                         <div class="flex items-center">
@@ -257,6 +259,18 @@
 
         <!-- Main POS Content -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                    <!-- Message Display -->
+        {% if messages %}
+        <div class="mb-6">
+            {% for message in messages %}
+            <div
+                class="p-3 rounded text-white font-semibold {% if message.tags == 'success' %}bg-green-500 {% elif message.tags == 'error' %}bg-red-500 {% elif message.tags == 'warning' %}bg-yellow-500 {% else %}bg-blue-500{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
             <!-- Left Column - Product Selection -->
             <div class="lg:col-span-2">
                 <!-- Product Categories -->
@@ -544,6 +558,9 @@
             </button>
         </div>
     </div>
+    <script>
+    window.PROMOS = {{ promotions_map_json|safe }};  // { "ITEM_ID": { promo_id, promo_price } }
+    </script>
 
         <script>
             // ✅ Get CSRF Token
@@ -632,24 +649,39 @@
 
             // ✅ Event Bindings After DOM is Ready
             $(document).ready(function () {
-                // Add to cart
+                                // Add to cart
+                // Replace your existing '.add-to-cart' click handler body
                 $(document).on('click', '.add-to-cart', function (e) {
                     e.preventDefault();
                     const productDiv = $(this).closest('.Product');
-                    const productId = productDiv.data('id');
+                    const productId = String(productDiv.data('id'));
                     const productName = productDiv.data('name');
-                    const productPrice = parseFloat(productDiv.data('price'));
+                    const defaultPrice = parseFloat(productDiv.data('price'));
 
-                    const existing = cart.find(item => item.id === productId);
+                    const promo = (window.PROMOS && window.PROMOS[productId]) ? window.PROMOS[productId] : null;
+                    const unitPrice = promo ? parseFloat(promo.promo_price) : defaultPrice;
+
+                    const existing = cart.find(item => String(item.id) === productId);
                     if (existing) {
                         existing.quantity += 1;
                     } else {
-                        cart.push({ id: productId, name: productName, price: productPrice, quantity: 1 });
+                        const newRow = {
+                            id: productId,
+                            name: productName,
+                            // keep using "price" as unit_price so the rest of the code works
+                            price: unitPrice,
+                            quantity: 1
+                        };
+                        if (promo) {
+                            newRow.isPromo = true;
+                            newRow.promo_id = promo.promo_id;
+                        }
+                        cart.push(newRow);
                     }
 
                     saveCart();
                     renderCart();
-                    showCartToast(`✅ {% trans "Added" %} ${productName} {% trans "successfully!" %}`);
+                    showCartToast(`✅ {{ _('Added') }} ${productName} {{ _('successfully!') }}`);
                 });
 
                 $('#clear-cart').on('click', function () {
@@ -697,6 +729,20 @@
                     $('#paymentModal').addClass('hidden');
                 });
 
+                // Before (wrong): sendCart('cash')
+                $('#print-btn').on('click', function () {
+                    const btn = $(this);
+                    btn.prop('disabled', true).text('{% trans "Printing..." %}');
+                    sendCart('print', function () {  // ✅ change to 'print'
+                        setTimeout(function () {
+                            showPaymentModal('🖨️ Print Payment', 'Payment completed! Opening print preview...');
+                            window.open("{% url 'print_preview' %}", "_blank");
+                            btn.prop('disabled', false).text('{% trans "Print" %}');
+                        }, 500);
+                    });
+                });
+
+
                 // ✅ Cash Payment
                 $('#cash-btn').on('click', function () {
                     const btn = $(this);
@@ -707,18 +753,7 @@
                     });
                 });
 
-                // ✅ Print Payment
-                $('#print-btn').on('click', function () {
-                    const btn = $(this);
-                    btn.prop('disabled', true).text('{% trans "Printing..." %}');
-                    sendCart('cash', function () {
-                        setTimeout(function () {
-                            showPaymentModal('🖨️ Print Payment', 'Payment completed! Opening print preview...');
-                            window.open("{% url 'print_preview' %}", "_blank");
-                            btn.prop('disabled', false).text('{% trans "Print" %}');
-                        }, 500);
-                    });
-                });
+
 
                 $('#mobile-btn').on('click', function () {
                     $('#qr-modal').removeClass('hidden');
@@ -853,6 +888,7 @@
                     $('#errorModal').addClass('hidden');
                 });
         </script>
+        
     </div>
 </body>
 </html>

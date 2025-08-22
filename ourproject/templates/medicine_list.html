@@ -6,8 +6,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pharmastics - Customer Dashboard</title>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body {
@@ -57,8 +58,22 @@
                 <h2 class="font-bold text-lg">Pharmastics</h2>
             </div>
             <nav class="mt-4 space-y-1 px-2">
-                <a href="{% url 'customer_dashboard' %}" class="sidebar-link block px-4 py-2 rounded transition">
-                    <i class="fas fa-chart-bar mr-2"></i> {% trans "Dashboard" %}
+                {% if request.user.userprofile.role == 'admin' %}
+                <a href="{% url 'admin_dashboard' %}" class="sidebar-link block px-4 py-2 rounded transition">
+                    <i class="fas fa-chart-bar mr-2"></i> {% trans "Admin Dashboard" %}
+                </a>
+                {% elif request.user.userprofile.role == 'pharmacist' %}
+                <a href="{% url 'pharmacist_dashboard' %}" class="sidebar-link block px-4 py-2 rounded transition">
+                    <i class="fas fa-briefcase-medical mr-2"></i> {% trans "Pharmacist Dashboard" %}
+                </a>
+                {% elif request.user.userprofile.role == 'customer' %}
+                <a href="{% url 'customer_dashboard' %}" class="sidebar-link active block px-4 py-2 rounded transition">
+                    <i class="fas fa-tachometer-alt mr-2"></i> {% trans "Customer Dashboard" %}
+                </a>
+                {% endif %}
+
+                <a href="{% url 'promotion_area' %}" class="sidebar-link block px-4 py-2 rounded transition">
+                    <i class="fas fa-pills mr-2"></i> Your Promotion Area
                 </a>
                 <a href="{% url 'medicine_list' %}" class="sidebar-link block px-4 py-2 rounded transition">
                     <i class="fas fa-pills mr-2"></i> {% trans "Medicine" %}
@@ -66,13 +81,20 @@
                 <a href="{% url 'customer_profilereal' %}" class="sidebar-link block px-4 py-2 rounded transition">
                     <i class="fas fa-user mr-2"></i> {% trans "My Profile" %}
                 </a>
-                <a href="{% url 'customer_profile' %}" class="sidebar-link active block px-4 py-2 rounded transition">
-                    <i class="fas fa-history mr-2"></i> {% trans "Purchase History" %}
+                <a href="{% url 'customer_profile' %}" class="sidebar-link block px-4 py-2 rounded transition">
+                    <i class="fas fa-user mr-2"></i> {% trans "Purchase History" %}
                 </a>
-                <a href="{% url 'logout' %}" class="block px-4 py-2 bg-red-500 hover:bg-red-600 rounded transition mt-4">
+                {% if user.is_authenticated %}
+                <a href="{% url 'logout' %}"
+                    class="block px-4 py-2 bg-red-500 hover:bg-red-600 rounded transition mt-4">
                     <i class="fas fa-sign-out-alt mr-2"></i> {% trans "Logout" %}
                 </a>
-                
+                {% else %}
+                <a href="{% url 'login' %}"
+                    class="block px-4 py-2 bg-green-500 hover:bg-green-600 rounded transition mt-4">
+                    <i class="fas fa-sign-in-alt mr-2"></i> {% trans "Login" %}
+                </a>
+                {% endif %}
             </nav>
         </aside>
 
@@ -251,57 +273,114 @@
                 <!-- Cart Tab -->
                 <div class="tab-pane hidden p-4 bg-white rounded-lg shadow" id="cart" role="tabpanel">
                     <div class="flex flex-col lg:flex-row gap-6">
-                        <div class="lg:w-2/3">
-                            <h3 class="text-xl font-semibold mb-4">{% trans "Your Shopping Cart" %} ({{ cart_products|length }} {% trans "items" %})</h3>
-                            
-                            {% if cart_products %}
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-sm text-left text-gray-500">
-                                    <thead class="text-xs text-gray-700 uppercase bg-gray-50">
-                                        <tr>
-                                            <th scope="col" class="px-6 py-3">{% trans "Product" %}</th>
-                                            <th scope="col" class="px-6 py-3">{% trans "Price" %}</th>
-                                            <th scope="col" class="px-6 py-3">{% trans "Quantity" %}</th>
-                                            <th scope="col" class="px-6 py-3">{% trans "Total" %}</th>
-                                            <th scope="col" class="px-6 py-3">{% trans "Action" %}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for cp in cart_products %}
-                                        <tr class="bg-white border-b hover:bg-gray-50">
-                                            <td class="px-6 py-4 font-medium text-gray-900">
-                                                {{ cp.item.item_name }}
-                                            </td>
-                                            <td class="px-6 py-4">{{ cp.item.item_price }}</td>
-                                            <td class="px-6 py-4">
-                                                <div class="flex items-center space-x-2">
-                                                    <a href="{% url 'decrease_quantity' cp.item.id %}" class="inline-flex items-center justify-center p-1 text-sm font-medium h-6 w-6 text-gray-500 bg-white border border-gray-300 rounded-full hover:bg-gray-100 focus:outline-none">
-                                                        -
-                                                    </a>
-                                                    <span class="px-2">{{ cp.qty }}</span>
-                                                    <a href="{% url 'increase_quantity' cp.item.id %}" class="inline-flex items-center justify-center p-1 text-sm font-medium h-6 w-6 text-gray-500 bg-white border border-gray-300 rounded-full hover:bg-gray-100 focus:outline-none">
-                                                        +
-                                                    </a>
-                                                </div>
-                                            </td>
-                                            <td class="px-6 py-4">{{ cp.qty|multiply:cp.item.item_price }}</td>
-                                            <td class="px-6 py-4">
-                                                <a href="{% url 'remove_from_cart' cp.item.id %}" class="font-medium text-red-600 hover:underline">{% trans "Remove" %}</a>
-                                            </td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                            {% else %}
-                            <div class="text-center py-8">
-                                <div class="text-gray-400 text-5xl mb-3">🛒</div>
-                                <h4 class="text-lg font-medium text-gray-500 mb-2">{% trans "Your cart is empty" %}</h4>
-                                <p class="text-gray-400 mb-4">{% trans "Browse our products and add items to your cart" %}</p>
-                                <a href="#products" class="text-blue-600 hover:underline" onclick="switchTab('products-tab')">{% trans "View Products" %}</a>
-                            </div>
-                            {% endif %}
+
+
+<div class="lg:w-2/3">
+    <h3 class="text-xl font-semibold mb-4">{% trans "Your Shopping Cart" %} ({{ cart_products|length }} {% trans "items" %})</h3>
+    
+    {% if cart_products %}
+    <div class="border rounded-lg overflow-hidden">
+        <!-- Table headers (kept for structure but hidden on mobile) -->
+        <div class="hidden md:grid grid-cols-12 gap-4 bg-gray-50 px-4 py-3 text-xs font-medium text-gray-700 uppercase">
+            <div class="col-span-5">{% trans "Product" %}</div>
+            <div class="col-span-2 text-center">{% trans "Price" %}</div>
+            <div class="col-span-3 text-center">{% trans "Quantity" %}</div>
+            <div class="col-span-2 text-right">{% trans "Action" %}</div>
+        </div>
+        
+        <!-- Cart items -->
+        <div class="divide-y">
+            {% for cp in cart_products %}
+            <div class="p-4">
+                <div class="flex flex-col md:flex-row md:items-center gap-4">
+                    <!-- Product name and details -->
+                    <div class="md:w-5/12">
+                        <div class="font-medium text-gray-900">{{ cp.item.item_name }}</div>
+                        
+                        <!-- Price breakdown -->
+                        <div class="text-sm text-gray-500 mt-1">
+                            {{ cp.qty }} × {{ cp.item.item_price }} Ks = 
+                            <span class="font-semibold">{{ cp.qty|multiply:cp.item.item_price }} Ks</span>
                         </div>
+                        
+                        <!-- Promo badge -->
+                        {% with promo_cart=request.session.promo_cart %}
+                            {% if promo_cart and cp.id|stringformat:"s" in promo_cart %}
+                                <span class="inline-block text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded mt-1">
+                                    {% trans "Promo" %}
+                                </span>
+                            {% endif %}
+                        {% endwith %}
+                    </div>
+                    
+                    <!-- Price -->
+                    <div class="md:w-2/12 text-gray-900 text-center">
+                        {{ cp.item.item_price }} Ks
+                    </div>
+                    
+                    <!-- Quantity controls -->
+                    <div class="md:w-3/12">
+                        <div class="flex items-center justify-center space-x-2">
+                            <!-- Decrease quantity form -->
+                            <form method="post" action="{% url 'decrease_cp_qty' cp.id %}" class="inline">
+                                {% csrf_token %}
+                                <button class="inline-flex items-center justify-center p-1 text-sm font-medium h-6 w-6 text-gray-500 bg-white border border-gray-300 rounded-full hover:bg-gray-100 focus:outline-none">
+                                    -
+                                </button>
+                            </form>
+                            
+                            <!-- Quantity display -->
+                            <span class="px-2">{{ cp.qty }}</span>
+                            
+                            <!-- Increase quantity form -->
+                            <form method="post" action="{% url 'increase_cp_qty' cp.id %}" class="inline">
+                                {% csrf_token %}
+                                <button class="inline-flex items-center justify-center p-1 text-sm font-medium h-6 w-6 text-gray-500 bg-white border border-gray-300 rounded-full hover:bg-gray-100 focus:outline-none">
+                                    +
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <!-- Quantity update form -->
+                        <form method="post" action="{% url 'update_cp_qty' cp.id %}" class="flex items-center mt-2">
+                            {% csrf_token %}
+                            <input type="number" name="quantity" value="{{ cp.qty }}" min="1" 
+                                   class="w-16 border rounded text-center mx-1 py-1 text-sm">
+                            <button type="submit" class="text-sm bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200">
+                                {% trans "Update" %}
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <!-- Total and actions -->
+                    <div class="md:w-2/12 flex flex-col items-end space-y-2">
+                        <div class="font-semibold text-gray-900">
+                            {{ cp.qty|multiply:cp.item.item_price }} Ks
+                        </div>
+                        
+                        <!-- Remove item form -->
+                        <form method="post" action="{% url 'remove_cp' cp.id %}" class="inline">
+                            {% csrf_token %}
+                            <button type="submit" class="text-sm font-medium text-red-600 hover:underline">
+                                {% trans "Remove" %}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <div class="text-center py-8">
+        <div class="text-gray-400 text-5xl mb-3">🛒</div>
+        <h4 class="text-lg font-medium text-gray-500 mb-2">{% trans "Your cart is empty" %}</h4>
+        <p class="text-gray-400 mb-4">{% trans "Browse our products and add items to your cart" %}</p>
+        <a href="#products" class="text-blue-600 hover:underline" onclick="switchTab('products-tab')">{% trans "View Products" %}</a>
+    </div>
+    {% endif %}
+</div>
+
                         
                         <div class="lg:w-1/3">
                             <div class="bg-white border border-gray-200 rounded-lg shadow p-6">
@@ -356,12 +435,7 @@
                                         </div>
                                         <div>
                                             <label class="block mb-2 text-sm font-medium text-gray-900">{% trans "Phone" %}</label>
-<input type="tel" name="phone" 
-       pattern="[0-9]{11}" 
-       maxlength="11"
-       title="Phone number must be exactly 11 digits" 
-       required
-       class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                                            <input type="tel" name="phone" value="(555) 123-4567" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
                                         </div>
                                     </div>
                                 </div>
