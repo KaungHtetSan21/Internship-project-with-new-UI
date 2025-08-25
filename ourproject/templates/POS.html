@@ -367,6 +367,21 @@
                                 </div>
                             </div>
 
+                            <div class="mt-4 space-y-1 text-sm">
+                            <div class="flex justify-between">
+                                <span>Subtotal</span>
+                                <span id="subtotal">0 ks</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Tax (2%)</span>
+                                <span id="tax">0 ks</span>
+                            </div>
+                            <div class="flex justify-between font-semibold border-t pt-2">
+                                <span>Total</span>
+                                <span id="total">0 ks</span>
+                            </div>
+                            </div>
+
                             <!-- Payment Buttons -->
                             <div class="grid grid-cols-2 gap-3">
                                 <button id="print-btn"
@@ -636,7 +651,7 @@
                 });
 
                 const discount = 0;
-                const tax = subtotal * 0.07;
+                const tax = Math.round(subtotal * 0.02);   // 2% tax 
                 const total = subtotal + tax - discount;
 
                 $('#subtotal').text(`${subtotal.toFixed(2)} {% trans "ks" %}`);

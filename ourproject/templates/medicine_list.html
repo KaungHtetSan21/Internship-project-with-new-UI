@@ -57,45 +57,50 @@
                 <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/120c636b-923a-456a-a13a-39844d5d3a4a.png" class="h-12 mx-auto mb-2">
                 <h2 class="font-bold text-lg">Pharmastics</h2>
             </div>
-            <nav class="mt-4 space-y-1 px-2">
-                {% if request.user.userprofile.role == 'admin' %}
-                <a href="{% url 'admin_dashboard' %}" class="sidebar-link block px-4 py-2 rounded transition">
-                    <i class="fas fa-chart-bar mr-2"></i> {% trans "Admin Dashboard" %}
-                </a>
-                {% elif request.user.userprofile.role == 'pharmacist' %}
-                <a href="{% url 'pharmacist_dashboard' %}" class="sidebar-link block px-4 py-2 rounded transition">
-                    <i class="fas fa-briefcase-medical mr-2"></i> {% trans "Pharmacist Dashboard" %}
-                </a>
-                {% elif request.user.userprofile.role == 'customer' %}
-                <a href="{% url 'customer_dashboard' %}" class="sidebar-link active block px-4 py-2 rounded transition">
-                    <i class="fas fa-tachometer-alt mr-2"></i> {% trans "Customer Dashboard" %}
-                </a>
-                {% endif %}
+        <nav class="mt-4 space-y-1 px-2">
+        {% if user.is_authenticated %}
+            {% if request.user.userprofile.role == 'admin' %}
+            <a href="{% url 'admin_dashboard' %}" class="sidebar-link block px-4 py-2 rounded transition">
+                <i class="fas fa-chart-bar mr-2"></i> {% trans "Admin Dashboard" %}
+            </a>
+            {% elif request.user.userprofile.role == 'pharmacist' %}
+            <a href="{% url 'pharmacist_dashboard' %}" class="sidebar-link block px-4 py-2 rounded transition">
+                <i class="fas fa-briefcase-medical mr-2"></i> {% trans "Pharmacist Dashboard" %}
+            </a>
+            {% elif request.user.userprofile.role == 'customer' %}
+            <a href="{% url 'customer_dashboard' %}" class="sidebar-link active block px-4 py-2 rounded transition">
+                <i class="fas fa-tachometer-alt mr-2"></i> {% trans "Customer Dashboard" %}
+            </a>
+            {% endif %}
 
-                <a href="{% url 'promotion_area' %}" class="sidebar-link block px-4 py-2 rounded transition">
-                    <i class="fas fa-pills mr-2"></i> Your Promotion Area
-                </a>
-                <a href="{% url 'medicine_list' %}" class="sidebar-link block px-4 py-2 rounded transition">
-                    <i class="fas fa-pills mr-2"></i> {% trans "Medicine" %}
-                </a>
-                <a href="{% url 'customer_profilereal' %}" class="sidebar-link block px-4 py-2 rounded transition">
-                    <i class="fas fa-user mr-2"></i> {% trans "My Profile" %}
-                </a>
-                <a href="{% url 'customer_profile' %}" class="sidebar-link block px-4 py-2 rounded transition">
-                    <i class="fas fa-user mr-2"></i> {% trans "Purchase History" %}
-                </a>
-                {% if user.is_authenticated %}
-                <a href="{% url 'logout' %}"
-                    class="block px-4 py-2 bg-red-500 hover:bg-red-600 rounded transition mt-4">
-                    <i class="fas fa-sign-out-alt mr-2"></i> {% trans "Logout" %}
-                </a>
-                {% else %}
-                <a href="{% url 'login' %}"
-                    class="block px-4 py-2 bg-green-500 hover:bg-green-600 rounded transition mt-4">
-                    <i class="fas fa-sign-in-alt mr-2"></i> {% trans "Login" %}
-                </a>
-                {% endif %}
-            </nav>
+            <a href="{% url 'promotion_area' %}" class="sidebar-link block px-4 py-2 rounded transition">
+            <i class="fas fa-tags mr-2"></i> Your Promotion Area
+            </a>
+            <a href="{% url 'medicine_list' %}" class="sidebar-link block px-4 py-2 rounded transition">
+            <i class="fas fa-pills mr-2"></i> {% trans "Medicine" %}
+            </a>
+            <a href="{% url 'customer_profilereal' %}" class="sidebar-link block px-4 py-2 rounded transition">
+            <i class="fas fa-user mr-2"></i> {% trans "My Profile" %}
+            </a>
+            <a href="{% url 'customer_profile' %}" class="sidebar-link block px-4 py-2 rounded transition">
+            <i class="fas fa-history mr-2"></i> {% trans "Purchase History" %}
+            </a>
+            <a href="{% url 'logout' %}" class="block px-4 py-2 bg-red-500 hover:bg-red-600 rounded transition mt-4">
+            <i class="fas fa-sign-out-alt mr-2"></i> {% trans "Logout" %}
+            </a>
+        {% else %}
+            <!-- Guest User Options -->
+            <a href="{% url 'medicine_list' %}" class="sidebar-link block px-4 py-2 rounded transition">
+            <i class="fas fa-pills mr-2"></i> {% trans "Browse Medicines" %}
+            </a>
+            <a href="{% url 'customer_register' %}" class="block px-4 py-2 bg-yellow-500 hover:bg-yellow-600 rounded transition">
+            <i class="fas fa-user-plus mr-2"></i> {% trans "Register" %}
+            </a>
+            <a href="{% url 'login' %}" class="block px-4 py-2 bg-green-500 hover:bg-green-600 rounded transition">
+            <i class="fas fa-sign-in-alt mr-2"></i> {% trans "Login" %}
+            </a>
+        {% endif %}
+        </nav>
         </aside>
 
         <!-- Main Content -->
@@ -158,16 +163,22 @@
                             {% trans "Products" %}
                         </button>
                     </li>
+                    {% if user.is_authenticated %}
                     <li class="mr-2" role="presentation">
                         <button class="nav-link inline-block p-4 border-b-2 rounded-t-lg" id="cart-tab" data-tabs-target="#cart" type="button" role="tab">
                             🛒 {% trans "Cart" %} <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full ml-1">{{ cart_products|length }}</span>
                         </button>
                     </li>
+                    {% endif %}
+                    
+                    {% if user.is_authenticated %}
                     <li class="mr-2" role="presentation">
                         <button class="nav-link inline-block p-4 border-b-2 rounded-t-lg" id="checkout-tab" data-tabs-target="#checkout" type="button" role="tab">
                             {% trans "Checkout" %}
                         </button>
                     </li>
+                    {% endif %}
+
                 </ul>
                 
         <form method="get" action="{% url 'medicine_list' %}" class="mb-4">
@@ -322,7 +333,7 @@
                     <div class="md:w-3/12">
                         <div class="flex items-center justify-center space-x-2">
                             <!-- Decrease quantity form -->
-                            <form method="post" action="{% url 'decrease_cp_qty' cp.id %}" class="inline">
+                            <form method="post" action="{% url 'decrease_cp_qty' cp.id %}#cart" class="inline">
                                 {% csrf_token %}
                                 <button class="inline-flex items-center justify-center p-1 text-sm font-medium h-6 w-6 text-gray-500 bg-white border border-gray-300 rounded-full hover:bg-gray-100 focus:outline-none">
                                     -
@@ -333,7 +344,7 @@
                             <span class="px-2">{{ cp.qty }}</span>
                             
                             <!-- Increase quantity form -->
-                            <form method="post" action="{% url 'increase_cp_qty' cp.id %}" class="inline">
+                            <form method="post" action="{% url 'increase_cp_qty' cp.id %}#cart" class="inline">
                                 {% csrf_token %}
                                 <button class="inline-flex items-center justify-center p-1 text-sm font-medium h-6 w-6 text-gray-500 bg-white border border-gray-300 rounded-full hover:bg-gray-100 focus:outline-none">
                                     +
@@ -383,25 +394,24 @@
                                     </div>
                                     <div class="flex justify-between">
                                         <span class="text-gray-600">{% trans "Shipping" %}:</span>
-                                        <span class="font-medium">1000 Ks</span>
+                                        <span class="font-medium">4000 Ks</span>
                                     </div>
                                     <div class="flex justify-between">
                                         <span class="text-gray-600">{% trans "Tax" %}:</span>
-                                        <span class="font-medium">500 Ks</span>
+                                        <span class="font-medium">{{ tax_amount }} Ks</span>
                                     </div>
                                 </div>
                                 <hr class="my-4">
                                 <div class="flex justify-between text-lg font-bold mb-6">
-                                    <span>{% trans "Total" %}:</span>
-                                    {% with total=cart.total_amount|add:"1000" %}
-                                    <span id="cart-total">{{ total_amount|floatformat:2 }} Ks</span>
-                                    {% endwith %}
+                                <span>Total:</span>
+                                <span id="cart-total">{{ grand_total }} Ks</span>
                                 </div>
                                 <a href="#checkout" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg py-2.5 px-5 transition text-center block" onclick="switchTab('checkout-tab')">
                                     {% trans "Proceed to Checkout" %}
                                 </a>
                             </div>
                         </div>
+
                     </div>
                 </div>
 
@@ -426,7 +436,7 @@
                                         </div>
                                         <div>
                                             <label class="block mb-2 text-sm font-medium text-gray-900">{% trans "Phone" %}</label>
-                                            <input type="tel" name="phone" value=" 09-xxxxxxxxxx" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                                            <input type="tel" name="phone" value="09XXXXXXXXX" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
                                         </div>
                                     </div>
                                 </div>
@@ -468,19 +478,19 @@
                                         </div>
                                         <div class="flex justify-between">
                                             <span class="text-gray-600">{% trans "Shipping" %}:</span>
-                                            <span class="font-medium">1000 Ks</span>
+                                            <span class="font-medium">4000 Ks</span>
                                         </div>
                                         <div class="flex justify-between">
-                                            <span class="text-gray-600">{% trans "Tax" %}:</span>
-                                            <span class="font-medium">500 KS</span>
+                                        <span class="text-gray-600">{% trans "Tax" %}:</span>
+                                        <span class="font-medium">{{ tax_amount }} Ks</span>
                                         </div>
                                     </div>
                                     <hr class="my-4">
                                     <div class="flex justify-between text-lg font-bold mb-6">
                                         <span>{% trans "Total" %}:</span>
-                                        {% with total=cart.total_amount|add:"1000" %}
-                                        <span id="cart-total">{{ total_amount|floatformat:2 }} Ks</span>
-                                        {% endwith %}
+                                        
+                                        <span id="cart-total"> {{ grand_total }} Ks</span>
+                                        
                                     </div>
                                     <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg py-2.5 px-5 transition">
                                         {% trans "Place Order" %}
@@ -558,6 +568,13 @@
                 switchTab(this.id);
             });
         });
+        window.addEventListener("DOMContentLoaded", function () {
+        if (window.location.hash === "#cart") {
+            switchTab('cart-tab');
+        } else if (window.location.hash === "#checkout") {
+            switchTab('checkout-tab');
+        }
+    });
     </script>
 </body>
 </html>

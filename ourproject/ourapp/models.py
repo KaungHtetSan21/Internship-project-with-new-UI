@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import RegexValidator
 from datetime import date
-
+from decimal import Decimal
 
 
 class UserProfile(models.Model):
@@ -24,8 +24,8 @@ class UserProfile(models.Model):
     role = models.CharField(max_length=50, choices=ROLE_CHOICES)
     phone = models.CharField(
         max_length=11,
-        blank=False,
-        null=False,
+        blank=True,
+        null=True,
         validators=[
             RegexValidator(
                 regex=r'^\d{11}$',
@@ -57,8 +57,8 @@ class Supplier(models.Model):
     email = models.EmailField(blank=True, null=True, verbose_name=_("Email"))
     phone = models.CharField(
         max_length=11,
-        blank=False,
-        null=False,
+        blank=True,
+        null=True,
         verbose_name=_("Phone"),
         validators=[
             RegexValidator(
@@ -164,6 +164,16 @@ class Cart(models.Model):
         self.total_amount = total
         self.save(update_fields=['total_amount'])
 
+    @property
+    def tax_amount(self):
+        """2% of total_amount"""
+        return int(Decimal(self.total_amount) * Decimal('0.02'))
+
+    @property
+    def total_with_tax(self):
+        """Total + tax"""
+        return self.total_amount + self.tax_amount
+
 
 class CartProduct(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, verbose_name=_("Cart"))
@@ -188,8 +198,8 @@ class Sale(models.Model):
     name = models.CharField(max_length=255, blank=True, null=True, verbose_name=_("Customer Name"))
     phone = models.CharField(
         max_length=11,
-        blank=False,
-        null=False,
+        blank=True,
+        null=True,
         verbose_name=_("Phone"),
         validators=[
             RegexValidator(
@@ -252,8 +262,8 @@ class customerpos(models.Model):
     name = models.CharField(max_length=100, verbose_name=_("Customer Name"))
     phone = models.CharField(
         max_length=11,
-        blank=False,
-        null=False,
+        blank=True,
+        null=True,
         verbose_name=_("Phone"),
         validators=[
             RegexValidator(
@@ -368,3 +378,5 @@ class SaleBatchConsumption(models.Model):
 
     def __str__(self):
         return f"{self.sale_item} | {self.batch} | {self.quantity}"
+    
+    

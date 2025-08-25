@@ -725,7 +725,7 @@ msgstr "ဆေးဝါးဌာန ဒက်ရှ်ဘုတ်"
 #: .\templates\customer\dashboard.html:44
 #: .\templates\customer\dashboard.html:68
 msgid "Customer Dashboard"
-msgstr "ဖောက်သည် ဒက်ရှ်ဘုတ်"
+msgstr "ဝယ်ယူသူ ဒက်ရှ်ဘုတ်"
 
 #: .\templates\customer\dashboard.html:48
 #: .\templates\customer\dashboard.html:204 .\templates\customer_profile.html:38

@@ -8,20 +8,22 @@
 <body onload="window.print()">
     <h2>Pharmacy Invoice</h2>
     <p><strong>Payment Method:</strong> {{ cart.payment_method|title }}</p>
-    <p><strong>Customer:</strong> {{ cart.customer_name|default:"Walk-in" }}</p>
+    <p><strong>Customer:</strong> {{ cart.customer_name|default:"Customer" }}</p>
     <ul>
         {% for item in items %}
-        <li>{{ item.item.item_name }} - {{ item.qty }} x {{ item.price }} ks</li>
+        <li>{{ item.item.item_name }} - {{ item.qty }} x {{ item.price }} Ks</li>
         {% endfor %}
     </ul>
-    <p>Total: {{ cart.total_amount }} ks</p>
+    <p>Total: {{ cart.total_amount }} Ks</p>
+    <p>Tax (2%): {{ tax_amount }} Ks</p>
+    <p>Total: {{ grand_total }} Ks</p>
 
-    <!-- inside body of print_invoice.html -->
-<div class="text-center mt-6">
+
+<!-- <div class="text-center mt-6">
     <a href="{% url 'pharmacist_dashboard' %}" 
        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
        ← Back to Home
     </a>
-</div>
+</div> -->
 </body>
 </html>

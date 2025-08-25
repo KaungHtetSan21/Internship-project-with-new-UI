@@ -32,19 +32,34 @@ from .models import *
 
 # Third-party imports
 from google import genai  # if used, otherwise remove
+from decimal import Decimal, ROUND_HALF_UP
+
+# 🆕 constants
+TAX_RATE = Decimal('0.02')   # 2%
+SHIPPING_FEE = 4000
+
+# (optional) utility
+def compute_tax(subtotal: int) -> int:
+    # kyat အနီးစပ်ဆုံး ရေကွက်တင် (round half up) ၊ int ပြန်
+    return int((Decimal(subtotal) * TAX_RATE).quantize(Decimal('1'), rounding=ROUND_HALF_UP))
 
 
 def base(request):
-    items = Item.objects.all().order_by('-id')[:2]
+    items = Item.objects.all().order_by('-id')[:4]
     categories = Category.objects.all()
-    context = {'items':items,
-               'categories': categories,
-                       
-                # 'cart': cart,
-                # 'cart_products': cart_products,
-                # 'total_amount': cart.total_amount + 5.99 + 1.00,
-               }
-    return render(request,'base.html',context)
+    promotions = PromotionItem.objects.filter(
+        status='active',
+        quantity__gt=0,
+    ).filter(
+        models.Q(expire_date__isnull=True) | models.Q(expire_date__gte=timezone.now().date())
+    ).order_by('-created_at')[:6]
+
+    context = {
+        'items': items,
+        'categories': categories,
+        'promotions': promotions,
+    }
+    return render(request, 'base.html', context)
 
 import random
 from django.utils import timezone
@@ -748,7 +763,7 @@ def customer_dashboard_view(request):
     user = request.user
     
     filter_type = request.GET.get('notifications', 'unread')  # ✅ Step 1: Get the filter type
-    items = Item.objects.all().order_by('-id')[:2]
+    items = Item.objects.all().order_by('-id')[:4]
     cart = Cart.objects.filter(user=user).last()
     cart_products = CartProduct.objects.filter(cart=cart) if cart else []
 
@@ -1958,8 +1973,16 @@ class SaveOrderView(View):
                         )
 
                 cart.update_total_amount()
+                tax_amount = cart.tax_amount
+                grand_total = cart.total_with_tax
 
-            return JsonResponse({'ok': True, 'cart_id': cart.id, 'total': cart.total_amount})
+            return JsonResponse({
+                'ok': True,
+                'cart_id': cart.id,
+                'subtotal': cart.total_amount,
+                'tax': tax_amount,
+                'total': grand_total
+            })
 
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)        
@@ -1968,10 +1991,16 @@ class SaveOrderView(View):
 def print_preview(request):
     cart = Cart.objects.filter(user=request.user).order_by('-id').first()
     items = CartProduct.objects.filter(cart=cart)
+    tax_amount = cart.tax_amount if cart else 0
+    grand_total = cart.total_with_tax if cart else 0
+
     return render(request, 'print_invoice.html', {
         'cart': cart,
-        'items': items
+        'items': items,
+        'tax_amount': tax_amount,
+        'grand_total': grand_total,
     })
+
     
 
 def search_customer(request):
@@ -2134,6 +2163,7 @@ def update_cp_qty(request, cp_id):
 
 
 def medicine_list(request):
+    active_tab = request.session.pop('active_tab', 'products-tab')
     user = request.user
     categories = Category.objects.all()
 
@@ -2164,9 +2194,13 @@ def medicine_list(request):
     cart, created = Cart.objects.get_or_create(user=user, defaults={'created_date': timezone.now()})
     cart_products = CartProduct.objects.filter(cart=cart)
 
-    # ✅ Refresh cart total
     cart.update_total_amount()
     cart.refresh_from_db()
+    subtotal = cart.total_amount
+
+    # 🆕 2% TAX + shipping
+    tax_amount = compute_tax(subtotal)
+    grand_total = subtotal + SHIPPING_FEE + tax_amount
 
     # ✅ Checkout
     if request.method == 'POST' and 'place_order' in request.POST:
@@ -2174,43 +2208,37 @@ def medicine_list(request):
             messages.warning(request, "Your cart is empty.")
             return redirect('medicine_list')
 
-        shipping_fee = 1000
-        tax = 500
-        total_amount = cart.total_amount + shipping_fee + tax
-
         sale = Sale.objects.create(
             invoice_no=f"INV-{timezone.now().strftime('%Y%m%d%H%M%S')}",
             user=user,
-            total_amount=cart.total_amount,
-            final_amount=total_amount
+            total_amount=subtotal,      # items only
+            final_amount=grand_total,   # items + 2% tax + shipping
         )
 
-        # ✅ load promo mapping
+    # ✅ promotion mapping (if you use promo_cart in session)
         promo_cart = request.session.get("promo_cart", {})
-
         for cp in cart_products:
             promo_id = promo_cart.get(str(cp.id))
             promotion = None
             is_promotion = False
-            price = cp.price  # default
-
             if promo_id:
                 try:
                     promotion = PromotionItem.objects.get(id=promo_id, status="active")
                     is_promotion = True
-                    price = promotion.discounted_price()   # ✅ force promo price
                 except PromotionItem.DoesNotExist:
                     pass
 
+            # price ကို unit_price သာသိမ်း (line total မဟုတ်)
             SaleItem.objects.create(
                 sale=sale,
                 item=cp.item,
                 quantity=cp.qty,
-                price=price,
+                price=cp.unit_price,
                 promotion=promotion if is_promotion else None,
-                is_promotion=is_promotion
+                is_promotion=is_promotion,
             )
 
+                # clear cart + session
         cart_products.delete()
         cart.total_amount = 0
         cart.save()
@@ -2218,21 +2246,27 @@ def medicine_list(request):
             del request.session["promo_cart"]
 
         messages.success(request, "✅ Checkout completed successfully.")
+        # success render (tax/total ပြန်ထုတ်ချင်ရင် context ထည့်ပေး)
         return render(request, 'medicine_list.html', {
             'items': items,
             'categories': categories,
             'cart': cart,
             'cart_products': [],
             'checkout_success': True,
-            'sale': sale
+            'sale': sale,
+            'tax_amount': tax_amount,
+            'grand_total': grand_total,
+            'search_query': search_query,
         })
 
+    # GET render
     return render(request, 'medicine_list.html', {
         'items': items,
         'categories': categories,
         'cart': cart,
         'cart_products': cart_products,
-        'total_amount': cart.total_amount + 1000 + 500,
+        'tax_amount': tax_amount,      
+        'grand_total': grand_total,    
         'search_query': search_query,
     })
 
@@ -2284,28 +2318,28 @@ def place_order_view(request):
     try:
         cart = get_object_or_404(Cart, user=user)
         cart_items = CartProduct.objects.filter(cart=cart)
-
         if not cart_items.exists():
             messages.warning(request, "Your cart is empty.")
             return redirect("medicine_list")
 
+        # Subtotal + tax + shipping
         cart.update_total_amount()
-        shipping_fee = 1000
-        tax = 500
-        total_amount = cart.total_amount + shipping_fee + tax
+        subtotal = cart.total_amount
+        tax_amount = compute_tax(subtotal)         # 🆕 2%
+        grand_total = subtotal + SHIPPING_FEE + tax_amount
 
-        # ✅ Create sale
+        # Create sale
         sale = Sale.objects.create(
             invoice_no=f"INV-{timezone.now().strftime('%Y%m%d%H%M%S')}",
             user=user,
             name=name,
             phone=phone,
             address=address,
-            total_amount=cart.total_amount,
-            final_amount=total_amount,
+            total_amount=subtotal,      # items only
+            final_amount=grand_total,   # items + tax + shipping
         )
 
-        # ✅ Handle promotions
+        # Handle promotions
         promo_cart = request.session.get("promo_cart", {})
         for cp in cart_items:
             promo_id = promo_cart.get(str(cp.id))
@@ -2322,17 +2356,15 @@ def place_order_view(request):
                 sale=sale,
                 item=cp.item,
                 quantity=cp.qty,
-                price=cp.unit_price,  # unit_price သုံးထားတာ promotion ထည့်ပြီးသား
+                price=cp.unit_price,  # unit price (promo included)
                 promotion=promotion if is_promotion else None,
                 is_promotion=is_promotion,
             )
 
-        # ✅ Clear cart
+        # Clear cart & promo session
         cart_items.delete()
         cart.total_amount = 0
         cart.save()
-
-        # ✅ Clear promo session
         if "promo_cart" in request.session:
             del request.session["promo_cart"]
 
@@ -2451,7 +2483,9 @@ def chatbot_view(request):
             model="gemini-2.5-flash",
             contents={question},
         )
+        print(response.text)
         text = getattr(response, 'text', '') or str(response)
+        
     except Exception as e:
         # handle errors gracefully
         text = "Sorry, something went wrong. Please try again later."
